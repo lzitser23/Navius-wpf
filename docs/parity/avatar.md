@@ -88,3 +88,12 @@ the doc's own open question in favor of "yes, public"), driven internally by `So
 event (WPF has no literal `ImageOpened` event; `DownloadCompleted` is the equivalent signal). The
 `DelayMs` fallback-suppression window is a `DispatcherTimer`. See `docs/parity/accessible-icon.md`
 for the sibling family that shares this page's gallery demo.
+
+## M6 audit (2026-07-09)
+
+Adversarially re-verified `NaviusAvatar` against this doc's claims: the `Status` state machine
+(`Idle`/`Loading`/`Loaded`/`Error`), `Source` load wiring via `BitmapImage.DownloadCompleted`/
+`DownloadFailed` plus the template `Image`'s `ImageFailed`, the `DelayMs` fallback-suppression
+`DispatcherTimer`, `IsFallbackVisible` computation, and the theme's `DynamicResource`-only
+`Background`/`Foreground` tokens all check out against the code and
+`tests/Navius.Wpf.Tests/AvatarTests.cs`. No confirmed or plausible disparities found.

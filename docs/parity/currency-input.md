@@ -107,3 +107,14 @@ overrides the symbol via `CurrencyEngine.SymbolFor`. No custom AutomationPeer:
 `TextBoxAutomationPeer` covers the bare-native-input contract. Tests pin formats with hand-built
 `NumberFormatInfo` instances and `CultureInfo.InvariantCulture` so they are immune to ICU/NLS
 cultural-data drift.
+
+## M6 audit (2026-07-09)
+
+Adversarially re-verified `NaviusCurrencyInput`/`CurrencyEngine` against this doc's claims: the
+caret-stability algorithm (`CountDigitsBefore`/`CaretForDigits`, digit-count anchoring, not raw
+character offset), the fixed-3-digit grouping and `NegativeSign + positive` (not parenthesized)
+negative-rendering simplifications (both deliberately preserved per the doc's own resolved open
+question), the selection-end-is-the-caret-anchor semantics, `Minimum`/`Maximum` blur-clamp +
+fraction-padding via `CommitValue`, and the `OnTextChanged`/`OnLostFocus` collapse of the web's
+two-phase JS bridge into one synchronous pipeline all check out line-for-line against the code and
+`CurrencyInputTests.cs`. No confirmed or plausible disparities found.

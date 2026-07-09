@@ -51,3 +51,11 @@ Tier C: reinterpret. WPF has no CSS/DOM-visibility concept to replicate; visuall
 Retired; see docs/adr/0003-web-substrate-utilities-retired.md. `NaviusAccessibleIcon`
 (docs/parity/accessible-icon.md) is the concrete example of the replacement pattern: it sets
 `AutomationProperties.Name` directly rather than wrapping a visually-hidden text node.
+
+## M6 audit (2026-07-09)
+
+ADR-only check, verified TRUE on all three points:
+
+- Retirement is real: no `NaviusVisuallyHidden.cs` and no `src/Navius.Wpf.Primitives/Controls/VisuallyHidden/` exist (globbed). The only `VisuallyHidden` artifact in the tree is the web Blazor `src/Navius.Primitives/Components/VisuallyHidden/NaviusVisuallyHidden.razor`, i.e. the substrate this ADR retires, not a WPF control.
+- The ADR's reasoning holds: `docs/adr/0003-web-substrate-utilities-retired.md` correctly names `AutomationProperties.Name` (or `AutomationPeer.GetNameCore()`) as the WPF-idiomatic replacement, since UIA exposes accessible names independently of visual rendering and there is no DOM-text-vs-CSS-visibility split for a clip-rect trick to solve.
+- Doc-completeness note: the task premise (this section empty, a bare header) was stale. The "WPF implementation notes" section already carried the same `Retired; see docs/adr/0003-...` pointer as `slot.md` (plus the concrete `NaviusAccessibleIcon` example), so it was already consistent and complete; no content backfill was required.

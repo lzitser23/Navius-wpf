@@ -4,6 +4,8 @@ using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using Navius.Wpf.Primitives.Controls;
 
@@ -39,6 +41,25 @@ public class SwitchTests
     /// </summary>
     private static void SimulateClick(ButtonBase button) => OnClickMethod.Invoke(button, null);
 
+    /// <summary>
+    /// Hosts the switch in a real (never-shown) HwndSource so routed key events carry the switch
+    /// as OriginalSource. That matters: native ButtonBase's Enter path is gated on
+    /// e.OriginalSource == this (plus KeyboardNavigation.AcceptsReturn, which ButtonBase defaults
+    /// to true), so directly invoking OnKeyDown with a fabricated KeyEventArgs never exercises it
+    /// and falsely reads as "Enter is dead". Both Space (press on key-down, click on key-up) and
+    /// Enter (click on key-down) are native ButtonBase behavior; NaviusSwitch adds no key handling.
+    /// </summary>
+    private static NaviusSwitch CreateHostedSwitch(out HwndSource source)
+    {
+        var toggle = new NaviusSwitch();
+        source = new HwndSource(new HwndSourceParameters("NaviusSwitchKeyTests", 100, 100)) { RootVisual = toggle };
+        toggle.Focus();
+        return toggle;
+    }
+
+    private static void RaiseKey(UIElement target, Key key, RoutedEvent routedEvent, PresentationSource source) =>
+        target.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key) { RoutedEvent = routedEvent });
+
     [StaFact]
     public void DefaultState_IsUncheckedAndTwoState()
     {
@@ -59,6 +80,41 @@ public class SwitchTests
         Assert.True(toggle.IsChecked);
 
         SimulateClick(toggle);
+        Assert.False(toggle.IsChecked);
+    }
+
+    [StaFact]
+    public void SpaceKey_TogglesCheckedState()
+    {
+        var toggle = CreateHostedSwitch(out var source);
+
+        // ButtonBase (ClickMode.Release) presses on KeyDown and clicks on KeyUp.
+        RaiseKey(toggle, Key.Space, Keyboard.KeyDownEvent, source);
+        RaiseKey(toggle, Key.Space, Keyboard.KeyUpEvent, source);
+
+        Assert.True(toggle.IsChecked);
+    }
+
+    [StaFact]
+    public void EnterKey_TogglesCheckedState()
+    {
+        var toggle = CreateHostedSwitch(out var source);
+
+        RaiseKey(toggle, Key.Enter, Keyboard.KeyDownEvent, source);
+        Assert.True(toggle.IsChecked);
+
+        RaiseKey(toggle, Key.Enter, Keyboard.KeyDownEvent, source);
+        Assert.False(toggle.IsChecked);
+    }
+
+    [StaFact]
+    public void EnterKey_BlockedWhenReadOnly()
+    {
+        var toggle = CreateHostedSwitch(out var source);
+        toggle.ReadOnly = true;
+
+        RaiseKey(toggle, Key.Enter, Keyboard.KeyDownEvent, source);
+
         Assert.False(toggle.IsChecked);
     }
 

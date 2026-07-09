@@ -76,6 +76,77 @@ public class NaviusTree : TreeView
     /// <summary>Programmatically replaces the selection (clamped to a single value automatically in Single mode by the caller's own discipline; use ReplaceSelection for a hard single-select).</summary>
     public void SetSelectedValues(IEnumerable<object> values) => ApplySelection(new HashSet<object>(values));
 
+    /// <summary>
+    /// Routed target for NaviusTreeItemAutomationPeer's ISelectionItemProvider.Select: replaces the
+    /// selection with just this node, mirroring the UIA contract that Select() always deselects
+    /// everything else, even in multi-select. No-op when selection is disabled or the node itself is.
+    /// Public (rather than the more natural <c>internal</c>) so it is directly unit-testable without
+    /// a live visual/logical tree for the peer's ancestor lookup to walk, the same tradeoff
+    /// HandleItemClicked/HandleKey make elsewhere in this class.
+    /// </summary>
+    public void SelectNodeExclusive(NaviusTreeNode node)
+    {
+        if (SelectionMode == NaviusTreeSelectionMode.None || node.Disabled)
+        {
+            return;
+        }
+
+        _anchor = node.Value;
+        _activeNode = node;
+        ApplySelection(TreeSelectionState.ReplaceSelection(node));
+    }
+
+    /// <summary>
+    /// Routed target for NaviusTreeItemAutomationPeer's ISelectionItemProvider.AddToSelection.
+    /// Adds the node to the current selection; in Single mode this behaves like SelectNodeExclusive
+    /// unless a different node is already selected, per UIA's rule that adding to a single-select
+    /// container's non-empty, differing selection is invalid. Public for the same testability
+    /// tradeoff as SelectNodeExclusive.
+    /// </summary>
+    public void AddNodeToSelection(NaviusTreeNode node)
+    {
+        if (SelectionMode == NaviusTreeSelectionMode.None || node.Disabled)
+        {
+            return;
+        }
+
+        if (SelectionMode == NaviusTreeSelectionMode.Single)
+        {
+            if (_selected.Count > 0 && !_selected.Contains(node.Value))
+            {
+                throw new InvalidOperationException(
+                    "Cannot add to selection: this NaviusTree is single-select and already has a different node selected.");
+            }
+
+            SelectNodeExclusive(node);
+            return;
+        }
+
+        if (_selected.Contains(node.Value))
+        {
+            return;
+        }
+
+        _anchor = node.Value;
+        ApplySelection(new HashSet<object>(_selected) { node.Value });
+    }
+
+    /// <summary>
+    /// Routed target for NaviusTreeItemAutomationPeer's ISelectionItemProvider.RemoveFromSelection.
+    /// Public for the same testability tradeoff as SelectNodeExclusive.
+    /// </summary>
+    public void RemoveNodeFromSelection(NaviusTreeNode node)
+    {
+        if (!_selected.Contains(node.Value))
+        {
+            return;
+        }
+
+        var next = new HashSet<object>(_selected);
+        next.Remove(node.Value);
+        ApplySelection(next);
+    }
+
     protected override DependencyObject GetContainerForItemOverride() => new NaviusTreeItem();
 
     protected override bool IsItemItsOwnContainerOverride(object item) => item is NaviusTreeItem;

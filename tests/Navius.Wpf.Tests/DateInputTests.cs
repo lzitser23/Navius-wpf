@@ -553,6 +553,37 @@ public class DateInputTests
     }
 
     [StaFact]
+    public void Required_EmptyValue_SetsIsInvalidState()
+    {
+        // Regression (M6 audit): Required was a dead DP -- it never fed into IsInvalidState, so a
+        // required-but-empty date input never reported invalid, contradicting the contract's
+        // "Required drives Field validity (ValueMissing) when composing is incomplete."
+        var input = CreateApplied(i => i.Required = true);
+
+        Assert.True(input.IsInvalidState);
+    }
+
+    [StaFact]
+    public void Required_False_EmptyValue_DoesNotSetIsInvalidState()
+    {
+        var input = CreateApplied();
+
+        Assert.False(input.IsInvalidState);
+    }
+
+    [StaFact]
+    public void Required_ComposedValue_ClearsIsInvalidState()
+    {
+        var input = CreateApplied(i =>
+        {
+            i.Required = true;
+            i.Value = new DateOnly(2026, 7, 9);
+        });
+
+        Assert.False(input.IsInvalidState);
+    }
+
+    [StaFact]
     public void FocusFirstSegment_FocusesCellZero()
     {
         var input = CreateApplied();
@@ -600,5 +631,36 @@ public class DateInputTests
         peer.SetValue(5);
 
         Assert.Equal(5, requested);
+    }
+
+    // ---- RTL: segment order must not mirror (only arrow-key navigation does) ----------------
+
+    [StaFact]
+    public void PartSegments_FlowDirectionPinnedToLeftToRight_RegardlessOfControlFlowDirection()
+    {
+        // Year/month/day segment order (and the literal separators between them) is a fixed
+        // reading-order layout, not a bidi-mirrored one -- only NaviusDateInput.OnSegmentPreviewKeyDown's
+        // arrow-key handling is RTL-aware (see docs/adr/0006-rtl-dpi-hardening.md). Without pinning
+        // PART_Segments' own FlowDirection, WPF would auto-mirror the whole segment row (verified via
+        // pixel-rendered RenderTargetBitmap diagnostics during the M6 RTL wave: the year segment's ink
+        // cluster moved from the end of the row to the start under FlowDirection=RightToLeft on the
+        // unpinned template).
+        var input = CreateApplied(i => i.FlowDirection = FlowDirection.RightToLeft);
+
+        var panel = (Panel)input.Template.FindName("PART_Segments", input);
+
+        Assert.Equal(FlowDirection.LeftToRight, panel.FlowDirection);
+    }
+
+    [StaFact]
+    public void PartSegments_ChildOrder_UnaffectedByFlowDirection()
+    {
+        var ltr = CreateApplied(i => { i.FlowDirection = FlowDirection.LeftToRight; i.Value = new DateOnly(2026, 7, 9); });
+        var rtl = CreateApplied(i => { i.FlowDirection = FlowDirection.RightToLeft; i.Value = new DateOnly(2026, 7, 9); });
+
+        var ltrUnits = GetCells(ltr).Select(c => c.Unit).ToArray();
+        var rtlUnits = GetCells(rtl).Select(c => c.Unit).ToArray();
+
+        Assert.Equal(ltrUnits, rtlUnits);
     }
 }

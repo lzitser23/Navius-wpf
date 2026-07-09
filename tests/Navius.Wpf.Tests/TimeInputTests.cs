@@ -265,6 +265,22 @@ public class TimeInputTests
     }
 
     [StaFact]
+    public void SegmentArrowKeys_MoveFocusBetweenSegments()
+    {
+        var input = CreateApplied(i => i.HourCycle = 24);
+        // Host in a real HwndSource so NaviusFieldSegment.Focus() actually moves keyboard focus.
+        _ = new HwndSource(new HwndSourceParameters("NaviusTimeInputKeyTests", 100, 100)) { RootVisual = input };
+        var cells = GetCells(input);
+        cells[0].Focus();
+
+        SendKey(cells[0], Key.Right); // hour -> minute
+        Assert.True(cells[1].IsKeyboardFocused);
+
+        SendKey(cells[1], Key.Left); // minute -> hour
+        Assert.True(cells[0].IsKeyboardFocused);
+    }
+
+    [StaFact]
     public void MinuteStep_DrivesArrowIncrement()
     {
         var input = CreateApplied(i => { i.HourCycle = 24; i.MinuteStep = 15; i.Value = new TimeOnly(9, 0); });
@@ -287,5 +303,31 @@ public class TimeInputTests
         Assert.Equal(AutomationControlType.Group, peer.GetAutomationControlType());
         var valuePattern = (IValueProvider)peer.GetPattern(PatternInterface.Value)!;
         Assert.Equal("09:30:15", valuePattern.Value);
+    }
+
+    // ---- RTL: segment order must not mirror (only arrow-key navigation does) ----------------
+
+    [StaFact]
+    public void PartSegments_FlowDirectionPinnedToLeftToRight_RegardlessOfControlFlowDirection()
+    {
+        // Same rationale as DateInputTests' equivalent: hour/minute/second segment order is a
+        // fixed reading-order layout, not bidi-mirrored (see docs/adr/0006-rtl-dpi-hardening.md).
+        var input = CreateApplied(i => i.FlowDirection = FlowDirection.RightToLeft);
+
+        var panel = (Panel)input.Template.FindName("PART_Segments", input);
+
+        Assert.Equal(FlowDirection.LeftToRight, panel.FlowDirection);
+    }
+
+    [StaFact]
+    public void PartSegments_ChildOrder_UnaffectedByFlowDirection()
+    {
+        var ltr = CreateApplied(i => { i.FlowDirection = FlowDirection.LeftToRight; i.HourCycle = 24; i.Value = new TimeOnly(9, 30, 15); });
+        var rtl = CreateApplied(i => { i.FlowDirection = FlowDirection.RightToLeft; i.HourCycle = 24; i.Value = new TimeOnly(9, 30, 15); });
+
+        var ltrUnits = GetCells(ltr).Select(c => c.Unit).ToArray();
+        var rtlUnits = GetCells(rtl).Select(c => c.Unit).ToArray();
+
+        Assert.Equal(ltrUnits, rtlUnits);
     }
 }

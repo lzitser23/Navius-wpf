@@ -35,6 +35,9 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Root" Property="Opacity" Value="0.5" />
                         </Trigger>
+                        <Trigger Property="IsSoftDisabled" Value="True">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.5" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

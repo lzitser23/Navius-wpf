@@ -1,9 +1,12 @@
+using System;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Interop;
 using Navius.Wpf.Primitives.Controls;
 using Navius.Wpf.Primitives.Theming;
 
@@ -82,6 +85,56 @@ public class ToggleTests
         _ = new StackPanel { IsEnabled = false, Children = { toggle } };
 
         Assert.False(toggle.IsEnabled);
+    }
+
+    // Hosts the toggle in a real (never-shown) HwndSource so keyboard focus and the mouse-capture
+    // that ButtonBase's Space handler performs actually work, then raises the real KeyDown/KeyUp
+    // routed events. This exercises the native ButtonBase key path (not the OnClick shortcut), so
+    // these are the true regressions for the contract's "Space / Enter native activation" claim --
+    // the "Space is dead" bug class the M6 batch re-checks everywhere.
+    private static NaviusToggle CreateFocusedToggle(out HwndSource source)
+    {
+        var toggle = new NaviusToggle();
+        source = new HwndSource(new HwndSourceParameters("NaviusToggleKeyTests", 100, 100)) { RootVisual = toggle };
+        toggle.Focus();
+        Keyboard.Focus(toggle);
+        return toggle;
+    }
+
+    private static void RaiseKey(UIElement target, Key key, RoutedEvent routedEvent, PresentationSource source) =>
+        target.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key) { RoutedEvent = routedEvent });
+
+    [StaFact]
+    public void SpaceKey_ActivatesToggle()
+    {
+        var toggle = CreateFocusedToggle(out var source);
+
+        // ButtonBase (ClickMode.Release) presses on KeyDown and clicks on KeyUp.
+        RaiseKey(toggle, Key.Space, Keyboard.KeyDownEvent, source);
+        RaiseKey(toggle, Key.Space, Keyboard.KeyUpEvent, source);
+
+        Assert.True(toggle.IsChecked);
+    }
+
+    [StaFact]
+    public void EnterKey_ActivatesToggle()
+    {
+        var toggle = CreateFocusedToggle(out var source);
+
+        RaiseKey(toggle, Key.Enter, Keyboard.KeyDownEvent, source);
+
+        Assert.True(toggle.IsChecked);
+    }
+
+    [StaFact]
+    public void NonActivationKey_DoesNotToggle()
+    {
+        var toggle = CreateFocusedToggle(out var source);
+
+        RaiseKey(toggle, Key.A, Keyboard.KeyDownEvent, source);
+        RaiseKey(toggle, Key.A, Keyboard.KeyUpEvent, source);
+
+        Assert.False(toggle.IsChecked);
     }
 
     [StaFact]

@@ -27,6 +27,15 @@ public class NaviusColorPickerAutomationPeer : FrameworkElementAutomationPeer, I
 
     protected override string GetClassNameCore() => nameof(NaviusColorPicker);
 
+    // Without this override, AutomationPeer.GetPattern's base implementation returns null for
+    // every PatternInterface regardless of which provider interfaces this class implements -- WPF
+    // does not auto-detect them. Omitting this override (M6 audit 2026-07-09: found and fixed)
+    // meant ValuePattern was never actually reachable over UIA despite IValueProvider being
+    // implemented, the same convention every other IValueProvider peer in this port follows (see
+    // e.g. NaviusDateInput's, NaviusFileUpload's, NaviusTagInput's automation peers).
+    public override object? GetPattern(PatternInterface patternInterface) =>
+        patternInterface == PatternInterface.Value ? this : base.GetPattern(patternInterface);
+
     public void SetValue(string value) =>
         throw new InvalidOperationException("NaviusColorPicker's UIA Value is read-only; use the Area/Hue/Alpha tracks, the hex field, or a swatch.");
 }

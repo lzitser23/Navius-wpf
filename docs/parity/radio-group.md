@@ -108,3 +108,14 @@ Tier B (custom lookless control). Native `RadioButton` + `GroupName` gives basic
 - No custom `AutomationPeer` was needed for the item: the native `RadioButtonAutomationPeer` already implements `ISelectionItemProvider` and reports `AutomationControlType.RadioButton`, matching `role="radio"`/`aria-checked` without extra code (the contract's WPF-strategy suggestion of a custom peer here turned out to be unnecessary). `NaviusRadioGroup` does get a minimal custom peer (`AutomationControlType.Group`) since its `ContentControl` base has no `role="radiogroup"` equivalent; it does not implement a full `ISelectionProvider` wired to child peers, kept deliberately minimal.
 - Descendant discovery (for keyboard nav, roving tabindex, and value sync) walks the **logical** tree, not the visual tree, so items are discoverable immediately after `Content` is assigned without requiring a layout pass or a live `PresentationSource` — this matters both for unit testing and for XAML parse-time ordering.
 - Dropped: `NaviusBubbleInput`'s hidden native-input form mirror (`Name` at the group level) and `Attributes` splat, per the porting brief.
+
+## M6 audit (2026-07-09)
+
+Confirmed issues found + fixed: none.
+
+Plausible / residual: none for keyboard or selection. `Orientation` remains an inert `string?` (documented deviation, no `aria-orientation` analog in WPF); unchanged.
+
+Verified TRUE under adversarial check:
+- Arrow / Home / End keyboard model is genuinely wired: `NaviusRadioGroup.HandlePreviewKeyDown` (NaviusRadioGroup.cs:190-225) dispatches Down/Up/Right/Left/Home/End to real `Move`/edge handlers, each proven by a passing test (`ArrowDown_MovesSelectionToNextItem_AndWrapsWhenLooping`, `ArrowDown_ClampsAtEnd_WhenLoopIsFalse`, `HomeAndEnd_JumpToFirstAndLastEnabledItem`, `ArrowRight_IsMirroredUnderRtl`).
+- The "Space is dead" bug class does NOT recur here. Space activation of the focused radio is native `ButtonBase`/`RadioButton` behavior (NaviusRadioGroupItem : RadioButton, NaviusRadioGroupItem.cs:19): the group's `HandlePreviewKeyDown` leaves Space unhandled (`e.Handled` stays false), so it tunnels on to the focused item's native OnKeyUp -> OnClick -> OnToggle -> CheckedEvent -> `OnItemChecked`, updating `Value`. Enter is correctly NOT an activation key. `ReadOnly` guard in `NaviusRadioGroupItem.OnToggle` (NaviusRadioGroupItem.cs:66-74) blocks selection while staying focusable (proven by `ReadOnly_BlocksClickButStaysFocusable`).
+- Roving tabindex (`UpdateRovingTabStops`, NaviusRadioGroup.cs:171-186) and the `AutomationControlType.Group` root peer / native `RadioButtonAutomationPeer` (ISelectionItemProvider) item peer both match the doc.

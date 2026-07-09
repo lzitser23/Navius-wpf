@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -339,5 +341,42 @@ public class SelectTests
             .Invoke(item, null) as AutomationPeer;
         Assert.NotNull(itemPeer);
         Assert.Equal(AutomationControlType.ListItem, itemPeer!.GetAutomationControlType());
+    }
+
+    [StaFact]
+    public void AutomationPeer_ExposesReadOnlyValuePattern_SurfacingDisplayText()
+    {
+        var select = CreateSelect();
+        var rootPeer = typeof(NaviusSelectBase)
+            .GetMethod("OnCreateAutomationPeer", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(select, null) as AutomationPeer;
+
+        var provider = (IValueProvider)rootPeer!.GetPattern(PatternInterface.Value);
+        Assert.NotNull(provider);
+        Assert.True(provider.IsReadOnly);
+        Assert.Equal("Pick", provider.Value); // placeholder while nothing is selected
+
+        select.Value = "cherry";
+        Assert.Equal("Cherry", provider.Value);
+    }
+
+    [StaFact]
+    public void AutomationPeer_ExposesExpandCollapsePattern_TrackingOpenState()
+    {
+        var select = CreateSelect();
+        var rootPeer = typeof(NaviusSelectBase)
+            .GetMethod("OnCreateAutomationPeer", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(select, null) as AutomationPeer;
+
+        var provider = (IExpandCollapseProvider)rootPeer!.GetPattern(PatternInterface.ExpandCollapse);
+        Assert.NotNull(provider);
+        Assert.Equal(ExpandCollapseState.Collapsed, provider.ExpandCollapseState);
+
+        provider.Expand();
+        Assert.True(select.IsOpen);
+        Assert.Equal(ExpandCollapseState.Expanded, provider.ExpandCollapseState);
+
+        provider.Collapse();
+        Assert.False(select.IsOpen);
     }
 }

@@ -333,3 +333,25 @@ Full parity with the contract's table (ArrowDown, ArrowUp, Enter, Escape, Tab, H
 ### AutomationPeer / aria-activedescendant gap (deferred)
 
 The contract's own Open Questions flag `aria-activedescendant`/virtual focus as the biggest translation gap requiring a custom `AutomationPeer` "before parity can be claimed", and WPF/UIA has no first-class virtual-focus primitive. Under this budget `NaviusAutocompleteAutomationPeer` is minimal: it reports the root as `ControlType.ComboBox` and exposes `Value` as its name, but it does NOT model the highlighted option as a UIA focused/selected descendant (no `IExpandCollapseProvider`/`ISelectionProvider` wired to `HighlightedIndex`). A faithful peer surfacing the active descendant to screen readers is explicitly deferred, consistent with the contract flagging it as unresolved.
+
+## M6 audit (2026-07-09)
+
+Adversarially re-verified `NaviusAutocompleteBase`/`NaviusAutocomplete<TItem>`/`AutocompleteEngine`/
+`NaviusAutocompleteAutomationPeer` against this doc's claims. Full keyboard-table walkthrough
+(ArrowDown/ArrowUp open-then-highlight-last-on-Up/Enter/Escape/Tab-not-handled/Home-PageUp/End-PageDown)
+confirmed wired on `PART_Input.PreviewKeyDown` exactly as documented, including the specific
+ordering nuance that `IsOpen=true` synchronously runs `Recompute()`/`SetRows()` (which resets
+`HighlightedIndex=-1`) before the ArrowUp handler's subsequent `HighlightedIndex = FilteredRows.Count-1`
+line executes, so "opens and highlights the last row" is correct rather than being clobbered.
+`AutocompleteEngine.MoveHighlight`'s clamp-without-wrap math matches. The claimed test names
+(`PopupListAndContent_AreNotFocusable_SoFocusNeverLeavesTheInput`, `Open_PushesANonFocusTrappingDismissableOverlaySession`)
+were confirmed to exist in `AutocompleteTests.cs`. The virtual-focus/no-real-focus-in-popup claim
+was verified in `Themes/Autocomplete.xaml`: `PART_PopupContent`, the `ScrollViewer`, and `PART_List`
+are all `Focusable="False"`.
+
+**PLAUSIBLE, not fixed (cosmetic doc imprecision).** The doc states PART_List/ScrollViewer/PART_PopupContent
+"are all `Focusable="False"` with `KeyboardNavigation.TabNavigation="None"`," but
+`Themes/Autocomplete.xaml` only sets `KeyboardNavigation.TabNavigation="None"` on `PART_List`, not
+on the `ScrollViewer` or `PART_PopupContent` (they only carry `Focusable="False"`). Functionally
+inconsequential (non-focusable elements are already excluded from Tab cycling), so not treated as a
+behavioral disparity and not fixed.

@@ -33,7 +33,13 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{DynamicResource Navius.Radius.Control}"
                         Padding="8,6">
-                        <StackPanel x:Name="PART_Segments" Orientation="Horizontal" />
+                        <!-- FlowDirection pinned to LeftToRight: segment order (hour/minute/second) must
+                             not mirror under rtl; only the arrow-key navigation direction does, handled
+                             by NaviusTimeInput reading the control's own (ambient) FlowDirection. Without
+                             this pin, WPF would auto-mirror this StackPanel's child render order along
+                             with the rest of the control under FlowDirection=RightToLeft. Same rationale
+                             as DateInput.xaml's PART_Segments. See docs/adr/0006-rtl-dpi-hardening.md. -->
+                        <StackPanel x:Name="PART_Segments" Orientation="Horizontal" FlowDirection="LeftToRight" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">

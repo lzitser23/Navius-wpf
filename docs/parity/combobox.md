@@ -364,3 +364,16 @@ Tier B, as this doc's own WPF strategy section already concludes: native `ComboB
 **AutomationPeer / aria-activedescendant gap.** `NaviusComboboxAutomationPeer` is minimal: ControlType.ComboBox + `IExpandCollapseProvider` (the `aria-expanded` mapping). `aria-activedescendant` has no first-class WPF equivalent (WPF focus is always a real element); per-row option peers with SelectionItemPattern and ElementSelected events are NOT implemented in this pass, so a screen reader does not announce the highlighted row as focus moves. This is the same gap the doc's own strategy section flags; the status live region partially compensates. Open item.
 
 **Dropped parameters.** `Attributes` and `Class` on every part (web-only, per repo precedent), `Dir` (WPF `FlowDirection` is the platform channel), `DefaultOpen` (WPF two-way `IsOpen` binding covers controlled/uncontrolled), Portal `Container`/`KeepMounted` (no DOM; WPF Popup always keeps its child instantiated within the template), `ItemIndicator.KeepMounted` (CSS exit-animation concern). `ItemTemplate`/`ChipTemplate` are `DataTemplate`s (the WPF analogue of `RenderFragment<TItem>`), swapped in code because `RelativeSource FindAncestor` cannot cross the Popup's separate visual tree.
+
+## M6 audit (2026-07-09)
+
+Adversarially re-verified `NaviusComboboxBase`/`NaviusCombobox<TItem>` against this doc's claims.
+Full keyboard-table walkthrough (ArrowDown/ArrowUp open-if-closed with ArrowUp not pre-highlighting
+last on open here -- correctly matching the doc's own note that Combobox's open-from-keyboard path
+calls `SetHighlight` separately from Autocomplete's, Enter/Escape/Tab-not-handled/Backspace
+multi-only/Home-PageUp/End-PageDown) confirmed wired on `PART_Input.PreviewKeyDown`, matching the
+"no deltas" claim. `OnIsOpenChanged` -> `CloseCore()` -> `RevertQuery()` confirmed for the
+Escape/Tab revert-to-committed-label behavior. `NaviusComboboxAutomationPeer`'s minimal
+`ComboBox` + `IExpandCollapseProvider`-only shape, with the `aria-activedescendant` gap
+explicitly undocumented as deferred (not falsely claimed as done), matches the code. No confirmed
+or plausible disparities found.

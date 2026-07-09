@@ -10,9 +10,12 @@ namespace Navius.Wpf.Primitives.Controls.Accordion;
 /// same "root owns state, descendants are discovered rather than registered" shape as
 /// NaviusCollapsible/NaviusRadioGroup.
 ///
-/// Disabled is not reimplemented as its own property: setting IsEnabled=false on an item
-/// cascades to its Trigger (blocking click/keyboard activation) via WPF's native
-/// IsEnabled property-value inheritance, matching the contract's per-item Disabled.
+/// Disabled is not reimplemented as its own property: this item's native IsEnabled is
+/// reused directly, but WPF's IsEnabled does NOT automatically cascade through a
+/// ContentControl's logical Content (verified empirically; see collapsible.md's parity
+/// notes). NaviusAccordion.SyncDescendants explicitly pushes this item's IsEnabled down
+/// onto its Trigger (and re-subscribes to IsEnabledChanged), matching the contract's
+/// per-item Disabled cascading.
 /// </summary>
 public class NaviusAccordionItem : ContentControl
 {

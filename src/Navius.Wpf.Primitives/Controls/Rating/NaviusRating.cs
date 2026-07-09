@@ -188,6 +188,15 @@ public class NaviusRating : Control
             case Key.D1 or Key.D2 or Key.D3 or Key.D4 or Key.D5 or Key.D6 or Key.D7 or Key.D8 or Key.D9:
                 Value = NaviusRatingMath.Digit(key - Key.D0, Max);
                 return true;
+            case Key.Space:
+            case Key.Enter:
+                // Activates (selects) the focused star. In the web contract this falls out of the
+                // item being a native <button>; here NaviusRatingItem is a plain Control, so it must
+                // be wired explicitly. The focused star in the roving model is always the one at
+                // FocusIndex(Value), so selecting its whole Index value (re-selecting clears when
+                // AllowClear) matches native button-click semantics.
+                Value = NaviusRatingMath.Select(NaviusRatingMath.FocusIndex(Value, Max), Value, AllowClear);
+                return true;
             default:
                 return false;
         }

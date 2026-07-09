@@ -149,3 +149,35 @@ midnight/noon/PM round-trip, 24h ignores day-period, absent minute/second defaul
 `[StaFact]` tests cover the control (template building for both hour cycles, seeding, end-to-end
 digit typing, AM/PM letter-key toggling, ReadOnly lockout, MinuteStep-driven Arrow increment) and
 the automation peer's ValuePattern.
+
+## M6 audit (2026-07-09)
+
+Focus of the re-check: segment navigation (arrow keys / colon separators) and Up/Down
+increment-decrement.
+
+Confirmed fixed: none (no behavioral disparity found). Segment arrow-navigation between segments
+was wired but untested at the control level; added a hosted-focus regression test.
+
+Added test (`TimeInputTests.cs`):
+- `SegmentArrowKeys_MoveFocusBetweenSegments`: with the control hosted in a real `HwndSource`,
+  `Key.Right` on the hour cell moves keyboard focus to the minute cell and `Key.Left` moves it
+  back (`OnSegmentPreviewKeyDown` -> `SegmentFocusMove` -> `FocusSegment`,
+  `NaviusTimeInput.cs:406-452`). Confirms `SegmentKeyMapper.Map` (`SegmentKeyMapper.cs:23-24`) and
+  `SegmentMath.HandleKey` (`SegmentEngine.cs:163-166`) drive real focus movement, not just a flag.
+
+Verified TRUE:
+- Up/Down increment: `Key.Up` steps the minute by `MinuteStep` (existing
+  `MinuteStep_DrivesArrowIncrement`); same `OnSegmentPreviewKeyDown` path as arrow navigation, so
+  the whole per-segment key surface is reachable through one real handler.
+- Digit auto-advance and AM/PM letter keys: existing `TypingDigits_ComposesValue_TwentyFourHour`
+  and `DayPeriodSegment_LetterKeys_SetAmPm`.
+- ReadOnly gates all segment keys (`NaviusTimeInput.cs:408-411`), covered by
+  `ReadOnly_BlocksAllSegmentKeys`.
+- Colon separators are non-editable literal `TextBlock`s (`NaviusTimeInput.cs:250-258`,
+  `Focusable=false`); the contract does not claim typing a colon advances a segment, so no
+  disparity. Segment advance is arrow/auto-advance only, matching the web.
+
+Plausible/residual: the shared segment engine (`SegmentEngine.cs`, `SegmentKeyMapper.cs`, both
+shared with `NaviusDateInput` and outside this family's edit scope) owns Home/End/PageUp/PageDown/
+Backspace/Delete; those keys are wired through the same handler but their per-key coverage lives in
+the DateInput suite, not re-duplicated here.

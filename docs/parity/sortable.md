@@ -130,3 +130,37 @@ Implemented as a Tier B custom lookless control family under `Controls/Sortable/
 ### Virtualization / performance
 
 Sortable does not need UI virtualization: it is designed for small, fully-materialized reorderable lists (the per-item drag/keyboard targets and roving tabindex assume every row is realized). Only the Tree and DataGrid families carry the virtualization/perf requirement from the task brief; Sortable's only "factored pure for perf/testability" requirement is the `SortableKeyboardReducer`, which is satisfied. This omission is intentional, not an oversight.
+
+## M6 audit (2026-07-09)
+
+### Confirmed fixed
+
+None. The keyboard reducer and automation peers hold up.
+
+### Verified TRUE
+
+- **APG grab-and-move keyboard is fully wired and matches the table.** `HandleItemKey`
+  (`NaviusSortable.cs:154-186`) routes Space/Enter to grab-then-drop, Escape to cancel, Down/Up to
+  rove-or-move forward/backward, Home/End to first/last, and mirrors Left/Right under
+  `FlowDirection.RightToLeft`. The pure transitions in `SortableKeyboardReducer.cs` are exhaustively
+  unit-tested (`SortableTests.cs:54-218`), and the control-level grab/move/drop/cancel paths are
+  tested against a real `NaviusSortable` (`SortableTests.cs:247-405`), including the contract's
+  ValuesChanged-per-move but OnReorder-only-on-drop split and Escape-restore-without-OnReorder.
+- **Claimed AutomationPeer support is real.** `OnCreateAutomationPeer` returns
+  `NaviusSortableAutomationPeer` reporting `AutomationControlType.List` (`NaviusSortable.cs:132`;
+  peer at `NaviusSortableAutomationPeer.cs:16`); `NaviusSortableItem.OnCreateAutomationPeer` returns
+  the ListItem peer with `GetLocalizedControlType` = "sortable item" and name resolved from
+  Label/Value (`NaviusSortableItem.cs:96`, peer 28-47); the handle's peer returns false from
+  `IsControlElement`/`IsContentElement` (the aria-hidden equivalent, `NaviusSortableItemHandle.cs:41-43`).
+  All three verified in `SortableTests.cs:481-518`. `PositionInSet`/`SizeOfSet` are pushed onto items
+  in `RefreshItemStates` and asserted (`SortableTests.cs:433-444`). Note: the contract's `role=list`/
+  `role=listitem` are UIA control types, not interactive UIA patterns, so no pattern-provider
+  interface is claimed or required.
+- Roving tabindex keeps exactly one enabled tab stop, skipping disabled rows
+  (`SortableTests.cs:409-431`). Cross-list transfer is guarded off (`NaviusSortable.cs:346-348`).
+
+### Plausible / residual (not fixed)
+
+- Pointer-drag paths (`OnDrop`/`OnDragOver`/`NearestIndex`, `NaviusSortable.cs:313-431`) have no
+  automated coverage because they need a live, laid-out visual tree; only the keyboard paths are
+  unit-tested. Drag ghost/insertion-adorner visuals remain deferred, as the notes already state.

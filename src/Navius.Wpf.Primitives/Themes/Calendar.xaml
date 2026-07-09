@@ -4,11 +4,11 @@
     xmlns:cal="clr-namespace:Navius.Wpf.Primitives.Controls.Calendar">
 
     <!--
-        Not merged into Generic.xaml (out of scope: another family owns that file, same precedent
-        as Themes/Select.xaml). Pages that use the Calendar family merge this dictionary
-        themselves, or get it transitively via Themes/DatePicker.xaml / DateRangePicker.xaml
-        (which merge it the same way Themes/ContextMenu.xaml merges Themes/Menu.xaml):
-        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Calendar.xaml" />
+        Merged into Themes/Generic.xaml directly (M6 audit 2026-07-09: corrected; this file
+        previously claimed it was NOT merged there, which was stale/false). Also reachable
+        transitively via Themes/DatePicker.xaml / DateRangePicker.xaml, which merge it the same
+        way Themes/ContextMenu.xaml merges Themes/Menu.xaml. Consumers do not need to merge this
+        dictionary themselves.
 
         Hard rule for this wave: hairline borders, no DropShadowEffect, one-ink brand.
 

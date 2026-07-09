@@ -116,3 +116,32 @@ Implemented in `Controls/Tabs/NaviusTabs.cs` (derives `TabControl`) and `Control
 - `DefaultValue` collapses into `Value`: like the RadioGroup family, this port exposes one `Value` DP used both controlled and uncontrolled (native `TabControl` selecting its first item on load already covers the "uncontrolled default" case without a separate property).
 - `data-navius-tabs`/`data-orientation`/`dir` marker attributes are dropped; the equivalent state is already queryable via native/added DPs (`IsSelected`, `IsEnabled`, `Orientation`, `ActivationDirection`) and consumed directly by `Style` triggers instead of synthetic `data-*` attached properties.
 - Disabled tabs map straight to `TabItem.IsEnabled`; no separate `Disabled` DP.
+
+## M6 audit (2026-07-09)
+
+### Confirmed fixed
+
+None. Arrow navigation and the activation-mode split are correctly wired.
+
+### Verified TRUE
+
+- **Automatic vs manual activation is real and correct.** `HandlePreviewKeyDown`
+  (`NaviusTabs.cs:211-266`): in `automatic` mode an arrow both moves roving focus and selects the
+  target (`TabsTests.cs:126-137`); in `manual` mode an arrow moves focus only and selection requires
+  Enter/Space/click (`TabsTests.cs:140-165`).
+- **Space is NOT dead.** Enter and Space share one activation branch (`NaviusTabs.cs:224`), so a
+  focused tab activates on either. Previously only Enter had a test; added
+  `ManualMode_SpaceOnFocusedTab_Selects` (`TabsTests.cs`) to cover Space directly.
+- `Loop=true` wraps, `Loop=false` clamps (`TabsTests.cs:168-189`); ArrowRight/Left mirror under RTL
+  including `FlowDirection.RightToLeft` fallback (`NaviusTabs.cs:236-237`, test 192-201); Home/End
+  jump to first/last (`TabsTests.cs:204-215`); disabled tabs are skipped (`TabsTests.cs:218-228`).
+- `ActivationDirection` is recomputed on selection change for both axes
+  (`NaviusTabs.cs:192-209`; `TabsTests.cs:100-123`), and native directional navigation is disabled so
+  the hand-rolled model owns the keys (`NaviusTabs.cs:81`).
+
+### Plausible / residual (not fixed)
+
+- `KeepMounted` is dropped (documented Tier A tradeoff, not a regression).
+- Vertical-orientation arrow *focus movement* (Up/Down through `Move`) is exercised only indirectly:
+  the vertical tests assert `ActivationDirection`, not Up/Down focus traversal. Low risk since the
+  same `Move()` drives both axes; a dedicated vertical Up/Down navigation test would close the gap.

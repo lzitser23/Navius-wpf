@@ -151,3 +151,39 @@ property was added (open question resolved: yes, use `FlowDirection`). `Inverted
 duplicated as a wrapper property; consumers set `IsDirectionReversed` directly (native Slider
 property, 1:1 with the contract's `Inverted`). Hidden-input form mirroring (`Name`/`Form`) is
 dropped entirely, per the top-level instruction that form mirroring is a web-only parameter.
+
+## M6 audit (2026-07-09)
+
+### Confirmed fixed
+
+None. The keyboard table is genuinely wired.
+
+### Verified TRUE
+
+- Every key in the contract's keyboard table is really wired and tested. `NaviusSlider.OnKeyDown`
+  (`NaviusSlider.cs:109-124`) fully overrides base key handling and routes through
+  `NaviusSliderKeyboard.TryGetTargetValue` (`NaviusSliderKeyboard.cs:35-78`): ArrowRight/Up `+Step`,
+  ArrowLeft/Down `-Step`, Shift+Arrow / PageUp / PageDown use `EffectiveLargeStep`, Home->Min,
+  End->Max; arrows flip under `IsDirectionReversed`, Page/Home/End do not; result clamps to
+  `[Min,Max]`. All covered directly in `SliderTests.cs:82-217`.
+- `LargeStep` heuristic (`max(Step, 10% of range snapped to Step)`) is real and tested
+  (`NaviusSliderKeyboard.ComputeEffectiveLargeStep`; `SliderTests.cs:63-78`).
+- `Step` syncs `SmallChange`/`TickFrequency` (`NaviusSlider.cs:131-137`; test 54-61); `Maximum`
+  defaults 100 (test 46-52); `ValueCommitted` raised on `Thumb.DragCompleted` and immediately after
+  each key edit (`NaviusSlider.cs:121-129`).
+- `MinStepsBetweenThumbs` is an intentional no-op DP (single-thumb build), matching the notes.
+
+### Plausible / residual (not fixed)
+
+- **RTL via `FlowDirection` is not wired into the keyboard flip.** `OnKeyDown` passes only
+  `IsDirectionReversed` (`NaviusSlider.cs:114`). The implementation notes state RTL "uses native
+  `FlowDirection` directly," but a horizontal slider set to `FlowDirection.RightToLeft` with
+  `IsDirectionReversed=false` will **not** mirror ArrowLeft/Right, unlike the web contract's "flips
+  under RTL for horizontal, or Inverted." Left as residual rather than fixed: the notes deliberately
+  collapse the flip signal to the single `IsDirectionReversed` property, and the correct combination
+  semantics (OR vs XOR of RTL and Inverted) versus the web source were not nailed down here. Note
+  the sibling Tabs handler *does* fold `FlowDirection==RightToLeft` into its RTL mirror, so the two
+  families are inconsistent on this point.
+- The control-level `OnKeyDown` wiring itself has no `KeyEventArgs`-level integration test; only the
+  pure `TryGetTargetValue` is exercised. This is the doc's stated pure-logic-first tradeoff, not a
+  regression.

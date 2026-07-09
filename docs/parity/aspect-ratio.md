@@ -59,3 +59,10 @@ non-positive `Ratio` as the doc's open question suggested. The width-vs-height-d
 factored into the pure `NaviusAspectRatioMath.ComputeDesiredSize`, unit-tested headless with plain
 `[Fact]` (no live `Control`/`Application` needed). No `ForwardedAttributes`/style-merge equivalent
 was added; the single child simply fills the computed box via the default `ContentPresenter`.
+
+## M6 audit (2026-07-09)
+
+Adversarially re-verified `NaviusAspectRatio`/`NaviusAspectRatioMath` line-by-line against this
+doc's claims (`EffectiveRatio` fallback, width-drives-height / height-drives-width / both-infinite
+box math, `MeasureOverride` wiring) and `tests/Navius.Wpf.Tests/AspectRatioTests.cs`. No confirmed
+or plausible disparities found.

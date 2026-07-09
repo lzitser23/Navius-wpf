@@ -164,3 +164,26 @@ Shipped in `Navius.Wpf.Primitives.Controls.AlertDialog.NaviusAlertDialog`. Answe
 - **Six cancelable hooks -> one.** The source's `OnOpenAutoFocus`/`OnCloseAutoFocus`/`OnEscapeKeyDown`/`OnPointerDownOutside`/`OnFocusOutside`/`OnInteractOutside` collapse into the single cancelable `Closing` event already defined on `Overlays.OverlaySession` (reused as-is, not redefined per-family): `EventHandler<Overlays.OverlayClosingEventArgs>? Closing`, carrying an `Overlays.OverlayCloseReason` (`EscapeKey` | `OutsidePress` | `Programmatic`). This resolves the doc's open question in favor of consolidation: WPF's outside-interaction model has no per-phase (pointer-down vs. focus vs. generic-interact) distinction to preserve, so a single reason enum is sufficient.
 - **Role/AutomationPeer.** `NaviusAlertDialogAutomationPeer` overrides `GetAutomationControlTypeCore() => AutomationControlType.Window`, `IsDialogCore() => true` (same as Dialog/Drawer), and additionally `GetLocalizedControlTypeCore() => "alert dialog"` — the closest native UIA mapping to `role="alertdialog"`, since WPF has no built-in alert-dialog control type.
 - **Enter/exit animation.** Same 150ms `Opacity` fade as Dialog (see dialog.md's implementation notes); no family-specific override, since the source gives no duration/easing to match.
+
+## M6 audit (2026-07-09)
+
+Re-verified `NaviusAlertDialog`/`AlertDialogFocus`/`NaviusAlertDialogAutomationPeer` against this
+doc's claims (`ModalEffective`/`CloseOnOutsideClickEffective` hard-coded, `IsCancelButton` attached
+property + logical-tree search for initial focus, `AutomationControlType.Window` +
+`IsDialogCore()=true` + `GetLocalizedControlTypeCore()="alert dialog"`) against
+`AlertDialogTests.cs`; all confirmed. `Themes/AlertDialog.xaml` uses only `DynamicResource` tokens.
+
+**PLAUSIBLE, not fixed (shared substrate outside this batch's editable scope).** The doc's own
+"Six cancelable hooks -> one" claim collapses `OnOpenAutoFocus`/`OnCloseAutoFocus`/`OnEscapeKeyDown`/
+`OnPointerDownOutside`/`OnFocusOutside`/`OnInteractOutside` into the single cancelable `Closing`
+event on `Overlays.OverlaySession`. Inspecting the shared substrate
+(`src/Navius.Wpf.Primitives/Overlays/OverlaySession.cs`, `OverlayOptions.cs`) shows only a
+cancelable `Closing` event and non-cancelable `Opened`/`Closed` events exist -- there is no
+cancelable hook at all for the OPEN side (`OnOpenAutoFocus`'s "PreventDefault keeps focus where it
+is when the popup opens" behavior). The "six -> one" framing therefore overstates what was ported:
+it's closer to "five close-related hooks -> one `Closing` event, `OnOpenAutoFocus` dropped
+entirely, undocumented as a drop." This affects every family built on `NaviusOverlaySurfaceBase`/
+`OverlayStack` (Dialog, Drawer, Popover, Autocomplete, Combobox, etc.), not just AlertDialog, so it
+is reported here rather than fixed: `Overlays/` is explicitly audit-and-report-only for this
+batch, and the fix (adding a cancelable open-focus hook to the shared session/options types) would
+touch infrastructure other concurrently-running auditors' families also depend on.

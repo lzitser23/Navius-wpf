@@ -4,4 +4,5 @@ public enum NaviusTheme
 {
     Light,
     Dark,
+    HighContrast,
 }

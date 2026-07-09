@@ -76,6 +76,18 @@ public class NaviusColorPicker : Control
     public static readonly DependencyProperty ColorsProperty = DependencyProperty.Register(
         nameof(Colors), typeof(IReadOnlyList<string>), typeof(NaviusColorPicker), new PropertyMetadata(null));
 
+    // AriaLabel on Area/Field/Swatches (docs/parity/color-picker.md "Parameters"): these were
+    // previously hardcoded directly into Themes/ColorPicker.xaml's AutomationProperties.Name
+    // values with no way for a consumer to override them (M6 audit 2026-07-09: found and fixed).
+    public static readonly DependencyProperty AreaAriaLabelProperty = DependencyProperty.Register(
+        nameof(AreaAriaLabel), typeof(string), typeof(NaviusColorPicker), new PropertyMetadata("Color"));
+
+    public static readonly DependencyProperty FieldAriaLabelProperty = DependencyProperty.Register(
+        nameof(FieldAriaLabel), typeof(string), typeof(NaviusColorPicker), new PropertyMetadata("Hex color"));
+
+    public static readonly DependencyProperty SwatchesAriaLabelProperty = DependencyProperty.Register(
+        nameof(SwatchesAriaLabel), typeof(string), typeof(NaviusColorPicker), new PropertyMetadata("Swatches"));
+
     public static readonly DependencyProperty HueProperty = DependencyProperty.Register(
         nameof(Hue), typeof(double), typeof(NaviusColorPicker),
         new PropertyMetadata(0.0, OnModelDependentChanged, CoerceHue));
@@ -162,6 +174,27 @@ public class NaviusColorPicker : Control
     {
         get => (IReadOnlyList<string>?)GetValue(ColorsProperty);
         set => SetValue(ColorsProperty, value);
+    }
+
+    /// <summary>Accessible name for the Area group's thumb. Mirrors the contract's NaviusColorPickerArea.AriaLabel.</summary>
+    public string AreaAriaLabel
+    {
+        get => (string)GetValue(AreaAriaLabelProperty);
+        set => SetValue(AreaAriaLabelProperty, value);
+    }
+
+    /// <summary>Accessible name for the hex TextBox. Mirrors the contract's NaviusColorPickerField.AriaLabel.</summary>
+    public string FieldAriaLabel
+    {
+        get => (string)GetValue(FieldAriaLabelProperty);
+        set => SetValue(FieldAriaLabelProperty, value);
+    }
+
+    /// <summary>Accessible name for the swatches list. Mirrors the contract's NaviusColorPickerSwatches.AriaLabel.</summary>
+    public string SwatchesAriaLabel
+    {
+        get => (string)GetValue(SwatchesAriaLabelProperty);
+        set => SetValue(SwatchesAriaLabelProperty, value);
     }
 
     /// <summary>Degrees, [0, 360).</summary>
@@ -336,7 +369,18 @@ public class NaviusColorPicker : Control
         }
     }
 
-    private static object CoerceHue(DependencyObject d, object baseValue) => ((((double)baseValue) % 360) + 360) % 360;
+    // M6 audit (2026-07-09): previously wrapped 360 -> 0 unconditionally, so the End key (which
+    // sets Hue = 360) was immediately coerced to the same value as Home (Hue = 0), snapping the
+    // hue thumb to the track's LEFT edge instead of its right edge -- contradicting
+    // ColorPickerSteps.cs's own doc comment ("Home/End still set the model to exactly 0/360").
+    // 0 and 360 are the same hue color-wise (ColorMath.HsvToRgb re-normalizes internally), so
+    // preserving the literal 360 boundary here is safe for color math and fixes the visual/UIA
+    // regression; every other value still wraps via modulo as before.
+    private static object CoerceHue(DependencyObject d, object baseValue)
+    {
+        var value = (double)baseValue;
+        return value == 360.0 ? value : ((value % 360) + 360) % 360;
+    }
 
     private static object CoerceUnit(DependencyObject d, object baseValue) => Math.Clamp((double)baseValue, 0, 1);
 

@@ -257,6 +257,51 @@ public class DateRangePickerTests
         Assert.True(picker.ApplyTemplate());
     }
 
+    [StaFact]
+    public void OnOpened_WithRealCalendarPart_SwitchesToSingleRangeAndSyncsSelectionWithoutThrowing()
+    {
+        // Regression (M6 audit): every other StaFact in this file that opens+picks constructs a
+        // bare NaviusDateRangePicker without ever calling ApplyTemplate(), so CalendarPart stays
+        // null and OnOpened()/SyncCalendarSelection() both return early at their null-guard --
+        // the CalendarSelectionMode.SingleRange switch and the SelectedDates/SelectedDate repaint
+        // were never actually exercised against a real native Calendar. This test applies the
+        // real template first so CalendarPart is populated, then drives the same open+pick+pick
+        // sequence other tests use, asserting both the public Value contract AND (via reflection,
+        // since CalendarPart is protected) that the underlying native Calendar really did switch
+        // modes and accept the selection writes without throwing.
+        var scope = new ResourceDictionary();
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        scope.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/DateRangePicker.xaml"),
+        });
+
+        var picker = new NaviusDateRangePicker
+        {
+            Resources = scope,
+            Style = (Style)scope[typeof(NaviusDateRangePicker)],
+        };
+        Assert.True(picker.ApplyTemplate());
+
+        var calendarPartProperty = typeof(NaviusDatePickerBase).GetProperty(
+            "CalendarPart", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var calendarPart = (System.Windows.Controls.Calendar?)calendarPartProperty.GetValue(picker);
+        Assert.NotNull(calendarPart);
+
+        // First pick: partial range (Start only) exercises SyncCalendarSelection's SelectedDate
+        // (not SelectedDates.AddRange) branch while SelectionMode is already SingleRange.
+        picker.IsOpen = true;
+        Assert.Equal(System.Windows.Controls.CalendarSelectionMode.SingleRange, calendarPart!.SelectionMode);
+
+        CommitPick(picker, Jan5);
+        Assert.Equal(Jan5, calendarPart.SelectedDate);
+
+        CommitPick(picker, Jan9);
+
+        Assert.Equal(new NaviusDateRange(Jan5, Jan9), picker.Value);
+        Assert.False(picker.IsOpen);
+    }
+
     private static AutomationPeer CreatePeer(NaviusDateRangePicker picker)
     {
         var peer = typeof(NaviusDateRangePicker)

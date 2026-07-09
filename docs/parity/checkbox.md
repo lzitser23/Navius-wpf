@@ -113,3 +113,17 @@ Tier A (derive from native `System.Windows.Controls.CheckBox`). WPF's `CheckBox`
 - `NaviusCheckboxIndicator` is a real composable part (not folded into the checkbox's own template glyph): it has `IsChecked`/`KeepMounted` and toggles its own `Visibility`, wired into `NaviusCheckbox`'s default template via a `TemplateBinding` of `IsChecked`.
 - Dropped: the hidden `<input type="checkbox">` bubble input (`Name`/`Value`/form submission) and `Attributes` splat, per the porting brief (no WPF form-submission model).
 - Not implemented: a custom `AutomationPeer` for `NaviusCheckbox` exposing `aria-readonly`/`aria-required` (the native `CheckBoxAutomationPeer` already covers tri-state via `ToggleState.Indeterminate`, but has no read-only/required surface); flagged as a gap rather than built, to keep scope proportional. `NaviusCheckboxGroup` does get a minimal custom peer (`AutomationControlType.Group`) since its native `ContentControl` peer has no group semantics at all.
+
+## M6 audit (2026-07-09)
+
+Adversarially re-verified `NaviusCheckbox`/`NaviusCheckboxIndicator`/`NaviusCheckboxGroup` against
+this doc's claims: the `IsThreeState=true` + `OnToggle()` override that replaces WPF's native
+3-way click cycle with the contract's binary-toggle rule (indeterminate reachable only
+programmatically), `ReadOnly` staying focusable while blocking value changes, the
+`GroupValue`/`IsSelectAll` renames (and the stated reason -- `Name`/`Parent` collide with
+`FrameworkElement.Name`/`Visual.Parent`), the group's routed-event-bubbling roll-up (`Checked`/`Unchecked`,
+guarded by `_isSyncing` against reentrancy, and correctly NOT re-triggered by the select-all
+checkbox's own `Indeterminate` transitions since only `Checked`/`Unchecked` are subscribed), and the
+indicator's `Visibility` toggle all check out against the code and `CheckboxTests.cs`. Theme
+(`Themes/Checkbox.xaml`) uses only `DynamicResource` tokens, no hardcoded colors. No confirmed or
+plausible disparities found.

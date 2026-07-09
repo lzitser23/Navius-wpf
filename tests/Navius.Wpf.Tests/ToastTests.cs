@@ -6,6 +6,8 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Interop;
 using Navius.Wpf.Primitives.Controls.Toast;
 using Navius.Wpf.Primitives.Theming;
 
@@ -483,6 +485,24 @@ public class ToastTests
         toast.ActionRequested += (_, _) => raised = true;
 
         SimulateClick(actionButton);
+
+        Assert.True(raised);
+    }
+
+    [StaFact]
+    public void NaviusToast_EscapeKey_RaisesCloseRequested()
+    {
+        var scope = CreateThemedScope();
+        var toast = new NaviusToast { Resources = scope, Title = "Hello" };
+        toast.ApplyTemplate();
+        var raised = false;
+        toast.CloseRequested += (_, _) => raised = true;
+
+        var source = new HwndSource(new HwndSourceParameters("NaviusToastKeyTests", 100, 100)) { RootVisual = toast };
+        toast.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, Key.Escape)
+        {
+            RoutedEvent = Keyboard.KeyDownEvent,
+        });
 
         Assert.True(raised);
     }

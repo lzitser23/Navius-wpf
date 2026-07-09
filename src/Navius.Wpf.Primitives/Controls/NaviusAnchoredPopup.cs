@@ -250,10 +250,15 @@ public class NaviusAnchoredPopup : FrameworkElement
             child.ActualWidth > 0 ? child.ActualWidth : child.DesiredSize.Width,
             child.ActualHeight > 0 ? child.ActualHeight : child.DesiredSize.Height);
 
-        // TODO(multi-monitor): SystemParameters.WorkArea is the primary screen's work area
-        // only. A multi-monitor-correct implementation should resolve the work area for the
-        // monitor under anchorRect via the Win32 MonitorFromPoint/GetMonitorInfo APIs.
-        var workArea = SystemParameters.WorkArea;
+        // Resolve the work area of the monitor containing the anchor (not just the primary
+        // monitor's) via MonitorWorkArea's MonitorFromPoint/GetMonitorInfo P/Invoke wrapper,
+        // using the anchor's center in device pixels so a popup near a monitor's edge is placed
+        // against that monitor's own bounds. Falls back to SystemParameters.WorkArea (the old
+        // primary-monitor approximation) if the platform lookup fails.
+        var anchorCenterDevice = Anchor.PointToScreen(
+            new Point(Anchor.RenderSize.Width / 2, Anchor.RenderSize.Height / 2));
+        var monitorWorkArea = MonitorWorkArea.TryGetWorkAreaDeviceUnits(anchorCenterDevice);
+        var workArea = MonitorWorkArea.ResolveWorkArea(monitorWorkArea, dpi.DpiScaleX, dpi.DpiScaleY, SystemParameters.WorkArea);
 
         var options = new AnchoredPlacementOptions
         {

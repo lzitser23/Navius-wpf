@@ -171,3 +171,35 @@ unset. `Disabled` maps to native `IsEnabled`. `data-empty` maps to the read-only
 DP (placeholder + chips-visibility triggers); `data-highlighted` to the VM's `IsHighlighted`.
 The public state machine (`CommitText`/`RemoveTagAt`/`RemoveHighlighted`/`Highlight`) is
 template-independent, so the whole contract is unit-testable headless.
+
+## M6 audit (2026-07-09)
+
+Focus of the re-check: Enter-to-commit, Backspace-to-delete-last-tag, and arrow-key chip
+navigation (all called out in the batch brief).
+
+Confirmed fixed: none (no behavioral disparity found). The keyboard model was fully wired but
+the arrow-key chip-navigation claims lacked tests exercising the real key handlers; added
+regression tests (see below) to close that coverage gap.
+
+Added tests (`TagInputTests.cs`):
+- `FieldArrowLeft_OnEmptyField_EntersChipNavigation`: real `Key.Left` PreviewKeyDown on the empty
+  field highlights the last chip (`NaviusTagInput.cs:347-351`).
+- `ChipArrowKeys_MoveTheHighlight`: real Left/Home/End/Right PreviewKeyDown on `PART_Chips` walks
+  the highlight and returns to the field past the last chip (`OnChipsPreviewKeyDown`,
+  `NaviusTagInput.cs:389-435`).
+- `ChipDeleteKey_RemovesTheHighlightedChip`: real `Key.Delete` removes the highlighted chip
+  (`NaviusTagInput.cs:429-433`).
+
+Verified TRUE:
+- Enter-to-commit: wired at `NaviusTagInput.cs:320-327` (Enter in `EffectiveDelimiters`), already
+  covered by `EnterKey_CommitsTheFieldText`.
+- Backspace two-step: first press highlights the last chip, second removes it
+  (`NaviusTagInput.cs:334-346`), covered by `BackspaceOnEmptyField_HighlightsThenRemoves`.
+- Arrow chip navigation reachable via `_chipsList.PreviewKeyDown` once a chip container is focused
+  by `MoveFocusToHighlight` (`NaviusTagInput.cs:497-510`); the state transitions are now key-tested.
+- Commit pipeline order (trim -> transform -> empty -> duplicate -> max -> validate), delimiter
+  split, and the read-only ValuePattern peer all match the doc.
+
+Plausible/residual: none. (The chip nav's actual container `.Focus()` cannot be asserted headless,
+so the tests assert the authoritative `HighlightedIndex`/`Value` state the handler drives, not the
+focus move itself; the focus move is exercised, just not observable without a hosted window.)

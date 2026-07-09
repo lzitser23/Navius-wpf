@@ -59,3 +59,11 @@ itself from both the control and content views of the UIA tree when `Label` is n
 hidden label span. `Attributes` forwarding was dropped per `docs/adr/0003-web-substrate-utilities-retired.md`'s
 reasoning (no free-form attribute bag in WPF). This is also the concrete replacement pattern for
 the retired `NaviusVisuallyHidden` (docs/parity/visually-hidden.md).
+
+## M6 audit (2026-07-09)
+
+Adversarially re-verified `NaviusAccessibleIcon`/`NaviusAccessibleIconAutomationPeer` against this
+doc's claims: `AutomationProperties.Name` propagation on content change/`Label` change, the
+`GetNameCore`/`GetAutomationControlTypeCore() => Image`/`IsControlElementCore`/`IsContentElementCore`
+peer behavior, and the sr-only-span-has-no-WPF-equivalent reasoning all check out against the code
+and `tests/Navius.Wpf.Tests/AccessibleIconTests.cs`. No confirmed or plausible disparities found.

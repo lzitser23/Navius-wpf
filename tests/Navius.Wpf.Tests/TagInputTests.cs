@@ -398,6 +398,55 @@ public class TagInputTests
     }
 
     [StaFact]
+    public void FieldArrowLeft_OnEmptyField_EntersChipNavigation()
+    {
+        var (control, input) = CreateApplied();
+        control.CommitText("a");
+        control.CommitText("b");
+
+        RaiseKey(input, Key.Left); // empty field + tags present -> highlight the last chip.
+
+        Assert.Equal(1, control.HighlightedIndex);
+    }
+
+    [StaFact]
+    public void ChipArrowKeys_MoveTheHighlight()
+    {
+        var (control, _) = CreateApplied();
+        control.CommitText("a");
+        control.CommitText("b");
+        control.CommitText("c");
+        var chips = (ItemsControl)control.Template.FindName("PART_Chips", control);
+        control.Highlight(2, focus: false); // start on the last chip.
+
+        RaiseKey(chips, Key.Left);
+        Assert.Equal(1, control.HighlightedIndex);
+
+        RaiseKey(chips, Key.Home);
+        Assert.Equal(0, control.HighlightedIndex);
+
+        RaiseKey(chips, Key.End);
+        Assert.Equal(2, control.HighlightedIndex);
+
+        RaiseKey(chips, Key.Right); // past the last chip -> back to the field (-1).
+        Assert.Equal(-1, control.HighlightedIndex);
+    }
+
+    [StaFact]
+    public void ChipDeleteKey_RemovesTheHighlightedChip()
+    {
+        var (control, _) = CreateApplied();
+        control.CommitText("a");
+        control.CommitText("b");
+        var chips = (ItemsControl)control.Template.FindName("PART_Chips", control);
+        control.Highlight(0, focus: false);
+
+        RaiseKey(chips, Key.Delete);
+
+        Assert.Equal(new[] { "b" }, control.Value);
+    }
+
+    [StaFact]
     public void UiaPeer_SurfacesTagsOverReadOnlyValuePattern()
     {
         var control = new NaviusTagInput();

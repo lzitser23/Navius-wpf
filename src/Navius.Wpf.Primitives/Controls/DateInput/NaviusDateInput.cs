@@ -56,7 +56,7 @@ public class NaviusDateInput : Control
         nameof(ReadOnly), typeof(bool), typeof(NaviusDateInput), new PropertyMetadata(false, OnReadOnlyChanged));
 
     public static readonly DependencyProperty RequiredProperty = DependencyProperty.Register(
-        nameof(Required), typeof(bool), typeof(NaviusDateInput), new PropertyMetadata(false));
+        nameof(Required), typeof(bool), typeof(NaviusDateInput), new PropertyMetadata(false, OnBoundChanged));
 
     public static readonly DependencyProperty InvalidProperty = DependencyProperty.Register(
         nameof(Invalid), typeof(bool), typeof(NaviusDateInput), new PropertyMetadata(false, OnBoundChanged));
@@ -355,7 +355,13 @@ public class NaviusDateInput : Control
         var outOfRange = value is not null &&
             ((MinValue is { } min && value < min) || (MaxValue is { } max && value > max));
         SetValue(IsOutOfRangePropertyKey, outOfRange);
-        SetValue(IsInvalidStatePropertyKey, Invalid || outOfRange);
+
+        // Required drives Field validity (ValueMissing) "when composing is incomplete"
+        // (docs/parity/date-input.md's contract table): the composed value is null until every
+        // segment is filled, so Required && value is null is the WPF-local ValueMissing signal
+        // (M6 audit 2026-07-09: found unwired -- Required was a dead property -- and fixed).
+        var valueMissing = Required && value is null;
+        SetValue(IsInvalidStatePropertyKey, Invalid || outOfRange || valueMissing);
     }
 
     private void FocusSegment(int index)

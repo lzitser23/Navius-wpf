@@ -95,7 +95,7 @@ Tier A, as planned: `NaviusDataGrid : System.Windows.Controls.DataGrid` (`Contro
 - `GlobalFilter` dependency property (`string?`), plus a `FilterFn` override hook and a `RowKeySelector` (see below).
 - A read-only `SortDescriptionsSnapshot` convenience wrapper over the native `Items.SortDescriptions` (the web's single-column `DataGridSort`, surfaced as the native multi-descriptor collection WPF actually maintains). Sorting, selection, and column-visibility otherwise ride entirely on the native surface (`DataGrid.Sorting` / `Items.SortDescriptions`, `SelectedItems`, `DataGridColumn.Visibility`), which the brief deemed sufficient, so no custom wrappers were added there.
 - `Themes/DataGrid.xaml`: a re-template via `ColumnHeaderStyle` / `CellStyle` / `RowStyle` / `RowHeaderStyle` (collapsed) and grid-level setters, leaving the native structural `ControlTemplate` intact (the low-risk, idiomatic way to reskin the native grid). One-ink brand: `Navius.Muted` header fill with a `Navius.Border` bottom hairline, `Navius.Card` row surface with a 1px `Navius.Border` bottom separator per row (a `Border` in a minimal `DataGridRow` template, so there are horizontal hairlines only, no vertical column separators), 10,8 cell padding, no shadows (no `Effect` anywhere).
-- Gallery page (`apps/Navius.Wpf.Gallery/Pages/DataGridPage.xaml(.cs)`): a filterable/sortable demo (`DataGridDemo`) with a `TextBox` bound to `GlobalFilter`, plus a real 10,000-row demo (`DataGrid10kDemo`) generated in code-behind with virtualization left on, the milestone's perf gate. Navigation is intentionally NOT wired into `MainWindow` (owned by another workstream).
+- Gallery page (`apps/Navius.Wpf.Gallery/Pages/DataGridPage.xaml(.cs)`): a filterable/sortable demo (`DataGridDemo`) with a `TextBox` bound to `GlobalFilter`, plus a real 10,000-row demo (`DataGrid10kDemo`) generated in code-behind with virtualization left on, the milestone's perf gate. `MainWindow` navigation IS wired (`ListBoxItem Content="DataGrid"` + the `"DataGrid" => new DataGridPage()` switch arm); see the M6 audit note below -- this line previously (incorrectly) claimed otherwise.
 
 ### Pagination: deliberately NOT reimplemented
 
@@ -126,3 +126,28 @@ Selection paints a full-row accent: the `DataGridRow` template's `Border` switch
 Native `EnableRowVirtualization`/`EnableColumnVirtualization` default to true and are also set explicitly in the constructor; the style additionally pins `VirtualizingPanel.IsVirtualizing = true` and `VirtualizingPanel.VirtualizationMode = Recycling` as belt-and-suspenders. The perf-guard test (`StyleApplication_PreservesVirtualization`) constructs a real `new NaviusDataGrid()`, loads `Themes/DataGrid.xaml` via the `pack://application:,,,/Navius.Wpf.Primitives;component/Themes/DataGrid.xaml` mechanism, finds the `Style` keyed to `typeof(NaviusDataGrid)`, assigns it to the instance's `.Style` (which runs the setters without a live visual tree or `.Show()`), then asserts `EnableRowVirtualization`, `EnableColumnVirtualization`, `VirtualizingPanel.IsVirtualizing`, and `VirtualizingPanel.VirtualizationMode == Recycling`. Because it exercises the real shipped control and the real shipped dictionary, it would catch a future regression that disabled virtualization in either the constructor or the style.
 
 DataGrid test count for this family: 23 (`tests/Navius.Wpf.Tests/DataGridTests.cs`), all green.
+
+## M6 audit (2026-07-09)
+
+**CONFIRMED, fixed (doc-only).** This doc previously claimed "Navigation is intentionally NOT
+wired into `MainWindow` (owned by another workstream)." That was false: `apps/Navius.Wpf.Gallery/MainWindow.xaml`
+already has `<ListBoxItem Content="DataGrid" />` in the nav list and `MainWindow.xaml.cs` already
+has `"DataGrid" => new DataGridPage(),` in the page-switch expression -- DataGrid navigation is
+fully wired and reachable from the running Gallery app. No code changes were needed (the code was
+already correct); only the stale doc claim above was corrected, since `MainWindow.xaml`/`.xaml.cs`
+are out of scope for this audit's edits regardless.
+
+All other claims were re-verified adversarially and hold: constructor defaults (`EnableRowVirtualization`,
+`EnableColumnVirtualization`, `AutoGenerateColumns`, `HeadersVisibility`, `GridLinesVisibility`,
+`CanUserAddRows`, `CanUserDeleteRows`, `SelectionMode`) all match code and are each pinned by a
+test; `GlobalFilterProperty`/`FilterFnProperty`/`RowKeySelectorProperty` defaults match;
+`SortDescriptionsSnapshot` matches; pagination is confirmed absent as documented; no custom
+`AutomationPeer` exists (native `DataGridAutomationPeer` relied on, as claimed); every
+`DynamicResource` token used in `Themes/DataGrid.xaml` resolves in both `Tokens.Light.xaml` and
+`Tokens.Dark.xaml`, with no hardcoded colors beyond structural `Transparent` literals; the 23-test
+count is accurate.
+
+One PLAUSIBLE/residual item: the doc's prose says the sort-glyph flip trigger lives on
+`Style.Triggers`, but it's actually implemented via `ControlTemplate.Triggers` in `DataGrid.xaml`.
+Very likely just imprecise wording rather than a functional defect (both are legitimate WPF
+mechanisms and produce the described effect), not confirmed as a real behavioral gap, not fixed.

@@ -144,7 +144,7 @@ Compose two Tier-B `DateInput` controls (see `date-input.md`) plus a `System.Win
 
 ## WPF implementation notes
 
-Shipped as three families in one batch: `Controls/Calendar/NaviusCalendar` (the calendar surface this contract says has no source in `Navius.Primitives` at all), `Controls/DatePicker/NaviusDatePicker` (+ the shared `NaviusDatePickerBase`), and `Controls/DateRangePicker/NaviusDateRangePicker` (+ `NaviusDateRange` + `DateRangeCommitEngine`). Themes: `Themes/Calendar.xaml`, `Themes/DatePicker.xaml`, `Themes/DateRangePicker.xaml` (the picker dictionaries merge Calendar.xaml transitively, the ContextMenu-merges-Menu precedent; none are merged into Generic.xaml, which another family owns).
+Shipped as three families in one batch: `Controls/Calendar/NaviusCalendar` (the calendar surface this contract says has no source in `Navius.Primitives` at all), `Controls/DatePicker/NaviusDatePicker` (+ the shared `NaviusDatePickerBase`), and `Controls/DateRangePicker/NaviusDateRangePicker` (+ `NaviusDateRange` + `DateRangeCommitEngine`). Themes: `Themes/Calendar.xaml`, `Themes/DatePicker.xaml`, `Themes/DateRangePicker.xaml` (the picker dictionaries merge Calendar.xaml transitively, the ContextMenu-merges-Menu precedent). All three ARE merged into `Themes/Generic.xaml` (M6 audit 2026-07-09: corrected -- this previously claimed the opposite, which was false; see `Themes/Generic.xaml`'s own merge list).
 
 ### Part mapping
 
@@ -168,6 +168,46 @@ Escape reverts BOTH endpoints to their open-time snapshot, then closes (the cont
 
 - The two endpoint segment inputs, hidden bubble inputs, `role="group"` control wrapper, and `Granularity`/`MinValue`/`MaxValue` passthroughs are not ported (DateInput family split + no-native-form precedent). `MinValue`/`MaxValue` can later map to the calendar part's `DisplayDateStart`/`DisplayDateEnd`.
 - UIA: peers report `AutomationControlType.Custom` with localized control types "date picker" / "date range picker" (the native `DatePickerAutomationPeer` shape) plus read-only `IValueProvider` ("start - end", empty while unset, never the placeholder) and `IExpandCollapseProvider`; the M3 gate showed template-only text otherwise exposes nothing over UIA. The web Popup's `role="dialog"` has no direct equivalent; ExpandCollapse plus moved-in focus is the native WPF idiom (APG date-picker-dialog tiebreak).
-- Keyboard, all confirmed by unit tests (the web contract had NO e2e-confirmed keyboard path for popup or grid, so WAI-ARIA APG plus native WPF Calendar won every tiebreak): Enter/Space/ArrowDown open when closed; the native Calendar keyboard model navigates inside (arrows by day, PageUp/PageDown by month, Home/End week edges); Enter/Space commit a pick; Escape cancels; outside press dismisses (OverlayStack, trigger and popup content registered as input roots per the Select precedent).
+- Keyboard (the web contract had NO e2e-confirmed keyboard path for popup or grid, so WAI-ARIA APG plus native WPF Calendar won every tiebreak): Enter/Space/ArrowDown open when closed; the native Calendar keyboard model navigates inside (arrows by day, PageUp/PageDown by month, Home/End week edges); Enter/Space commit a pick; Escape cancels; outside press dismisses (OverlayStack, trigger and popup content registered as input roots per the Select precedent). Only the open-when-closed keys (Enter/Space/ArrowDown), Escape-cancels, and the pick-commit engine are actually unit-tested; the in-grid native Calendar navigation (arrows/PageUp/PageDown/Home/End) and outside-press dismissal are asserted only as "inherited from native Calendar behavior," not independently driven by a test (see M6 audit below -- the prior wording here, "all confirmed by unit tests," overstated this).
 - Mid-interaction range display: after a pick the committed range is repainted onto `SelectedDates`, but arrowing then collapses the native highlight to the focused day until the next pick (state is never lost, display only). The web's two-month layout is single-month here (native Calendar shows one month per view).
 - `NaviusDateRange` is a `readonly record struct` over `DateTime?` (not `DateOnly`) to match the native Calendar's value type; `Ordered()` from the web contract is unnecessary because the engine orders on commit.
+
+## M6 audit (2026-07-09)
+
+**CONFIRMED, fixed.** `Controls/Calendar/NaviusCalendar.cs`'s own doc comment directly
+contradicted this doc and the actual shipped code: it claimed the range picker "layers its own
+two-pick commit state machine on top of single-date commits rather than switching to
+`CalendarSelectionMode.SingleRange`," while `NaviusDateRangePicker.OnOpened()` (`NaviusDateRangePicker.cs:65`)
+explicitly does switch `CalendarPart.SelectionMode = CalendarSelectionMode.SingleRange`, exactly as
+this doc's own "Commit model" section (above) correctly describes. Fixed the stale comment in
+`NaviusCalendar.cs` to match the doc and the real behavior.
+
+**CONFIRMED, fixed (doc-only).** `Themes/Calendar.xaml`, `Themes/DatePicker.xaml`, and
+`Themes/DateRangePicker.xaml` all claimed (both in this doc and in each file's own header comment)
+that they were "Not merged into Generic.xaml... same precedent as Themes/Select.xaml." Both halves
+of that claim were false: `Themes/Generic.xaml` merges all three directly, and also merges
+`Themes/Select.xaml` (so the cited "precedent" was itself wrong). Corrected this doc's "WPF
+implementation notes" intro and the three theme files' header comments (not `Generic.xaml` itself,
+which is out of scope for this audit's edits either way). No functional impact -- consumers were
+already getting these styles for free via `Generic.xaml`; only the comments were wrong.
+
+**CONFIRMED, fixed.** The doc's "Keyboard" delta bullet claimed "all confirmed by unit tests," but
+no test in `DateRangePickerTests.cs`/`DatePickerTests.cs`/`CalendarTests.cs` drives PageUp/PageDown/
+Home/End/arrow-day navigation or an outside-press dismissal; only the open-when-closed keys,
+Escape, and the commit engine are actually exercised. Softened the claim above rather than adding
+exhaustive coverage of native `Calendar`'s own (pre-existing, Microsoft-owned) keyboard model,
+which is out of proportion for this audit; the mis-claim itself is what's fixed.
+
+**CONFIRMED, fixed (test coverage gap).** Every existing `StaFact` that opens the popup and commits
+a pick (`FirstPick_SetsStart_AndKeepsThePopupOpen`, `SecondPick_CompletesTheRange_AndCloses`,
+`Escape_RevertsBothEndpoints_AndCloses`) constructs a bare `NaviusDateRangePicker` without ever
+calling `ApplyTemplate()`, so `CalendarPart` stays null and `OnOpened()`/`SyncCalendarSelection()`
+return early at their null-guards -- the `SelectionMode = SingleRange` assignment and the
+`SelectedDates`/`SelectedDate` repaint were never actually exercised against a real native
+`Calendar`. Added `OnOpened_WithRealCalendarPart_SwitchesToSingleRangeAndSyncsSelectionWithoutThrowing`
+(`DateRangePickerTests.cs`), which applies the real template first, then asserts (via reflection,
+since `CalendarPart` is protected) that the native Calendar really does switch to `SingleRange` and
+accepts both the partial-pick `SelectedDate` write and the complete-range `SelectedDates.AddRange`
+write without throwing. This also resolves the one PLAUSIBLE item flagged during investigation
+(whether `Calendar.SelectedDate`'s setter is safe under `SelectionMode=SingleRange`): confirmed
+safe, no exception.

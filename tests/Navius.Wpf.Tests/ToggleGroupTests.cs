@@ -183,6 +183,27 @@ public class ToggleGroupTests
     }
 
     [StaFact]
+    public void Space_AutoRepeat_DoesNotFlapPressedState()
+    {
+        var (group, a, _, _) = CreateGroup();
+
+        // First (non-repeat) Space press toggles on.
+        SimulateItemKeyDown(a, Key.Space);
+        Assert.True(a.IsChecked);
+
+        // Auto-repeated Space key-downs from holding the key must be ignored: a native web
+        // button fires Space once on key-up, so a held Space never flaps the pressed state.
+        var repeatArgs = MakeKeyArgs(Key.Space);
+        typeof(KeyEventArgs)
+            .GetMethod("SetRepeat", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(repeatArgs, new object[] { true });
+        OnKeyDownMethod.Invoke(a, new object[] { repeatArgs });
+
+        Assert.True(a.IsChecked);
+        Assert.Contains("a", group.Value);
+    }
+
+    [StaFact]
     public void Disabled_CascadesFromGroup_ToEveryItem()
     {
         var (group, a, b, c) = CreateGroup();

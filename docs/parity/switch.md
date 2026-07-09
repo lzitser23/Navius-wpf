@@ -109,3 +109,45 @@ native mapping to `role="switch"`/`aria-checked` available in WPF.
 **Thumb animation**: a 120ms `DoubleAnimation` on a `TranslateTransform.X` applied to the
 `PART_Thumb` Ellipse, driven by `Trigger.EnterActions`/`ExitActions` on `IsChecked` in
 `Themes/Switch.xaml` (plain WPF `Storyboard`, no motion library dependency).
+
+## M6 audit (2026-07-09)
+
+### Confirmed fixed
+
+- **Enter activation: first reported dead, then disproven on cross-verification; regression tests
+  added, no production code change shipped.** The contract keyboard table lists **Space / Enter**
+  as activation keys (native `<button role="switch">` activates on both). A first audit pass read
+  Enter as unwired and briefly added an `OnKeyDown` override; a cross-check with real routed key
+  events proved the premise false and the override was removed, leaving `NaviusSwitch.cs` with no
+  custom key handling. The verified facts: native WPF `ButtonBase` activates on BOTH keys out of
+  the box. Space uses the press-on-key-down/click-on-key-up state machine; Enter clicks on
+  key-down via `ButtonBase`'s own Enter branch, enabled because `ButtonBase` overrides
+  `KeyboardNavigation.AcceptsReturn` metadata to `true` (verified empirically on a bare
+  `ToggleButton`). The earlier "Enter is dead" reading was a test-harness artifact:
+  `ButtonBase`'s Enter branch is gated on `e.OriginalSource == this`, so invoking `OnKeyDown`
+  directly with a fabricated `KeyEventArgs` (OriginalSource null) silently skips it. Raising real
+  routed `KeyDown` events on an `HwndSource`-hosted switch shows Enter toggling natively.
+  Regression tests locking the native behavior: `SpaceKey_TogglesCheckedState`,
+  `EnterKey_TogglesCheckedState`, `EnterKey_BlockedWhenReadOnly` in `SwitchTests.cs`
+  (routed-event harness, not direct `OnKeyDown` invocation). `Disabled` (no key events reach a
+  disabled element) and `ReadOnly` (the existing `OnToggle` no-op) are both respected on the
+  native path.
+
+### Verified TRUE
+
+- Space AND Enter activation are both intact via native `ToggleButton`; unchanged, now key-tested.
+- `ReadOnly` blocks user toggle but keeps the control focusable/enabled, and does not block
+  programmatic `IsChecked` changes (`NaviusSwitch.cs` `OnToggle`; `SwitchTests.cs`).
+- Inherited `ToggleButtonAutomationPeer` exposes UIA `TogglePattern` / `IToggleProvider`
+  (`SwitchTests.cs` `AutomationPeer_IsToggleButtonAutomationPeer_WithTogglePattern`); no custom
+  peer, matching the notes.
+- `PART_Thumb` is a real mandatory template part (`SwitchTests.cs` `Template_...ThumbPart`).
+- Form-mirroring params dropped, `Required` kept as an inert DP, per the notes.
+
+### Plausible / residual (not fixed)
+
+- (Withdrawn) An earlier draft of this section flagged sibling `NaviusCheckbox`/`NaviusToggle` as
+  "also lacking Enter activation". With the native-Enter finding above, that flag is withdrawn:
+  all `ToggleButton`-derived controls get Space and Enter natively. `NaviusToggle` has its own
+  routed-event key tests confirming this (`ToggleTests.cs`, `SpaceKey_ActivatesToggle` /
+  `EnterKey_ActivatesToggle`).

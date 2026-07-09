@@ -1,7 +1,11 @@
+using System;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Navius.Wpf.Primitives.Controls;
+using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
@@ -217,6 +221,41 @@ public class RatingTests
     }
 
     [StaFact]
+    public void HandleKey_Space_SelectsFocusedStar_WhenUnrated()
+    {
+        // Roving focus lands on star 1 when unrated; Space activates it (native button-click parity).
+        var rating = new NaviusRating { Max = 5 };
+
+        var handled = rating.HandleKey(Key.Space);
+
+        Assert.True(handled);
+        Assert.Equal(1m, rating.Value);
+    }
+
+    [StaFact]
+    public void HandleKey_Enter_ReselectingFocusedStar_ClearsWhenAllowClear()
+    {
+        // Focus is on the star holding the current value (3); Enter re-selects it, which clears.
+        var rating = new NaviusRating { Value = 3m };
+
+        var handled = rating.HandleKey(Key.Enter);
+
+        Assert.True(handled);
+        Assert.Null(rating.Value);
+    }
+
+    [StaFact]
+    public void HandleKey_Space_NoOpWhenReadOnly()
+    {
+        var rating = new NaviusRating { ReadOnly = true, Value = 2m };
+
+        var handled = rating.HandleKey(Key.Space);
+
+        Assert.False(handled);
+        Assert.Equal(2m, rating.Value);
+    }
+
+    [StaFact]
     public void HandleKey_NoOpWhenReadOnly()
     {
         var rating = new NaviusRating { ReadOnly = true, Value = 2m };
@@ -314,5 +353,75 @@ public class RatingTests
         var peer = new NaviusRatingItemAutomationPeer(item);
 
         Assert.False(peer.IsSelected);
+    }
+
+    // ---- RTL: half-fill clip mirroring (docs/parity/rating.md correction) -------------------
+
+    // docs/parity/rating.md previously flagged the half-fill Clip (Themes/Rating.xaml's
+    // RectangleGeometry Rect="0,0,12,24" on the "Fill" Path) as "not RTL-mirrored". Pixel-rendered
+    // RenderTargetBitmap verification during the M6 RTL wave showed this claim was false: WPF's
+    // automatic FlowDirection mirroring (applied once, as a whole, wherever FlowDirection is
+    // explicitly set -- here, directly on the templated NaviusRatingItem) already reflects the
+    // Path's local Clip along with everything else the item renders, since no element in the
+    // template opts out with its own local FlowDirection. This test locks in that (correct,
+    // no-code-change-needed) behavior as a regression guard: the solid ink mass of a half-filled
+    // star must sit on the side matching FlowDirection's "first half of reading order".
+    [StaFact]
+    public void HalfFill_ClipMirrorsUnderRtl_SolidInkOnOppositeSideFromLtr()
+    {
+        var ltrLeftHeavy = SolidInkIsLeftHeavy(FlowDirection.LeftToRight);
+        var rtlLeftHeavy = SolidInkIsLeftHeavy(FlowDirection.RightToLeft);
+
+        Assert.True(ltrLeftHeavy, "LTR half-fill should show its solid ink mass on the left.");
+        Assert.False(rtlLeftHeavy, "RTL half-fill should show its solid ink mass on the right (mirrored).");
+    }
+
+    private static bool SolidInkIsLeftHeavy(FlowDirection dir)
+    {
+        var scope = new ResourceDictionary();
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        scope.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Rating.xaml"),
+        });
+
+        var item = new NaviusRatingItem { Width = 24, Height = 24, FlowDirection = dir, Resources = scope };
+        item.SetResourceReference(FrameworkElement.StyleProperty, typeof(NaviusRatingItem));
+        item.ApplyTemplate();
+        item.FillState = NaviusRatingFillState.Half;
+        item.Measure(new Size(24, 24));
+        item.Arrange(new Rect(0, 0, 24, 24));
+        item.UpdateLayout();
+
+        var rtb = new RenderTargetBitmap(24, 24, 96, 96, PixelFormats.Pbgra32);
+        rtb.Render(item);
+        var pixels = new byte[24 * 24 * 4];
+        rtb.CopyPixels(pixels, 24 * 4, 0);
+
+        // Row 12 (vertical middle) is wide enough on this star glyph to distinguish a left- from a
+        // right-heavy solid fill; count opaque pixels in each half, ignoring the thin (~1px) always
+        // -visible outline stroke by requiring a comfortable majority rather than any-opacity.
+        const int y = 12;
+        var leftOpaque = 0;
+        var rightOpaque = 0;
+        for (var x = 0; x < 24; x++)
+        {
+            var idx = (y * 24 + x) * 4;
+            if (pixels[idx + 3] <= 10)
+            {
+                continue;
+            }
+
+            if (x < 12)
+            {
+                leftOpaque++;
+            }
+            else
+            {
+                rightOpaque++;
+            }
+        }
+
+        return leftOpaque > rightOpaque;
     }
 }

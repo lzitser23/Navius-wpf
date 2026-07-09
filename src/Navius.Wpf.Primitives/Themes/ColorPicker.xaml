@@ -108,7 +108,7 @@
                             </Border>
                             <Canvas>
                                 <Thumb x:Name="PART_AreaThumb" Style="{StaticResource Navius.ColorPicker.RingThumbStyle}"
-                                       AutomationProperties.Name="Color" />
+                                       AutomationProperties.Name="{Binding AreaAriaLabel, RelativeSource={RelativeSource TemplatedParent}}" />
                             </Canvas>
                         </Grid>
 
@@ -157,7 +157,8 @@
                             <Border Grid.Column="0" Width="28" Height="28" Margin="0,0,8,0"
                                     CornerRadius="{DynamicResource Navius.Radius.Small}"
                                     BorderBrush="{DynamicResource Navius.Border}" BorderThickness="1"
-                                    Background="{StaticResource Navius.ColorPicker.CheckerboardBrush}">
+                                    Background="{StaticResource Navius.ColorPicker.CheckerboardBrush}"
+                                    AutomationProperties.Name="{Binding Value, RelativeSource={RelativeSource TemplatedParent}}">
                                 <Border CornerRadius="{DynamicResource Navius.Radius.Small}">
                                     <Border.Background>
                                         <SolidColorBrush>
@@ -178,7 +179,7 @@
                                      Background="{DynamicResource Navius.Background}"
                                      Foreground="{DynamicResource Navius.Foreground}"
                                      BorderBrush="{DynamicResource Navius.Input}" BorderThickness="1"
-                                     AutomationProperties.Name="Hex color" />
+                                     AutomationProperties.Name="{Binding FieldAriaLabel, RelativeSource={RelativeSource TemplatedParent}}" />
                         </Grid>
 
                         <!-- Swatches. -->
@@ -186,7 +187,7 @@
                                  ItemsSource="{Binding Colors, RelativeSource={RelativeSource TemplatedParent}}"
                                  ItemTemplate="{StaticResource Navius.ColorPicker.SwatchItemTemplate}"
                                  Background="Transparent" BorderThickness="0"
-                                 AutomationProperties.Name="Swatches">
+                                 AutomationProperties.Name="{Binding SwatchesAriaLabel, RelativeSource={RelativeSource TemplatedParent}}">
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <WrapPanel Orientation="Horizontal" />

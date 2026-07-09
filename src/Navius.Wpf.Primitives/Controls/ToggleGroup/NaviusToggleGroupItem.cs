@@ -16,11 +16,15 @@ namespace Navius.Wpf.Primitives.Controls.ToggleGroup;
 /// A11y delta: the 2026-07-09 audit found Space was dead on ToggleGroup items in the
 /// shipped web version, even though the contract's own keyboard table says Space/Enter
 /// should both activate via native &lt;button&gt; semantics. WAI-ARIA APG agrees both keys
-/// should activate a button-role widget. Native WPF ButtonBase only wires Space by default
-/// (Enter requires IsDefault, which does not apply to a roving-focus group item), so this
-/// overrides OnKeyDown to explicitly handle both Space and Enter via the same OnClick path
-/// a mouse click uses, guaranteeing neither can regress into "dead" the way Space did on
-/// the web.
+/// should activate a button-role widget. Native WPF ButtonBase does in fact wire BOTH keys
+/// (Space via its press-on-key-down/click-on-key-up state machine; Enter clicks on key-down
+/// because ButtonBase defaults KeyboardNavigation.AcceptsReturn to true, no IsDefault
+/// needed). This override still handles both explicitly, for two reasons: it makes the
+/// activation deterministic (a single OnClick on key-down, no mouse-capture state machine
+/// that can be disturbed by the group's roving-focus PreviewKeyDown handling) and it
+/// guarantees neither key can regress into "dead" the way Space did on the web. Space skips
+/// key auto-repeat to match a native web button (Space fires once on key-up); Enter is
+/// allowed to repeat, which is what a held Enter does on a native web button too.
 /// </summary>
 public class NaviusToggleGroupItem : ToggleButton
 {
@@ -54,7 +58,14 @@ public class NaviusToggleGroupItem : ToggleButton
     {
         if (IsEnabled && e.Key is Key.Space or Key.Enter)
         {
-            OnClick();
+            // Held Space must not flap the pressed state: a native web button fires Space
+            // once on key-up, ignoring auto-repeat. Enter auto-repeat is native on both
+            // platforms and stays allowed.
+            if (!(e.Key == Key.Space && e.IsRepeat))
+            {
+                OnClick();
+            }
+
             e.Handled = true;
             return;
         }

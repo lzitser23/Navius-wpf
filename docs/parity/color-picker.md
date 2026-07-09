@@ -179,3 +179,69 @@ this port exposes one 2D thumb with one `AutomationPeer`. The peer implements `I
 read-only, surfacing `HexValue` (see `NaviusColorPickerAutomationPeer`) since the hex text lives
 only in a template `TextBox` that exposes nothing over UIA on its own. `Name`/hidden-bubble-input
 form participation is dropped (no WPF form-submission model to mirror).
+
+## M6 audit (2026-07-09)
+
+**CONFIRMED, fixed.** `NaviusColorPickerAutomationPeer` implemented `IValueProvider` but never
+overrode `GetPattern(PatternInterface)`. WPF's `AutomationPeer.GetPattern` base implementation
+returns `null` for every pattern regardless of which provider interfaces a subclass implements --
+it does not auto-detect them (every other `IValueProvider` peer in this port, e.g. `NaviusDateInput`'s,
+`NaviusFileUpload`'s, `NaviusTagInput`'s, follows the `GetPattern` override convention). This meant
+`ValuePattern` was claimed as implemented but was actually unreachable from any real UIA client.
+Fixed by adding the `GetPattern` override. Added `AutomationPeer_GetPattern_SurfacesValuePattern`
+regression test.
+
+**CONFIRMED, fixed.** The Hue slider's `End` key is documented (and its own `ColorPickerSteps.cs`
+doc comment claims) to "set the model to exactly 0/360," but `HueProperty`'s `CoerceHue` callback
+unconditionally wrapped `360 -> 0` via modulo, so `End` produced the identical model value as
+`Home` (`Hue = 0`) and visually snapped the hue thumb to the track's LEFT edge instead of its
+right edge. Fixed `CoerceHue` to preserve the literal `360` boundary value (safe: `ColorMath.HsvToRgb`
+already re-normalizes `h` internally via its own `((h % 360) + 360) % 360`, so 0 and 360 produce
+identical RGB) while every other out-of-range value still wraps via modulo as before. Added 3
+regression tests (`Hue_SettingExactly360_IsPreservedNotWrappedToZero`,
+`Hue_OtherOutOfRangeValues_StillWrapViaModulo`, `Hue_At360_HexValueMatchesHueAtZero`).
+
+**CONFIRMED, fixed.** The current-color preview swatch (next to the hex field) had no
+`AutomationProperties.Name` at all, contradicting the contract's `NaviusColorPickerSwatch: role="img",
+aria-label=Context.Projected`. Fixed by binding the swatch `Border`'s `AutomationProperties.Name`
+to the picker's `Value` in `Themes/ColorPicker.xaml`.
+
+**CONFIRMED, fixed.** The Area/Field/Swatches `AriaLabel` parameters are documented contract
+parameters (`docs/parity/color-picker.md` "Parameters": defaults `"Color"`/`"Hex color"`/`"Swatches"`,
+caller-overridable), but the WPF port hardcoded these three strings directly into
+`Themes/ColorPicker.xaml`'s `AutomationProperties.Name` values with no way for a consumer to
+override them, and this was not disclosed as a dropped/simplified parameter anywhere. Fixed by
+adding `AreaAriaLabel`/`FieldAriaLabel`/`SwatchesAriaLabel` dependency properties (same defaults)
+and rebinding the theme's three `AutomationProperties.Name` values to them via `TemplateBinding`-style
+`RelativeSource TemplatedParent` bindings. Added `AriaLabels_DefaultToContractStrings` and
+`AriaLabels_AreConsumerOverridable` regression tests.
+
+**CONFIRMED, deferred (documented gap, not fixed).** The Area/Hue/Alpha `Thumb`s expose zero UIA
+value/range semantics: they are plain `System.Windows.Controls.Primitives.Thumb` instances with
+only a hardcoded `AutomationProperties.Name`, no `IRangeValueProvider`/custom `AutomationPeer` at
+all, despite this doc's own "Accessibility" section requiring `role="slider"` +
+`aria-valuemin`/`aria-valuemax`/`aria-valuenow`/`aria-valuetext` on each, and the "WPF strategy"
+section explicitly proposing "a `RangeValuePattern`-exposing custom automation peer." Keyboard
+nudging works correctly (the DP values change), but a screen reader gets no
+value/range announcement on any of the three sliders. Not fixed in this pass: doing so properly
+requires introducing dedicated `Thumb`-derived classes (or peer factories) for all three tracks,
+which is a larger, higher-risk structural change than this audit's remaining budget supports
+cleanly; recorded here as a confirmed, disclosed gap (the repo's own established pattern for
+disproportionate a11y gaps, e.g. `checkbox.md`'s undocumented `aria-readonly`/`aria-required`
+peer) rather than silently left as a false claim.
+
+**CONFIRMED, deferred (documented gap, not fixed).** `NaviusColorPickerSwatches.ChildContent`
+(explicit custom swatch items overriding auto-generated `Colors`) has no WPF equivalent: `PART_Swatches`
+is unconditionally bound to `Colors`. Not fixed in this pass (would need a new content-authoring
+API); recorded as a confirmed, disclosed gap for the same proportionality reason as above.
+
+**PLAUSIBLE, reported only:** (1) `FieldName` is a vestigial no-op DP whose in-code doc comment
+("the surviving 'Name' parameter... survives as FieldName") reads as implying functional parity,
+while the doc's own implementation notes correctly say `Name` is dropped -- more an API-hygiene
+inconsistency than a contract violation. (2) `SyncValueFromModel` includes `Alpha` in the projected
+`Value` string unconditionally, even when `AlphaEnabled=false`, if a caller sets `Format="rgba"`/`"hsla"`
+directly; could not confirm against original Blazor semantics (not present in this repo) whether
+this is a real deviation. (3) `RingThumbStyle`'s `Stroke="Black"`/`Stroke="White"` and the
+checkerboard brush's `#FFFFFFFF`/`#FFCCCCCC` are hardcoded rather than `DynamicResource` tokens;
+arguably a defensible exception (same class as "the swatch itself must show arbitrary colors") but
+undocumented as such, and means the thumb ring/checkerboard don't respond to theme switching.

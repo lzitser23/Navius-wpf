@@ -9,13 +9,15 @@ namespace Navius.Wpf.Primitives.Controls.Calendar;
 /// template (Themes/Calendar.xaml) that restyles the framework's own CalendarItem/CalendarDayButton/
 /// CalendarButton parts to the one-ink brand (hairline borders, no shadows).
 ///
-/// <see cref="System.Windows.Controls.Calendar.SelectionMode"/> is the native property: single-date
-/// selection (the default, <c>CalendarSelectionMode.SingleDate</c>) is used by both
-/// <c>NaviusDatePicker</c> and <c>NaviusDateRangePicker</c>; the range picker layers its own
-/// two-pick commit state machine on top of single-date commits rather than switching to
-/// <c>CalendarSelectionMode.SingleRange</c>, because that native mode's Shift-to-extend semantics
-/// do not match the contract's plain "first pick sets start, second sets end" model. See
-/// docs/parity/date-range-picker.md "WPF implementation notes" for the full decision record.
+/// <see cref="System.Windows.Controls.Calendar.SelectionMode"/> is the native property:
+/// <c>NaviusDatePicker</c> uses the default single-date selection (<c>CalendarSelectionMode.SingleDate</c>).
+/// <c>NaviusDateRangePicker</c> switches its <see cref="NaviusCalendar"/> instance to
+/// <c>CalendarSelectionMode.SingleRange</c> while open purely so both endpoints and the days
+/// between them render as selected (the web data-range-start/-end/-middle styling); it layers its
+/// own two-pick commit state machine (<c>DateRangeCommitEngine</c>) on top for the actual "first
+/// pick sets start, second sets end" logic, so commits never go through SingleRange's native
+/// Shift-to-extend semantics. See docs/parity/date-range-picker.md "WPF implementation notes" for
+/// the full decision record.
 /// </summary>
 public class NaviusCalendar : System.Windows.Controls.Calendar
 {

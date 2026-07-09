@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using Navius.Wpf.Ui.Internal;
 
 namespace Navius.Wpf.Ui.Sidebar;
 
@@ -124,6 +125,14 @@ public class NaviusSidebar : ItemsControl
         }
 
         var to = isCollapsed ? CollapsedWidth : ExpandedWidth;
+
+        if (!ReducedMotion.AnimationsEnabled)
+        {
+            // Reduced-motion users get an instant width change instead of the ease, the same
+            // ReducedMotion.AnimationsEnabled guard NaviusSkeleton/NaviusSpinner apply to their loops.
+            _rootPart.Width = to;
+            return;
+        }
 
         if (PresentationSource.FromVisual(this) is null)
         {

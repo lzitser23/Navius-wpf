@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 
 namespace Navius.Wpf.Primitives.Theming;
@@ -10,6 +11,10 @@ public static class ThemeManager
 {
     /// <summary>Key present in every token dictionary; used to find and replace it.</summary>
     internal const string TokenDictionaryMarker = "Navius.Tokens.Theme";
+
+    private static bool _systemHighContrastSyncEnabled;
+    private static bool _systemHighContrastActive;
+    private static NaviusTheme _themeBeforeSystemHighContrast = NaviusTheme.Light;
 
     public static NaviusTheme Current { get; private set; } = NaviusTheme.Light;
 
@@ -41,4 +46,62 @@ public static class ThemeManager
     private static Uri TokenUri(NaviusTheme theme) => new(
         $"pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Tokens.{theme}.xaml",
         UriKind.Absolute);
+
+    /// <summary>
+    /// Opt-in: applies <see cref="NaviusTheme.HighContrast"/> application-wide whenever the OS's
+    /// SystemParameters.HighContrast is on, tracking it live via SystemParameters.StaticPropertyChanged,
+    /// and restores whatever theme was active immediately before switching once it turns back off.
+    /// Idempotent (a second call is a no-op) and windows/desktop-only -- the web port never needed
+    /// this because browsers own high-contrast rendering themselves.
+    /// </summary>
+    public static void EnableSystemHighContrastSync()
+    {
+        if (_systemHighContrastSyncEnabled)
+        {
+            return;
+        }
+
+        _systemHighContrastSyncEnabled = true;
+        SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
+        SyncSystemHighContrastState(SystemParameters.HighContrast);
+    }
+
+    private static void OnSystemParametersChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SystemParameters.HighContrast))
+        {
+            SyncSystemHighContrastState(SystemParameters.HighContrast);
+        }
+    }
+
+    /// <summary>
+    /// The sync decision behind <see cref="EnableSystemHighContrastSync"/>, factored out and given
+    /// the OS flag as a parameter (rather than reading SystemParameters.HighContrast itself) so it
+    /// is directly unit-testable without flipping the real OS high-contrast setting. Public rather
+    /// than the more natural <c>internal</c> because this assembly has no InternalsVisibleTo -- the
+    /// same tradeoff NaviusTree.HandleKey()/NaviusRating.HandleKey() make elsewhere in this codebase.
+    /// Applies/restores through the normal <see cref="Apply(NaviusTheme)"/> path, so
+    /// <see cref="ThemeChanged"/> still fires for these transitions.
+    /// </summary>
+    public static void SyncSystemHighContrastState(bool systemHighContrastEnabled)
+    {
+        if (systemHighContrastEnabled)
+        {
+            if (!_systemHighContrastActive)
+            {
+                _themeBeforeSystemHighContrast = Current;
+            }
+
+            _systemHighContrastActive = true;
+            if (Current != NaviusTheme.HighContrast)
+            {
+                Apply(NaviusTheme.HighContrast);
+            }
+        }
+        else if (_systemHighContrastActive)
+        {
+            _systemHighContrastActive = false;
+            Apply(_themeBeforeSystemHighContrast);
+        }
+    }
 }

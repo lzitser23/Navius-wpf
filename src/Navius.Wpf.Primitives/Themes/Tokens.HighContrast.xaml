@@ -1,0 +1,59 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!--
+        Navius brand tokens, Windows high contrast. Every brush here is bound via DynamicResource
+        to a SystemColors *ColorKey (not a literal color), so an OS palette change (switching
+        between high-contrast themes, or any live SystemColors update) repaints these brushes
+        without an app restart or an explicit ThemeManager.Apply call; see ADR-0007 for the full
+        mapping rationale.
+
+        Role mapping (semantic role -> SystemColors key):
+          Background/Foreground   -> Window/WindowText            (page surface + body text)
+          Card/Popover(+Fg)       -> Window/WindowText            (HC collapses "elevated surface"
+                                      distinctions; borders carry the separation instead)
+          Primary(+Fg)            -> Highlight/HighlightText      (the OS's own selection/accent pair)
+          Secondary/Accent(+Fg)   -> Control/ControlText          (HC also collapses these two "less
+                                      prominent than Primary" roles onto the one control pair)
+          Muted(+Fg)              -> Control/GrayText             (de-emphasized text uses the
+                                      dedicated GrayText system role)
+          Destructive(+Fg)        -> WindowText/Window            (no system "danger/red" key exists
+                                      in SystemColors, so this falls back to WindowText per the
+                                      "system-red only if a system key exists, else WindowText" rule;
+                                      destructive affordances rely on icon/label, not hue, in HC)
+          Border/Input            -> WindowText                   (borders must stay visible against
+                                      Window regardless of which HC theme is active)
+          Ring (focus)            -> Highlight                    (matches the OS's own focus-visual
+                                      convention in high contrast)
+    -->
+    <sys:String x:Key="Navius.Tokens.Theme">HighContrast</sys:String>
+
+    <SolidColorBrush x:Key="Navius.Background" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Foreground" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Card" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="Navius.CardForeground" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Popover" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="Navius.PopoverForeground" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Primary" Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}" />
+    <SolidColorBrush x:Key="Navius.PrimaryForeground" Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Secondary" Color="{DynamicResource {x:Static SystemColors.ControlColorKey}}" />
+    <SolidColorBrush x:Key="Navius.SecondaryForeground" Color="{DynamicResource {x:Static SystemColors.ControlTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Muted" Color="{DynamicResource {x:Static SystemColors.ControlColorKey}}" />
+    <SolidColorBrush x:Key="Navius.MutedForeground" Color="{DynamicResource {x:Static SystemColors.GrayTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Accent" Color="{DynamicResource {x:Static SystemColors.ControlColorKey}}" />
+    <SolidColorBrush x:Key="Navius.AccentForeground" Color="{DynamicResource {x:Static SystemColors.ControlTextColorKey}}" />
+    <!-- No SystemColors "danger/red" key exists; falls back to WindowText per the mapping rule above. -->
+    <SolidColorBrush x:Key="Navius.Destructive" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.DestructiveForeground" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Border" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Input" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Ring" Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}" />
+
+    <!-- Not color tokens; kept identical to Tokens.Light.xaml/Tokens.Dark.xaml so the key set matches exactly. -->
+    <CornerRadius x:Key="Navius.Radius.Small">4</CornerRadius>
+    <CornerRadius x:Key="Navius.Radius.Control">6</CornerRadius>
+    <CornerRadius x:Key="Navius.Radius.Card">8</CornerRadius>
+
+</ResourceDictionary>

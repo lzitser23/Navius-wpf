@@ -165,6 +165,20 @@ public class TabsTests
     }
 
     [StaFact]
+    public void ManualMode_SpaceOnFocusedTab_Selects()
+    {
+        var (root, a, b, _) = CreateTabs(activationMode: "manual");
+        a.IsSelected = true;
+        FocusManager.SetFocusedElement(root, a);
+        SimulateKey(root, Key.Right);
+
+        SimulateKey(root, Key.Space);
+
+        Assert.True(b.IsSelected);
+        Assert.Equal("b", root.Value);
+    }
+
+    [StaFact]
     public void ArrowRight_WrapsAtEnd_WhenLooping()
     {
         var (root, _, _, c) = CreateTabs(loop: true);

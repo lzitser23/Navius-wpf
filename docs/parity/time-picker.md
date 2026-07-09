@@ -179,3 +179,29 @@ coercion, AM/PM options). 10 `[StaFact]` tests cover the control (column visibil
 granularity/hour-cycle, Value-to-column sync, column-selection-to-Value composition in both hour
 cycles, minute-step-driven option rebuilding, the embedded `PART_Input` wiring) and the automation
 peer's ComboBox type, ValuePattern, and ExpandCollapse Expand/Collapse round-trip.
+
+## M6 audit (2026-07-09)
+
+Confirmed fixed: none (no disparity found).
+
+Verified TRUE:
+- Column keyboard (ArrowUp/Down/Home/End/typeahead, Enter/Space activation) is provided natively
+  by the four `ListBox` columns (`NaviusTimePicker.cs:32-35`, `227-230`), the documented
+  deliberate simplification; native `ListBoxItem` selection replaces the web's
+  highlight-then-commit two-step, which the WPF implementation notes already disclose.
+- Column-selection composes the value in both hour cycles: existing
+  `SelectingColumnOptions_ComposesValue_TwentyFourHour` / `..._TwelveHourPm`
+  (`OnColumnSelectionChanged`, `NaviusTimePicker.cs:288-307`).
+- MinuteStep coerced to >= 1 and drives option rebuild: `Minutes_StepCoercedToAtLeastOne`,
+  `MinuteStepChange_RebuildsMinuteColumnOptions`.
+- AutomationPeer: `ControlType.ComboBox` + read-only `IValueProvider` (`HH:mm:ss`) +
+  `IExpandCollapseProvider` over `IsOpen`, all really returned from `GetPattern`
+  (`NaviusTimePicker.cs:404-408`) and round-tripped by
+  `AutomationPeer_ReportsComboBox_ExpandCollapseAndValuePattern`.
+- Embedded `PART_Input` is a real `NaviusTimeInput` sharing the value (existing
+  `PartInput_IsWiredToTheSameTimeInputFamily`), so the input's full segment keyboard carries over.
+
+Plausible/residual: native `ListBox` `TextSearch` typeahead has a slightly different buffer-reset
+timing than the web's custom per-keystroke buffer (already disclosed in the implementation notes);
+functionally satisfies "type digits, jump to the matching option". Column keyboard is not
+re-tested here because it is 100% native `ListBox` behavior with no custom handler to regress.

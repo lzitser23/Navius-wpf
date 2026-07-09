@@ -181,6 +181,13 @@ Contract deltas (WPF-native substitutions, not gaps):
   controls drop the hidden native-form mirror; `Name` stays a marker-only property.
 - **`Dir` is WPF's native `FlowDirection`**, not a custom string parameter; `ArrowLeft`/`ArrowRight`
   focus-flip honors it exactly as the contract's `MoveFocus` does for `Dir="rtl"`.
+- **`Disabled` maps onto the inherited `Control.IsEnabled`**, not a separate dependency property
+  (M6 audit 2026-07-09: added to this list; this delta already existed in the code but was
+  previously undocumented here).
+- **`DefaultValue` (uncontrolled initial value) has no separate property**: `Value` is a plain
+  two-way dependency property, and WPF's DP system does not need a controlled/uncontrolled split
+  the way the Blazor contract does (M6 audit 2026-07-09: added to this list; also previously
+  undocumented).
 - **Placeholder rendering.** An unfilled segment shows a unit-shorthand token ("yyyy"/"mm"/"dd" via
   `SegmentFormat.PlaceholderToken`) instead of the literal aria-valuetext string `"Empty"` — WPF's
   own native masked-input placeholder idiom. The `NaviusFieldSegmentAutomationPeer`'s
@@ -196,13 +203,42 @@ Contract deltas (WPF-native substitutions, not gaps):
   `NaviusSelectAutomationPeer` precedent and the sibling `NaviusTimePicker`'s explicit requirement
   ("template-only text otherwise exposes nothing over UIA").
 
-Segment-engine coverage: 34 `[Fact]` tests in `DateInputTests.cs` cover `SegmentMath` (wrap/clamp,
-Arrow/PageUp/PageDown/Home/End/Backspace/Delete, RTL-flipped ArrowLeft/Right, digit accumulation
-with early-advance and max-digit-advance, digit-exceeds-max buffer restart, day-period letter/arrow
-handling), `SegmentLayoutBuilder` (culture-driven ordering/separators, granularity filtering,
-hour-cycle sniffing, per-unit bounds), `DateSegmentComposer` (null-when-incomplete, day clamping,
-granularity defaults, day-max recompute), and `SegmentFormat` (placeholder tokens, leading-zero
-padding). 17 `[StaFact]` tests cover the control (template building, seeding, typed-digit
-composition end to end, placeholder-basis Arrow reveal, focus travel, Backspace clearing,
-ReadOnly lockout, month-change day-max clamping, out-of-range invalid state) and both automation
-peers.
+Segment-engine coverage: 27 `[Fact]` tests plus one 2-case `[Theory]` in `DateInputTests.cs` cover
+`SegmentMath` (wrap/clamp, Arrow/PageUp/PageDown/Home/End/Backspace/Delete, RTL-flipped
+ArrowLeft/Right, digit accumulation with early-advance and max-digit-advance, digit-exceeds-max
+buffer restart, day-period letter/arrow handling), `SegmentLayoutBuilder` (ordering/separators,
+granularity filtering, hour-cycle sniffing, per-unit bounds), `DateSegmentComposer`
+(null-when-incomplete, day clamping, granularity defaults, day-max recompute), and `SegmentFormat`
+(placeholder tokens, leading-zero padding). 20 `[StaFact]` tests cover the control (template
+building, seeding, typed-digit composition end to end, placeholder-basis Arrow reveal, focus
+travel, Backspace clearing, ReadOnly lockout, month-change day-max clamping, out-of-range invalid
+state, `Required`/`IsInvalidState`) and both automation peers.
+
+(M6 audit 2026-07-09: the prior "34 `[Fact]`"/"17 `[StaFact]`" counts here were both inaccurate --
+actual counts at the time of that audit were 26 `[Fact]` + 1 `[Theory]` (2 cases) and 15
+`[StaFact]`; corrected above, and the `[StaFact]` count now also reflects the 3 new `Required`
+tests added by this audit. Also noted: the "culture-driven ordering/separators" coverage claim was
+found to only exercise `CultureInfo.InvariantCulture` in practice -- no test drives a
+`dd/MM/yyyy`-style culture such as `en-GB`/`de-DE` through `SegmentLayoutBuilder`, so that specific
+sub-claim overstates actual coverage breadth; the underlying `Tokenize`/`BuildDateLayout` code is
+written generically and was not found to be wrong, just less-tested than implied. Not fixed here
+(PLAUSIBLE, not CONFIRMED -- no defect was found, only a coverage gap.)
+
+## M6 audit (2026-07-09)
+
+**CONFIRMED, fixed.** `Required` (`NaviusDateInput.cs`) was a dead dependency property: declared,
+CLR-wrapped, but never read anywhere else in the class, so it had no effect on `IsInvalidState`
+despite the contract documenting `Required` as driving "Field validity (`ValueMissing`) when
+composing is incomplete." Fixed by wiring `Required && value is null` (the composed value stays
+null until every segment is filled) into `UpdateComputedState`'s `IsInvalidState` computation,
+alongside the existing `Invalid`/`outOfRange` terms, and giving `RequiredProperty` the same
+`OnBoundChanged` callback `Invalid`/`MinValue`/`MaxValue` already use so toggling `Required` alone
+recomputes state. Added 3 regression tests (`Required_EmptyValue_SetsIsInvalidState`,
+`Required_False_EmptyValue_DoesNotSetIsInvalidState`, `Required_ComposedValue_ClearsIsInvalidState`).
+
+**CONFIRMED, fixed (doc-only).** Two contract deltas existed in the code but were missing from
+this doc's "Contract deltas" list: `Disabled` maps onto the inherited `Control.IsEnabled` (no
+separate DP), and `DefaultValue` has no separate property (plain two-way `Value` DP covers both
+controlled/uncontrolled). Both added to the list above. Also corrected the test-count claims
+("34/17") which were both wrong; see the parenthetical above the test-coverage paragraph for the
+corrected counts and the one coverage-breadth caveat (PLAUSIBLE, not fixed).

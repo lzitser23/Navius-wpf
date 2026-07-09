@@ -142,3 +142,25 @@ Implemented as a lookless Tier B family: `Controls/Accordion/NaviusAccordion.cs`
 - `role="region"` on the Panel is approximated as plain `AutomationControlType.Group` on a custom automation peer; WPF's `AutomationControlType` enum has no direct "region" value, and this is recorded as a known gap rather than a false claim of an exact landmark match.
 - `data-index` is implemented literally as an `Index` int property on `NaviusAccordionItem`, recomputed by the root on every open-state sync.
 - Disabled is not reimplemented as its own named parameter: each Item's native `IsEnabled` is reused, but WPF's `IsEnabled` does **not** automatically cascade through a `ContentControl`'s logical `Content` (verified empirically, see collapsible.md's notes). `SyncDescendants` explicitly pushes each Item's `IsEnabled` down onto its Trigger and re-subscribes to `IsEnabledChanged` so later toggles keep propagating, matching "Disabled cascades to every item."
+
+## M6 audit (2026-07-09)
+
+**CONFIRMED, fixed.** `Controls/Accordion/NaviusAccordionItem.cs`'s own doc comment directly
+contradicted `NaviusAccordion.cs`'s doc comment (and this family's own implementation): the Item
+file claimed IsEnabled "cascades to its Trigger... via WPF's native IsEnabled property-value
+inheritance," while the Accordion root's file (correctly) says the opposite -- that native
+`IsEnabled` does NOT auto-cascade through a `ContentControl`'s logical `Content`, which is why
+`SyncDescendants` explicitly pushes it down. The actual runtime behavior was always correct (via
+`SyncDescendants`); only the Item's comment was wrong. Fixed by correcting the comment in
+`NaviusAccordionItem.cs` to match the accurate claim already in `NaviusAccordion.cs` and
+`collapsible.md`. No behavioral change, no new test needed (existing `Disabled_CascadesFromItem_BlocksToggle`
+in `AccordionTests.cs` already covers the real behavior).
+
+Otherwise re-verified adversarially and found sound: the full keyboard table (ArrowUp/Down/Left/Right
+with rtl flip, Home/End, always-wrap per the contract's own table), the dual-pattern
+`NaviusAccordionTriggerAutomationPeer` (Invoke + ExpandCollapse), the Header's
+`AutomationProperties.HeadingLevel` mapping (Level1-6), the Panel's `Group`-type peer approximating
+`role="region"` (honestly disclosed as a known gap, not a false claim), and the
+`PanelHeightAnimator`/`KeepMounted` mount-lifecycle claims. No hardcoded colors found in
+`Themes/Accordion.xaml` beyond `DynamicResource` tokens (not independently re-checked line-by-line
+in this pass beyond the structural template, which matches the doc's part list).

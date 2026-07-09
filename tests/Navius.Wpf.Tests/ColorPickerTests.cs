@@ -319,4 +319,75 @@ public class ColorPickerTests
 
         Assert.Throws<InvalidOperationException>(() => peer.SetValue("#000000"));
     }
+
+    [StaFact]
+    public void AutomationPeer_GetPattern_SurfacesValuePattern()
+    {
+        // Regression (M6 audit): implementing IValueProvider alone does not surface it over UIA;
+        // GetPattern must be overridden or the base implementation always returns null.
+        var picker = new NaviusColorPicker();
+        var peer = new NaviusColorPickerAutomationPeer(picker);
+
+        var pattern = peer.GetPattern(System.Windows.Automation.Peers.PatternInterface.Value);
+
+        Assert.Same(peer, pattern);
+    }
+
+    // --- Hue coercion: 0 and 360 are the same color but distinct thumb/model positions ---
+
+    [StaFact]
+    public void Hue_SettingExactly360_IsPreservedNotWrappedToZero()
+    {
+        // Regression (M6 audit): CoerceHue used to wrap 360 -> 0 unconditionally, making the End
+        // key (Hue = 360) indistinguishable from Home (Hue = 0) and snapping the thumb to the
+        // wrong edge of the track.
+        var picker = new NaviusColorPicker { Hue = 360 };
+
+        Assert.Equal(360.0, picker.Hue);
+    }
+
+    [StaFact]
+    public void Hue_OtherOutOfRangeValues_StillWrapViaModulo()
+    {
+        var picker = new NaviusColorPicker { Hue = 400 };
+
+        Assert.Equal(40.0, picker.Hue);
+    }
+
+    [StaFact]
+    public void Hue_At360_HexValueMatchesHueAtZero()
+    {
+        // 0 and 360 are the same color: ColorMath.HsvToRgb re-normalizes internally.
+        var atZero = new NaviusColorPicker { Hue = 0, Saturation = 1, Brightness = 1 };
+        var at360 = new NaviusColorPicker { Hue = 360, Saturation = 1, Brightness = 1 };
+
+        Assert.Equal(atZero.HexValue, at360.HexValue);
+    }
+
+    // --- AriaLabel: Area/Field/Swatches accessible names (previously hardcoded in the theme) ---
+
+    [StaFact]
+    public void AriaLabels_DefaultToContractStrings()
+    {
+        var picker = new NaviusColorPicker();
+
+        Assert.Equal("Color", picker.AreaAriaLabel);
+        Assert.Equal("Hex color", picker.FieldAriaLabel);
+        Assert.Equal("Swatches", picker.SwatchesAriaLabel);
+    }
+
+    [StaFact]
+    public void AriaLabels_AreConsumerOverridable()
+    {
+        var picker = new NaviusColorPicker
+        {
+            AreaAriaLabel = "Saturation and brightness",
+            FieldAriaLabel = "Hex code",
+            SwatchesAriaLabel = "Presets",
+        };
+
+        Assert.Equal("Saturation and brightness", picker.AreaAriaLabel);
+        Assert.Equal("Hex code", picker.FieldAriaLabel);
+        Assert.Equal("Presets", picker.SwatchesAriaLabel);
+    }
 }

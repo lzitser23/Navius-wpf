@@ -76,3 +76,14 @@ a real `Window.Show()` (this repo's test suite otherwise avoids simulating real 
 `NaviusSeparatorAutomationPeer.IsAccessibilityTreeMember(bool decorative)`, tested directly; the
 "decorative always forces false regardless of the base" case is additionally verified on a real
 peer instance since it short-circuits before the visibility-dependent base call.
+
+## M6 audit (2026-07-09)
+
+Confirmed issues found + fixed: none.
+
+Plausible / residual: none. The family is a two-parameter pure-presentational control with no keyboard, no events, and no selection.
+
+Verified TRUE under adversarial check:
+- No keyboard handling exists or is claimed (Separator is non-interactive, never in the tab order); the "dead activation key" class is inapplicable.
+- `NaviusSeparatorAutomationPeer` (NaviusSeparatorAutomationPeer.cs) really is returned from `OnCreateAutomationPeer` (NaviusSeparator.cs:43), reports `AutomationControlType.Separator`, exposes an orientation-aware `GetOrientationCore`, and removes the element from the accessibility tree (`IsControlElementCore`/`IsContentElementCore` -> false) when `Decorative` is true - each covered by a passing test.
+- `Orientation` is the native `System.Windows.Controls.Orientation` enum (defaults Horizontal), which structurally obviates the web's `isValidOrientation` guard; `Decorative` defaults false. Both defaults match the contract and are tested.

@@ -270,3 +270,39 @@ state forever).
 Gallery demo: `apps/Navius.Wpf.Gallery/Pages/ToastPage.xaml(.cs)`, self-contained (own
 page-local `ToastManager`, `Limit=2` to make the queue visible), not wired into `MainWindow`'s
 nav list per the task's scope constraints.
+
+## M6 audit (2026-07-09)
+
+Focus of the re-check: the AutomationPeer live-region claim (UIA `LiveSetting` actually set) and
+the pause-on-hover / pause-on-focus timer claims actually implemented.
+
+Confirmed fixed: none (no disparity found). Added one keyboard regression test for the Escape
+claim, which had no key-level test.
+
+Added test (`ToastTests.cs`):
+- `NaviusToast_EscapeKey_RaisesCloseRequested`: a real `Key.Escape` KeyDown on a focused toast
+  raises `CloseRequested` (`NaviusToast.OnKeyDown`, `NaviusToast.cs:165-175`). Previously only the
+  close-button click path was tested for that event.
+
+Verified TRUE (the claims the brief specifically flagged as suspect held up):
+- **Live-region really set.** `NaviusToastAutomationPeer.GetLiveSettingCore()` returns
+  `Assertive` for High priority and `Polite` for Low (`NaviusToastAutomationPeer.cs:25-26`), and
+  the peer is really returned from `NaviusToast.OnCreateAutomationPeer` (`NaviusToast.cs:163`).
+  Covered by `NaviusToastAutomationPeer_LiveSetting_MatchesPriority`. This is a genuine
+  role=status/role=alert equivalent, unlike the false live-region claims a sibling web audit found.
+- **RaiseNotificationEvent** is really invoked on load and on Title/Description change
+  (`NaviusToast.cs:196-215`), the intended better-than-aria-live mechanism per the strategy.
+- **Pause-on-hover / pause-on-focus really wired.** `NaviusToastViewport.CreateVisual` attaches
+  `MouseEnter->Pause`, `MouseLeave->Resume`, and `IsKeyboardFocusWithinChanged->Pause/Resume`
+  (`NaviusToastViewport.cs:201-213`) to the toast's `ToastHandle`. The manager's ref-counted
+  pause (`ToastManager.cs:195-219`) means hover + focus-within must both release before the
+  countdown resumes, covered by `Pause_FromTwoSources_RequiresTwoResumesBeforeCountdownContinues`.
+- **DispatcherToastTimer** genuinely tracks remaining time across pause/resume via a `Stopwatch`
+  (`DispatcherToastTimer.cs:42-68`): Pause stops the timer and subtracts elapsed from `_remaining`;
+  Resume restarts a fresh interval of exactly the remaining time (no full-window restart).
+- Queue promotion and Update-rearm regressions still pass
+  (`Dismiss_AtLimitOne_PromotesQueuedToast...`, `Update_LoadingToSuccess_RearmsAutoDismissTimer...`).
+
+Plausible/residual: F6-focuses-viewport (`NaviusToastViewport.cs:378-387`) and swipe-to-dismiss are
+honestly documented as, respectively, a hardcoded single hotkey (web's configurable `Hotkey`/
+`LabelTemplate` not ported) and not-implemented; both accurately described, no false claim.

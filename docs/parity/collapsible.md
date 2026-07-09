@@ -87,3 +87,15 @@ Implemented as a lookless Tier B family: `Controls/Collapsible/NaviusCollapsible
 - `KeepMounted`: `Visibility.Collapsed` is used uniformly for the closed state. `KeepMounted=false` (default) additionally caches and clears `Content` once the close animation's `Completed` callback fires, approximating DOM removal; `KeepMounted=true` leaves `Content` in place.
 - Logical open/closed state (the `Open` DP, the Trigger's `IsPanelOpen`, the Panel's `IsOpen`, and the automation peer's `ExpandCollapseState`) is intentionally decoupled from animation completion: it flips synchronously on toggle so it stays correct and unit-testable even in a headless test host where nothing pumps the animation clock to completion. Only the cosmetic Height/Visibility transition is asynchronous.
 - Disabled is not reimplemented as its own named parameter: the root's native `IsEnabled` is reused, but WPF's `IsEnabled` does **not** automatically cascade through a `ContentControl`'s logical `Content` the way it does through a `Panel`'s `Children` (verified empirically; a bare `ContentControl.IsEnabled=false` does not disable a `Button` set as its `Content`, with or without `ApplyTemplate`). `SyncDescendants` therefore explicitly pushes `IsEnabled` down onto the Trigger, matching "Disabled blocks RequestSetOpenAsync."
+
+## M6 audit (2026-07-09)
+
+Adversarially re-verified `NaviusCollapsible`/`NaviusCollapsibleTrigger`/`NaviusCollapsiblePanel`
+against this doc's claims: the root-owns-state/discovers-descendants-via-logical-tree shape, the
+`IsEnabled`-does-not-auto-cascade claim (this is the empirical finding `accordion.md` and this doc
+both cite -- cross-checked and internally consistent between the two families), the dual-pattern
+`NaviusCollapsibleTriggerAutomationPeer` (Invoke + ExpandCollapse, mirroring `ExpanderAutomationPeer`),
+the root's plain `Group`-type peer with no data-state attribute (matching the contract's "root
+carries no data-* state" asymmetry), `KeepMounted`/`PanelHeightAnimator` mount lifecycle, and
+`HiddenUntilFound`'s documented drop. All check out against the code and `CollapsibleTests.cs`. No
+confirmed or plausible disparities found.

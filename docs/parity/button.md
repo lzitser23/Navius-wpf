@@ -60,3 +60,32 @@ Derive directly from `System.Windows.Controls.Button`, which already exposes a `
 - Whether `NativeButton` (currently a no-op parity flag with no rendering effect) should be ported at all, given WPF has no asChild/Slot equivalent to gate.
 - Whether `Type`'s three HTML values (`submit`/`button`/`reset`) should map to anything in the WPF port (e.g. `IsDefault`/`IsCancel` on `Button` approximate `submit`/`reset` inside a dialog) or be dropped entirely as meaningless outside a `<form>`.
 - Confirm whether "soft-disabled" (`FocusableWhenDisabled`) is exercised anywhere else in the primitives set (e.g. other families with the same pattern) so the WPF mechanism for it can be shared rather than reinvented per-control.
+
+## M6 audit (2026-07-09)
+
+**CONFIRMED disparity, fixed.** Prior to this audit, `NaviusButton` (`src/Navius.Wpf.Primitives/Controls/NaviusButton.cs`)
+was a bare `System.Windows.Controls.Button` subclass with zero custom properties: no `Disabled`,
+no `FocusableWhenDisabled`, no test file (`tests/Navius.Wpf.Tests/ButtonTests.cs` did not exist),
+and this doc had no "WPF implementation notes" section at all -- i.e. this family was shipped
+without the soft-disabled contract parameter ever being ported or the gap being disclosed.
+
+Fix: added `Disabled`/`FocusableWhenDisabled`/`IsSoftDisabled` (read-only) dependency properties.
+`Disabled && !FocusableWhenDisabled` sets native `IsEnabled=false` (hard-disabled, unchanged
+behavior for the common case). `Disabled && FocusableWhenDisabled` keeps `IsEnabled=true` (so the
+button stays focusable/tabbable) but overrides `OnClick()` to no-op -- `ButtonBase.OnClick()` is
+the single funnel for mouse, keyboard, and UIA-Invoke activation, so this one override suppresses
+all three. Added `NaviusButtonAutomationPeer : ButtonAutomationPeer` overriding `IsEnabledCore()`
+to report disabled to UIA when soft-disabled (the `aria-disabled`-while-focusable analog); this
+also makes WPF's stock `IInvokeProvider.Invoke()` throw `ElementNotEnabledException` rather than
+silently activating a soft-disabled button, which is the correct UIA behavior. Added an
+`IsSoftDisabled` opacity trigger to `Themes/Button.xaml` alongside the existing `IsEnabled=False`
+one, since the soft-disabled case doesn't get the free `IsEnabled` visual trigger. Added
+`tests/Navius.Wpf.Tests/ButtonTests.cs` (11 facts) covering default state, hard- vs soft-disabled
+`IsEnabled`/`IsSoftDisabled`, `OnClick` suppression (via reflection on the protected `ButtonBase.OnClick`,
+since that's the actual mouse/keyboard funnel), and the AutomationPeer's `IsEnabled()`/`IInvokeProvider.Invoke()`
+behavior in both states.
+
+`Type` and `NativeButton` remain unported, unchanged from before this audit -- the doc's own "Open
+questions" section already flags both as unresolved design decisions (not false claims), and native
+`Button` already exposes `IsDefault`/`IsCancel` as a partial, non-string-typed analog to `Type`'s
+`submit`/`reset` values, so this is left as a residual open question rather than a confirmed gap.

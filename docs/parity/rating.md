@@ -120,11 +120,17 @@ system and was dropped; the star is a single fixed `PathGeometry` in `Themes/Rat
 (`Navius.Rating.StarGeometry`), styleable but not swappable per-instance without editing the
 template.
 
-**Deviation -- half-zone clip is not RTL-mirrored**: the half-fill visual
-(`RectangleGeometry Rect="0,0,12,24"` clipping the left half of the 24x24 star box) always clips
-the geometric left half regardless of `FlowDirection`; keyboard arrow mirroring under `rtl` is
-correct (implemented in `HandleKey`), but a half-rated star's visual fill does not flip sides
-under RTL layout. Flagged here rather than fixed, given this wave's scope.
+**Correction (M6 RTL wave) -- half-zone clip mirroring claim was false**: this section previously
+flagged the half-fill visual (`RectangleGeometry Rect="0,0,12,24"` on the "Fill" `Path`) as "not
+RTL-mirrored". Pixel-rendered `RenderTargetBitmap` verification (see
+`RatingTests.HalfFill_ClipMirrorsUnderRtl_SolidInkOnOppositeSideFromLtr`) shows this was incorrect:
+WPF's automatic `FlowDirection` mirroring is applied once, as a whole, at the point where
+`FlowDirection` is explicitly set (here, directly on the templated `NaviusRatingItem`, or on
+whatever ancestor a consumer sets it on), and nothing in `Themes/Rating.xaml` opts a descendant out
+with its own local `FlowDirection`. That single mirror transform reflects everything the item
+renders, including the "Fill" `Path`'s local `Clip`, exactly the same as it already does for the
+star's outline glyph. No code change was needed; keyboard arrow mirroring under `rtl` (implemented
+in `HandleKey`) was already correct as previously documented.
 
 **Keyboard**: `NaviusRating.HandleKey(Key)` is `public` (not the more natural `internal`) so
 `RatingTests` can drive the full keyboard table (`Key.Up`/`Down`/`Left`/`Right` with RTL mirroring,
@@ -139,3 +145,14 @@ back both `NaviusRatingAutomationPeer.GetSelection()`/`ISelectionProvider` and
 `NaviusRatingItemAutomationPeer.Select()`/`ISelectionItemProvider`. `AutomationControlType.Group`
 is used for the root (not `List`), matching `NaviusRadioGroupAutomationPeer`'s existing precedent
 in this codebase, since WPF has no built-in radiogroup-of-buttons peer.
+
+## M6 audit (2026-07-09)
+
+Confirmed issue found + FIXED (the "Space is dead" bug class):
+- The contract keyboard table lists `Space / Enter` as activating (selecting) the focused star. In the web version that falls out of the item being a native `<button>`. In WPF, `NaviusRatingItem` derives from a plain `Control` (NaviusRatingItem.cs:24), has no keyboard handling of its own, and `NaviusRating.HandleKey` (NaviusRating.cs) had no `Space`/`Enter` case, so pressing Space or Enter on a focused star did NOTHING: the key was silently unhandled. This is exactly the dead-activation-key class the audit was told to hunt for.
+- Fix: added `Key.Space`/`Key.Enter` cases to `NaviusRating.HandleKey` (NaviusRating.cs:188-196) that select the star at `NaviusRatingMath.FocusIndex(Value, Max)` (always the roving-focused star) via `NaviusRatingMath.Select`, so re-selecting the current value clears it when `AllowClear`, matching native button-click semantics. Guarded by the existing `!IsEnabled || ReadOnly` early return.
+- Regression tests added to RatingTests.cs: `HandleKey_Space_SelectsFocusedStar_WhenUnrated`, `HandleKey_Enter_ReselectingFocusedStar_ClearsWhenAllowClear`, `HandleKey_Space_NoOpWhenReadOnly`.
+
+Plausible / residual (left for follow-up, not fixed): the half-fill visual clip is not RTL-mirrored (already flagged in the WPF implementation notes above) - the keyboard arrow mirroring under rtl IS correct, only the geometric half-star fill does not flip sides. Unchanged this wave.
+
+Verified TRUE under adversarial check: every other key in the contract table is genuinely wired in `HandleKey` and covered by a passing test (Up/Down/Left/Right with rtl mirroring, Home, End, Backspace, Delete, digit 1-9). `NaviusRatingMath` is exact-decimal and unit-tested. The automation peers (`NaviusRatingAutomationPeer` : ISelectionProvider = Group, `NaviusRatingItemAutomationPeer` : ISelectionItemProvider = RadioButton, with the asymmetric fractional-vs-whole `GetNameCore`) exist and are returned from `OnCreateAutomationPeer`, matching the doc.

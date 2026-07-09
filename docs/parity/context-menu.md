@@ -250,3 +250,13 @@ Only two new classes were needed:
 - *Modal*: not implemented. Native `Popup`'s default `StaysOpen=false`-equivalent dismiss-on-outside-click and Escape-to-close already cover the practical behavior; no scroll-lock equivalent was added.
 
 **Tests:** `tests/Navius.Wpf.Tests/ContextMenuTests.cs` (6 facts, all `[StaFact]`). Covers template application for the two new classes, that the reused Menu-family item classes still template correctly when only `Themes/ContextMenu.xaml` is merged, `Menu` assignment reflecting onto `FrameworkElement.ContextMenu`, `Disabled` toggling `ContextMenuService.IsEnabled`, and the Side/Align defaults. `RequestOpenAt`'s actual popup-opening behavior is exercised interactively via the gallery's `Pages/ContextMenuPage.xaml` "Open at a fixed point" button rather than a headless test, since it requires a live `PresentationSource` on the placement target.
+
+## M6 audit (2026-07-09)
+
+Adversarially re-verified `NaviusContextMenuTrigger`/`NaviusContextMenuPopup` against this doc's
+claims: `Menu` DP assignment reflecting onto `FrameworkElement.ContextMenu`, `Disabled` mapping to
+`ContextMenuService.SetIsEnabled` (not `IsEnabled`), `RequestOpenAt`'s `PlacementMode.Custom` +
+`PlacementMath`-based zero-size-rect anchoring, and `Side`/`Align` defaults (Right/Start). Confirmed
+the claimed 6 `[StaFact]` test count in `ContextMenuTests.cs` is accurate. No confirmed or
+plausible disparities found. (Note: this family reuses the Menu family's item classes verbatim, and
+Menu itself is outside this batch -- not independently re-audited here.)

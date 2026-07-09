@@ -115,3 +115,19 @@ Tier B: custom lookless control composing Tier-A pieces. WPF's `ToolBar` control
 - WPF's own `ToolBar` control brings overflow-menu behavior this component does not have; confirm the port intentionally avoids `ToolBar` and builds a plain `ItemsControl`-based container instead, to avoid accidentally inheriting overflow semantics that break parity.
 - The shared-roving-domain design (toggle-group items participate in the parent toolbar's Tab stop, not their own) needs the WPF `ToggleGroup`/`Toolbar` ports to share one focus-scope implementation; sequence this after (or together with) the standalone `ToggleGroup` port to avoid duplicating the roving logic.
 - No 1:1 UIA pattern exists for `role="toolbar"`; decide between reusing `ToolBarAutomationPeer` (semantically close but from a different-behaved native control) versus a custom `AutomationPeer` subclass.
+
+## M6 audit (2026-07-09)
+
+CONFIRMED CATALOG GAP, reported loudly per audit scope: **no WPF implementation of Toolbar exists at all.**
+
+Verified with a repo-wide search for every "toolbar" file naming variant (`find . -iname "*toolbar*"`, excluding `bin/`/`obj/`/`.git/`): the only match in the entire repository is this doc file itself, `docs/parity/toolbar.md`. Specifically confirmed absent:
+
+- No `src/Navius.Wpf.Primitives/Controls/Toolbar/` directory (every other ported family in this batch has one).
+- No `NaviusToolbar.cs`, `NaviusToolbarButton.cs`, `NaviusToolbarLink.cs`, `NaviusToolbarSeparator.cs`, `NaviusToolbarToggleGroup.cs`, or `NaviusToolbarToggleItem.cs` anywhere in the tree.
+- No `Themes/Toolbar.xaml` in `src/Navius.Wpf.Ui/Themes/`.
+- No `tests/Navius.Wpf.Tests/ToolbarTests.cs`.
+- This doc has no "WPF implementation notes" section at all (every implemented family in this catalog has one; its absence here is consistent with, and further confirms, the gap).
+
+This is not a partial/plausible gap, it is total: the family described above (root + button + link + separator + toggle-group + toggle-item, 5 parts) does not exist in Navius.Wpf in any form. Per audit instructions this gap is reported only, not built, in this pass.
+
+Residual/follow-up: when this family is eventually built, the shared-roving-domain design with `ToggleGroup` (open question 2 above) and the `Loop`-wrap `PreviewKeyDown` pattern already implemented for `NaviusToggleGroup` (see `docs/parity/toggle-group.md`, "WPF implementation notes") should be reused rather than re-derived, since `ToggleGroup`'s WPF port already answered the open questions this doc raises about roving focus and deselect-to-empty behavior.

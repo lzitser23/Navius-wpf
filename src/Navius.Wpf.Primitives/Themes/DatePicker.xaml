@@ -6,10 +6,9 @@
     xmlns:dp="clr-namespace:Navius.Wpf.Primitives.Controls.DatePicker">
 
     <!--
-        Not merged into Generic.xaml (out of scope: another family owns that file, same precedent
-        as Themes/Select.xaml). Pages that use the DatePicker family merge this dictionary
-        themselves:
-        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/DatePicker.xaml" />
+        Merged into Themes/Generic.xaml (M6 audit 2026-07-09: corrected; this file previously
+        claimed it was NOT merged there, which was stale/false. Generic.xaml already includes it).
+        Consumers do not need to merge this dictionary themselves.
 
         Hard rule for this wave: hairline borders, no DropShadowEffect, one-ink brand. The popup
         surface is the calendar's own card (1px Navius.Border, NO shadow).

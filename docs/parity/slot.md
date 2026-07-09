@@ -46,3 +46,25 @@ Tier C: reinterpret or retire. WPF has no DOM/attribute-splatting model comparab
 ## WPF implementation notes
 
 Retired; see docs/adr/0003-web-substrate-utilities-retired.md.
+
+## M6 audit (2026-07-09)
+
+### Retirement CONFIRMED (no code to fix)
+
+- **(a) The retirement is real, not an after-the-fact label on an accidental omission.** There is
+  no `Controls/Slot/` folder and no `NaviusSlot.cs` under `src/Navius.Wpf.Primitives`. A repo-wide
+  glob for `*Slot*` returns only the web Blazor project's files
+  (`src/Navius.Primitives/Components/Slot/NaviusSlot.razor`, `SlotMerge.cs`) plus
+  `NaviusPasswordToggleFieldSlot.razor`, none of them in the WPF assembly.
+- **(b) ADR-0003's reasoning is internally consistent with the observed composition patterns.**
+  Every family audited in this batch composes via `ControlTemplate` + named `TemplatePart`, never
+  DOM-style attribute splatting: `NaviusSwitch` declares `PART_Thumb`
+  (`Controls/Switch/NaviusSwitch.cs`), `NaviusSlider` declares `PART_Track`/`PART_Range`/`PART_Thumb`
+  (`Controls/Slider/NaviusSlider.cs:16-23`), and Tabs/Sortable subclass native `TabControl`/
+  `ItemsControl` with template-part styling. This matches the ADR's stated rationale that WPF
+  composes via "ControlTemplate + named template parts... not a generic slot component," so there is
+  nothing for a runtime attribute-merge primitive to do.
+- **(c) The parity doc's WPF implementation notes correctly point to the ADR** (the "Retired; see
+  docs/adr/0003..." line above).
+
+Verdict: retirement is correct and well-founded. No dispute.

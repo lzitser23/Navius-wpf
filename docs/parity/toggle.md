@@ -65,3 +65,32 @@ Tier A: derive from `System.Windows.Controls.Primitives.ToggleButton`. This maps
 - No custom `AutomationPeer` was needed: the native `ToggleButtonAutomationPeer` already reports `AutomationControlType.Button` with `TogglePattern`, matching the contract's `aria-pressed` semantics.
 - The controlled/uncontrolled `PressedChanged`/`DefaultPressed` duality collapses onto WPF's single bindable `IsChecked` dependency property (a `Binding` covers controlled use, a plain set covers uncontrolled use); this is the same simplification applied consistently across the other three families in this batch.
 - Theme: `Themes/Toggle.xaml` renders a bordered `Border` + `ContentPresenter` with triggers on `IsChecked` (pressed), `IsMouseOver`, `IsFocused`, and `IsEnabled` (disabled), using only the documented `Navius.*` DynamicResource tokens.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-check of the "Space is dead" bug class, the exact concern for a simple
+pressed-toggle button (siblings ToggleGroup/Toolbar had dead Space in the web audit).
+
+**Space AND Enter verdict: BOTH activate NaviusToggle, verified by real key simulation.** The
+prior tests only invoked `ButtonBase.OnClick` by reflection (`SimulateClick`), which proves the
+toggle-on-click path but NOT that a keydown reaches it. This audit hosted the toggle in a real
+`HwndSource` (so focus and the mouse-capture that `ButtonBase`'s Space handler performs actually
+work) and raised the real `KeyDown`/`KeyUp` routed events:
+
+- `SpaceKey_ActivatesToggle` (`ToggleTests.cs`): Space KeyDown+KeyUp flips `IsChecked` (native
+  `ButtonBase` press-on-down/click-on-up, `ClickMode.Release`). TRUE.
+- `EnterKey_ActivatesToggle` (`ToggleTests.cs`): Enter KeyDown flips `IsChecked`. Empirically
+  confirmed native `ButtonBase` DOES activate a focused ToggleButton on Enter (a hypothesised
+  "Enter is dead, only default buttons get Enter" disparity was tested and DISPROVEN: with an
+  experimental Enter handler disabled, Enter still toggled). TRUE, no code change needed.
+- `NonActivationKey_DoesNotToggle` (`ToggleTests.cs`): a letter key does not toggle, validating
+  the harness is not spuriously flipping state.
+
+Confirmed fixed: none (no disparity found).
+
+Verified TRUE: the keyboard table's "Space / Enter native activation" claim (`NaviusToggle.cs:13`
+derives `ToggleButton`, no custom key handling, and native `ButtonBase` handles both keys);
+`IsThreeState=false` (`NaviusToggle.cs:26`); `ToggleButtonAutomationPeer` reports
+`ControlType.Button` + `IToggleProvider` (existing `AutomationPeer_IsToggleButtonAutomationPeer_WithTogglePattern`).
+
+Plausible/residual: none.

@@ -132,3 +132,14 @@ Shipped as `Navius.Wpf.Primitives.Controls.NaviusScrollArea` (`src/Navius.Wpf.Pr
 - **Drag gesture.** Confirms the doc's second-to-last open question: the native `Thumb`/`Track` drag-to-scroll behavior supersedes the web's JS `dragScrollThumb` module entirely; nothing was ported, including RTL handling (WPF's own `FlowDirection` is the framework-level RTL mechanism per the WPF strategy note above, not a manual sign flip).
 - **`ForceMount` not ported.** No WPF equivalent DP; `Visibility="{TemplateBinding Computed*ScrollBarVisibility}"` is the only presence control, resolving the doc's remaining open question in favor of not needing an "always mounted, opacity 0" mode - `Opacity` already independently gates visibility from `Visibility`, so a consumer wanting a bar always in the visual tree can already get that by not needing `ForceMount` at all.
 - **No ARIA-parity gap to carry over.** The web family deliberately uses no ARIA roles anywhere (plain `div`s, relying on native `overflow: auto` semantics); the WPF port's native `ScrollViewer`/`ScrollBar` automation peers are a strict accessibility upgrade over that baseline, not a gap.
+
+## M6 audit (2026-07-09)
+
+Confirmed issues found + fixed: none.
+
+Plausible / residual: `Type` (auto/always/hover/scroll) and `ForceMount` remain deliberately not ported (documented above); no behavioral gap, just a smaller surface than the web contract. Unchanged.
+
+Verified TRUE under adversarial check:
+- No keyboard handler exists or is claimed. The family relies entirely on the base `ScrollViewer`'s native arrow/Page/Home/End scrolling via the standard part names (`PART_ScrollContentPresenter` etc.), so the "dead activation key" bug class is structurally inapplicable here (nothing in `NaviusScrollArea.cs` intercepts keys). This matches the web contract, which also attaches no `@onkeydown`.
+- `IsHovering` / `IsScrolling` are real read-only DPs driven by `OnMouseEnter`/`OnMouseLeave` and `OnScrollChanged` -> `HandleScrollActivity` (NaviusScrollArea.cs:76-117), with the `ScrollHideDelay`-driven `DispatcherTimer` reset, each proven by a passing test. `ScrollHideDelay` default is 600, matching the contract.
+- The re-templated overlay scrollbars + corner parts apply from the pack-URI theme (`Template_AppliesAndExposesScrollBarAndCornerParts`), and the native `ScrollViewerAutomationPeer`/`ScrollBarAutomationPeer` are a strict a11y upgrade over the web's role-free divs, as documented.

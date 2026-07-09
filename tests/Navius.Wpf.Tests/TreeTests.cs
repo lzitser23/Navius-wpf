@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
@@ -721,16 +722,143 @@ public class TreeTests
     }
 
     [StaFact]
-    public void ItemAutomationPeer_UsesNativeTreeViewItemPeer()
+    public void ItemAutomationPeer_IsCustomPeer_StillDerivesTreeViewItemPeer()
     {
-        // NaviusTreeItem intentionally doesn't override OnCreateAutomationPeer (see its doc
-        // comment / docs/parity/tree.md "WPF implementation notes"), so it gets the native
-        // TreeViewItemAutomationPeer -> ExpandCollapsePattern mapping for free.
+        // NaviusTreeItem now overrides OnCreateAutomationPeer to fix the SelectionItemPattern gap
+        // this test used to document (see NaviusTreeItemAutomationPeer's doc comment /
+        // docs/parity/tree.md "WPF implementation notes"), but it still derives
+        // TreeViewItemAutomationPeer so the native ExpandCollapsePattern mapping is unaffected.
         var item = new NaviusTreeItem();
 
         var peer = FrameworkElementAutomationPeer.CreatePeerForElement(item);
 
-        Assert.IsType<TreeViewItemAutomationPeer>(peer);
+        var custom = Assert.IsType<NaviusTreeItemAutomationPeer>(peer);
+        Assert.IsAssignableFrom<TreeViewItemAutomationPeer>(custom);
+    }
+
+    [StaFact]
+    public void ItemAutomationPeer_IsSelected_ReflectsNodeSelection_NotNativeIsSelected()
+    {
+        var (root, _, _, _, _, _, _) = BuildFixture();
+        var tree = BuildTree(NaviusTreeSelectionMode.Multiple, new[] { root });
+        var item = new NaviusTreeItem { DataContext = root };
+        var peer = (ISelectionItemProvider)new NaviusTreeItemAutomationPeer(item);
+
+        Assert.False(peer.IsSelected);
+
+        tree.SetSelectedValues(new object[] { root.Value });
+
+        Assert.True(peer.IsSelected);
+
+        tree.SetSelectedValues(Array.Empty<object>());
+
+        Assert.False(peer.IsSelected);
+    }
+
+    [StaFact]
+    public void ItemAutomationPeer_WithoutTreeAncestor_RoutedMembersNoOpInsteadOfThrowing()
+    {
+        var item = new NaviusTreeItem { DataContext = new NaviusTreeNode("a", "A") };
+        var peer = (ISelectionItemProvider)new NaviusTreeItemAutomationPeer(item);
+
+        Assert.Null(peer.SelectionContainer);
+        peer.AddToSelection();
+        peer.RemoveFromSelection();
+        peer.Select();
+    }
+
+    [StaFact]
+    public void ItemAutomationPeer_RaiseSelectionEvents_DoesNotThrowWithoutListener()
+    {
+        var item = new NaviusTreeItem();
+        var peer = new NaviusTreeItemAutomationPeer(item);
+
+        peer.RaiseSelectionEvents(true);
+        peer.RaiseSelectionEvents(false);
+    }
+
+    // --- NaviusTree: ISelectionItemProvider routing (AddToSelection/RemoveFromSelection/Select) ---
+
+    [StaFact]
+    public void SelectNodeExclusive_ReplacesSelectionWithJustThatNode_EvenInMultipleMode()
+    {
+        var (root, apple, fuji, gala, _, _, _) = BuildFixture();
+        var tree = BuildTree(NaviusTreeSelectionMode.Multiple, new[] { root });
+        tree.SetSelectedValues(new object[] { fuji.Value, gala.Value });
+
+        tree.SelectNodeExclusive(apple);
+
+        Assert.Equal(new object[] { apple.Value }, tree.SelectedValues);
+    }
+
+    [StaFact]
+    public void SelectNodeExclusive_DisabledNode_NoOp()
+    {
+        var (root, _, _, _, _, plantain, _) = BuildFixture();
+        var tree = BuildTree(NaviusTreeSelectionMode.Single, new[] { root });
+
+        tree.SelectNodeExclusive(plantain);
+
+        Assert.Empty(tree.SelectedValues);
+    }
+
+    [StaFact]
+    public void AddNodeToSelection_Multiple_AddsWithoutClearingExisting()
+    {
+        var (root, _, fuji, gala, _, _, _) = BuildFixture();
+        var tree = BuildTree(NaviusTreeSelectionMode.Multiple, new[] { root });
+        tree.SetSelectedValues(new object[] { fuji.Value });
+
+        tree.AddNodeToSelection(gala);
+
+        Assert.Equal(new object[] { fuji.Value, gala.Value }, tree.SelectedValues.OrderBy(v => v));
+    }
+
+    [StaFact]
+    public void AddNodeToSelection_Single_NoExistingSelection_Selects()
+    {
+        var (root, apple, _, _, _, _, _) = BuildFixture();
+        var tree = BuildTree(NaviusTreeSelectionMode.Single, new[] { root });
+
+        tree.AddNodeToSelection(apple);
+
+        Assert.Equal(new object[] { apple.Value }, tree.SelectedValues);
+    }
+
+    [StaFact]
+    public void AddNodeToSelection_Single_DifferentExistingSelection_Throws()
+    {
+        var (root, apple, fuji, _, _, _, _) = BuildFixture();
+        var tree = BuildTree(NaviusTreeSelectionMode.Single, new[] { root });
+        tree.SetSelectedValues(new object[] { apple.Value });
+
+        Assert.Throws<InvalidOperationException>(() => tree.AddNodeToSelection(fuji));
+    }
+
+    [StaFact]
+    public void RemoveNodeFromSelection_RemovesJustThatNode()
+    {
+        var (root, _, fuji, gala, _, _, _) = BuildFixture();
+        var tree = BuildTree(NaviusTreeSelectionMode.Multiple, new[] { root });
+        tree.SetSelectedValues(new object[] { fuji.Value, gala.Value });
+
+        tree.RemoveNodeFromSelection(fuji);
+
+        Assert.Equal(new object[] { gala.Value }, tree.SelectedValues);
+    }
+
+    [StaFact]
+    public void RemoveNodeFromSelection_NotSelected_NoOpDoesNotFireEvent()
+    {
+        var (root, _, fuji, gala, _, _, _) = BuildFixture();
+        var tree = BuildTree(NaviusTreeSelectionMode.Multiple, new[] { root });
+        tree.SetSelectedValues(new object[] { fuji.Value });
+        var fired = false;
+        tree.SelectedValuesChanged += (_, _) => fired = true;
+
+        tree.RemoveNodeFromSelection(gala);
+
+        Assert.False(fired);
     }
 
     // --- NaviusTreeItem: container plumbing ---
