@@ -1,0 +1,2460 @@
+{
+  "$schema": "./schema.json",
+  "name": "navius-wpf",
+  "items": [
+    {
+      "name": "accessible-icon",
+      "type": "registry:primitive",
+      "title": "AccessibleIcon",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/AccessibleIcon/NaviusAccessibleIcon.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/AccessibleIcon/NaviusAccessibleIcon.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/AccessibleIcon/NaviusAccessibleIconAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/AccessibleIcon/NaviusAccessibleIconAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/AccessibleIcon.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/AccessibleIcon.xaml"
+        }
+      ]
+    },
+    {
+      "name": "accordion",
+      "type": "registry:primitive",
+      "title": "Accordion",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Accordion/NaviusAccordion.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Accordion/NaviusAccordion.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Accordion/NaviusAccordionHeader.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Accordion/NaviusAccordionHeader.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Accordion/NaviusAccordionItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Accordion/NaviusAccordionItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Accordion/NaviusAccordionPanel.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Accordion/NaviusAccordionPanel.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Accordion/NaviusAccordionTrigger.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Accordion/NaviusAccordionTrigger.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Accordion.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Accordion.xaml"
+        }
+      ]
+    },
+    {
+      "name": "alert",
+      "type": "registry:styled",
+      "title": "Alert",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Alert.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Alert.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Alert/NaviusAlert.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Alert/NaviusAlert.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Alert/NaviusAlertDescription.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Alert/NaviusAlertDescription.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Alert/NaviusAlertTitle.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Alert/NaviusAlertTitle.cs"
+        }
+      ]
+    },
+    {
+      "name": "alert-dialog",
+      "type": "registry:primitive",
+      "title": "AlertDialog",
+      "dependencies": [],
+      "registryDependencies": [
+        "core",
+        "overlay-surface"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/AlertDialog/NaviusAlertDialog.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/AlertDialog/NaviusAlertDialog.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/AlertDialog.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/AlertDialog.xaml"
+        }
+      ]
+    },
+    {
+      "name": "anchored-popup",
+      "type": "registry:primitive",
+      "title": "AnchoredPopup",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NaviusAnchoredPopup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NaviusAnchoredPopup.cs"
+        }
+      ]
+    },
+    {
+      "name": "aspect-ratio",
+      "type": "registry:primitive",
+      "title": "AspectRatio",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/AspectRatio/NaviusAspectRatio.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/AspectRatio/NaviusAspectRatio.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/AspectRatio/NaviusAspectRatioMath.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/AspectRatio/NaviusAspectRatioMath.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/AspectRatio.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/AspectRatio.xaml"
+        }
+      ]
+    },
+    {
+      "name": "autocomplete",
+      "type": "registry:primitive",
+      "title": "Autocomplete",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Autocomplete/AutocompleteEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Autocomplete/AutocompleteEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Autocomplete/NaviusAutocomplete.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Autocomplete/NaviusAutocomplete.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Autocomplete/NaviusAutocompleteAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Autocomplete/NaviusAutocompleteAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Autocomplete/NaviusAutocompleteBase.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Autocomplete/NaviusAutocompleteBase.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Autocomplete.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Autocomplete.xaml"
+        }
+      ]
+    },
+    {
+      "name": "avatar",
+      "type": "registry:primitive",
+      "title": "Avatar",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Avatar/NaviusAvatar.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Avatar/NaviusAvatar.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Avatar/NaviusAvatarLoadStatus.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Avatar/NaviusAvatarLoadStatus.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Avatar.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Avatar.xaml"
+        }
+      ]
+    },
+    {
+      "name": "badge",
+      "type": "registry:styled",
+      "title": "Badge",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Badge.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Badge.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Badge/NaviusBadge.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Badge/NaviusBadge.cs"
+        }
+      ]
+    },
+    {
+      "name": "breadcrumb",
+      "type": "registry:styled",
+      "title": "Breadcrumb",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Breadcrumb.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Breadcrumb.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Breadcrumb/NaviusBreadcrumb.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Breadcrumb/NaviusBreadcrumb.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Breadcrumb/NaviusBreadcrumbItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Breadcrumb/NaviusBreadcrumbItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Breadcrumb/NaviusBreadcrumbSeparator.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Breadcrumb/NaviusBreadcrumbSeparator.cs"
+        }
+      ]
+    },
+    {
+      "name": "button",
+      "type": "registry:primitive",
+      "title": "Button",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NaviusButton.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NaviusButton.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Button.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Button.xaml"
+        }
+      ]
+    },
+    {
+      "name": "button-group",
+      "type": "registry:styled",
+      "title": "ButtonGroup",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/ButtonGroup.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.ButtonGroup.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/ButtonGroup/NaviusButtonGroup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/ButtonGroup/NaviusButtonGroup.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/ButtonGroup/NaviusButtonGroupItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/ButtonGroup/NaviusButtonGroupItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/ButtonGroup/RoundedClipConverter.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/ButtonGroup/RoundedClipConverter.cs"
+        }
+      ]
+    },
+    {
+      "name": "calendar",
+      "type": "registry:primitive",
+      "title": "Calendar",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Calendar/NaviusCalendar.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Calendar/NaviusCalendar.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Calendar.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Calendar.xaml"
+        }
+      ]
+    },
+    {
+      "name": "card",
+      "type": "registry:styled",
+      "title": "Card",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Card.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Card.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Card/NaviusCard.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Card/NaviusCard.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Card/NaviusCardContent.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Card/NaviusCardContent.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Card/NaviusCardDescription.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Card/NaviusCardDescription.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Card/NaviusCardFooter.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Card/NaviusCardFooter.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Card/NaviusCardHeader.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Card/NaviusCardHeader.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Card/NaviusCardTitle.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Card/NaviusCardTitle.cs"
+        }
+      ]
+    },
+    {
+      "name": "carousel",
+      "type": "registry:styled",
+      "title": "Carousel",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Carousel.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Carousel.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Carousel/CarouselDotConverter.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Carousel/CarouselDotConverter.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Carousel/CarouselEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Carousel/CarouselEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Carousel/NaviusCarousel.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Carousel/NaviusCarousel.cs"
+        }
+      ]
+    },
+    {
+      "name": "checkbox",
+      "type": "registry:primitive",
+      "title": "Checkbox",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Checkbox/NaviusCheckbox.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Checkbox/NaviusCheckbox.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Checkbox/NaviusCheckboxGroup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Checkbox/NaviusCheckboxGroup.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Checkbox/NaviusCheckboxIndicator.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Checkbox/NaviusCheckboxIndicator.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Checkbox.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Checkbox.xaml"
+        }
+      ]
+    },
+    {
+      "name": "collapsible",
+      "type": "registry:primitive",
+      "title": "Collapsible",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Collapsible/NaviusCollapsible.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Collapsible/NaviusCollapsible.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Collapsible/NaviusCollapsiblePanel.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Collapsible/NaviusCollapsiblePanel.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Collapsible/NaviusCollapsibleTrigger.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Collapsible/NaviusCollapsibleTrigger.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Collapsible.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Collapsible.xaml"
+        }
+      ]
+    },
+    {
+      "name": "color-picker",
+      "type": "registry:primitive",
+      "title": "ColorPicker",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ColorPicker/ColorMath.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ColorPicker/ColorMath.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ColorPicker/ColorPickerConverters.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ColorPicker/ColorPickerConverters.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ColorPicker/ColorPickerSteps.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ColorPicker/ColorPickerSteps.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ColorPicker/NaviusColorPicker.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ColorPicker/NaviusColorPicker.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ColorPicker/NaviusColorPickerAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ColorPicker/NaviusColorPickerAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/ColorPicker.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/ColorPicker.xaml"
+        }
+      ]
+    },
+    {
+      "name": "combobox",
+      "type": "registry:primitive",
+      "title": "Combobox",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Combobox/ComboboxEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Combobox/ComboboxEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Combobox/ComboboxRowVm.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Combobox/ComboboxRowVm.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Combobox/NaviusCombobox.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Combobox/NaviusCombobox.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Combobox/NaviusComboboxBase.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Combobox/NaviusComboboxBase.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Combobox.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Combobox.xaml"
+        }
+      ]
+    },
+    {
+      "name": "command-palette",
+      "type": "registry:styled",
+      "title": "CommandPalette",
+      "dependencies": [],
+      "registryDependencies": [
+        "autocomplete",
+        "core",
+        "overlay-surface"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/CommandPalette.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.CommandPalette.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/CommandPalette/BoolToVisibilityConverter.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/CommandPalette/BoolToVisibilityConverter.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/CommandPalette/CommandPaletteEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/CommandPalette/CommandPaletteEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/CommandPalette/CommandPaletteItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/CommandPalette/CommandPaletteItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/CommandPalette/NaviusCommandPalette.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/CommandPalette/NaviusCommandPalette.cs"
+        }
+      ]
+    },
+    {
+      "name": "context-menu",
+      "type": "registry:primitive",
+      "title": "ContextMenu",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ContextMenu/NaviusContextMenuPopup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ContextMenu/NaviusContextMenuPopup.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ContextMenu/NaviusContextMenuTrigger.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ContextMenu/NaviusContextMenuTrigger.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/ContextMenu.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/ContextMenu.xaml"
+        }
+      ]
+    },
+    {
+      "name": "core",
+      "type": "registry:core",
+      "title": "Shared overlay/positioning/theming base layer",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Internal/LogicalTreeWalker.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Internal/LogicalTreeWalker.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Internal/PanelHeightAnimator.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Internal/PanelHeightAnimator.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Internal/SegmentEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Internal/SegmentEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Internal/TimePickerOptions.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Internal/TimePickerOptions.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Internal/VisualAncestorWalker.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Internal/VisualAncestorWalker.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Overlays/OverlayBackdrop.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Overlays/OverlayBackdrop.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Overlays/OverlayCloseReason.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Overlays/OverlayCloseReason.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Overlays/OverlayClosingEventArgs.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Overlays/OverlayClosingEventArgs.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Overlays/OverlayDismissPolicy.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Overlays/OverlayDismissPolicy.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Overlays/OverlayOptions.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Overlays/OverlayOptions.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Overlays/OverlaySession.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Overlays/OverlaySession.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Overlays/OverlayStack.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Overlays/OverlayStack.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Positioning/AnchoredPlacementOptions.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Positioning/AnchoredPlacementOptions.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Positioning/PlacementAlign.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Positioning/PlacementAlign.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Positioning/PlacementMath.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Positioning/PlacementMath.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Positioning/PlacementResult.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Positioning/PlacementResult.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Positioning/PlacementSide.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Positioning/PlacementSide.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Theming/NaviusTheme.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Theming/NaviusTheme.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Theming/ThemeManager.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Theming/ThemeManager.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/OverlayBackdrop.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/OverlayBackdrop.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Tokens.Dark.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Tokens.Dark.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Tokens.Light.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Tokens.Light.xaml"
+        }
+      ]
+    },
+    {
+      "name": "currency-input",
+      "type": "registry:primitive",
+      "title": "CurrencyInput",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/CurrencyInput/CurrencyEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/CurrencyInput/CurrencyEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/CurrencyInput/NaviusCurrencyInput.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/CurrencyInput/NaviusCurrencyInput.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/CurrencyInput.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/CurrencyInput.xaml"
+        }
+      ]
+    },
+    {
+      "name": "data-grid",
+      "type": "registry:primitive",
+      "title": "DataGrid",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/DataGrid/NaviusDataGrid.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/DataGrid/NaviusDataGrid.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/DataGrid.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/DataGrid.xaml"
+        }
+      ]
+    },
+    {
+      "name": "date-input",
+      "type": "registry:primitive",
+      "title": "DateInput",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/DateInput/NaviusDateInput.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/DateInput/NaviusDateInput.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/DateInput/NaviusFieldSegment.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/DateInput/NaviusFieldSegment.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/DateInput/SegmentKeyMapper.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/DateInput/SegmentKeyMapper.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/DateInput.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/DateInput.xaml"
+        }
+      ]
+    },
+    {
+      "name": "date-picker",
+      "type": "registry:primitive",
+      "title": "DatePicker",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "calendar",
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/DatePicker/NaviusDatePicker.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/DatePicker/NaviusDatePicker.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/DatePicker/NaviusDatePickerBase.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/DatePicker/NaviusDatePickerBase.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/DatePicker.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/DatePicker.xaml"
+        }
+      ]
+    },
+    {
+      "name": "date-range-picker",
+      "type": "registry:primitive",
+      "title": "DateRangePicker",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "calendar",
+        "date-picker"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/DateRangePicker/DateRangeCommitEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/DateRangePicker/DateRangeCommitEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/DateRangePicker/NaviusDateRange.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/DateRangePicker/NaviusDateRange.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/DateRangePicker/NaviusDateRangePicker.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/DateRangePicker/NaviusDateRangePicker.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/DateRangePicker.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/DateRangePicker.xaml"
+        }
+      ]
+    },
+    {
+      "name": "dialog",
+      "type": "registry:primitive",
+      "title": "Dialog",
+      "dependencies": [],
+      "registryDependencies": [
+        "core",
+        "overlay-surface"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Dialog/NaviusDialog.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Dialog/NaviusDialog.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Dialog.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Dialog.xaml"
+        }
+      ]
+    },
+    {
+      "name": "drawer",
+      "type": "registry:primitive",
+      "title": "Drawer",
+      "dependencies": [],
+      "registryDependencies": [
+        "core",
+        "overlay-surface"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Drawer/DrawerGeometry.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Drawer/DrawerGeometry.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Drawer/NaviusDrawer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Drawer/NaviusDrawer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Drawer/NaviusDrawerSide.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Drawer/NaviusDrawerSide.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Drawer.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Drawer.xaml"
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "type": "registry:styled",
+      "title": "Empty",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Empty.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Empty.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Empty/NaviusEmpty.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Empty/NaviusEmpty.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Empty/NaviusEmptyDescription.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Empty/NaviusEmptyDescription.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Empty/NaviusEmptyMedia.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Empty/NaviusEmptyMedia.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Empty/NaviusEmptyTitle.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Empty/NaviusEmptyTitle.cs"
+        }
+      ]
+    },
+    {
+      "name": "field",
+      "type": "registry:primitive",
+      "title": "Field",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Field/FieldValidationMode.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Field/FieldValidationMode.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Field/NaviusField.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Field/NaviusField.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Field/NaviusFieldControl.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Field/NaviusFieldControl.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Field/NaviusFieldDescription.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Field/NaviusFieldDescription.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Field/NaviusFieldError.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Field/NaviusFieldError.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Field/NaviusFieldItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Field/NaviusFieldItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Field/NaviusFieldLabel.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Field/NaviusFieldLabel.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Field/NaviusInput.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Field/NaviusInput.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Field.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Field.xaml"
+        }
+      ]
+    },
+    {
+      "name": "fieldset",
+      "type": "registry:primitive",
+      "title": "Fieldset",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Fieldset/NaviusFieldset.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Fieldset/NaviusFieldset.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Fieldset/NaviusFieldsetLegend.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Fieldset/NaviusFieldsetLegend.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Fieldset.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Fieldset.xaml"
+        }
+      ]
+    },
+    {
+      "name": "file-upload",
+      "type": "registry:primitive",
+      "title": "FileUpload",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/FileUpload/FileUploadEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/FileUpload/FileUploadEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/FileUpload/IFilePicker.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/FileUpload/IFilePicker.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/FileUpload/NaviusFileUpload.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/FileUpload/NaviusFileUpload.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/FileUpload.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/FileUpload.xaml"
+        }
+      ]
+    },
+    {
+      "name": "form",
+      "type": "registry:primitive",
+      "title": "Form",
+      "dependencies": [],
+      "registryDependencies": [
+        "core",
+        "field"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Form/NaviusForm.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Form/NaviusForm.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Form/NaviusFormSubmit.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Form/NaviusFormSubmit.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Form.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Form.xaml"
+        }
+      ]
+    },
+    {
+      "name": "input-group",
+      "type": "registry:styled",
+      "title": "InputGroup",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/InputGroup.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.InputGroup.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/InputGroup/NaviusInputGroup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/InputGroup/NaviusInputGroup.cs"
+        }
+      ]
+    },
+    {
+      "name": "internal",
+      "type": "registry:styled",
+      "title": "Internal",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Internal/ReducedMotion.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Internal/ReducedMotion.cs"
+        }
+      ]
+    },
+    {
+      "name": "item",
+      "type": "registry:styled",
+      "title": "Item",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Item.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Item.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Item/NaviusItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Item/NaviusItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Item/NaviusItemContent.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Item/NaviusItemContent.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Item/NaviusItemDescription.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Item/NaviusItemDescription.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Item/NaviusItemMedia.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Item/NaviusItemMedia.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Item/NaviusItemTitle.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Item/NaviusItemTitle.cs"
+        }
+      ]
+    },
+    {
+      "name": "kbd",
+      "type": "registry:styled",
+      "title": "Kbd",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Kbd.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Kbd.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Kbd/NaviusKbd.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Kbd/NaviusKbd.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Kbd/NaviusKbdGroup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Kbd/NaviusKbdGroup.cs"
+        }
+      ]
+    },
+    {
+      "name": "label",
+      "type": "registry:primitive",
+      "title": "Label",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NaviusLabel.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NaviusLabel.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Label.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Label.xaml"
+        }
+      ]
+    },
+    {
+      "name": "masked-input",
+      "type": "registry:primitive",
+      "title": "MaskedInput",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/MaskedInput/MaskEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/MaskedInput/MaskEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/MaskedInput/NaviusMaskedInput.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/MaskedInput/NaviusMaskedInput.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/MaskedInput.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/MaskedInput.xaml"
+        }
+      ]
+    },
+    {
+      "name": "menu",
+      "type": "registry:primitive",
+      "title": "Menu",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menu/NaviusMenuCheckboxItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menu/NaviusMenuCheckboxItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menu/NaviusMenuGroupLabel.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menu/NaviusMenuGroupLabel.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menu/NaviusMenuItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menu/NaviusMenuItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menu/NaviusMenuItemBase.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menu/NaviusMenuItemBase.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menu/NaviusMenuPopup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menu/NaviusMenuPopup.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menu/NaviusMenuRadioItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menu/NaviusMenuRadioItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menu/NaviusMenuTrigger.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menu/NaviusMenuTrigger.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menu/NaviusSelectEventArgs.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menu/NaviusSelectEventArgs.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Menu.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Menu.xaml"
+        }
+      ]
+    },
+    {
+      "name": "menubar",
+      "type": "registry:primitive",
+      "title": "Menubar",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubar.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubar.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubarCheckboxItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubarCheckboxItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubarItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubarItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubarLabel.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubarLabel.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubarMenu.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubarMenu.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubarRadioGroup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubarRadioGroup.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubarRadioItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubarRadioItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubarSelectEventArgs.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubarSelectEventArgs.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubarSeparator.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubarSeparator.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Menubar/NaviusMenubarSubTrigger.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Menubar/NaviusMenubarSubTrigger.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Menubar.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Menubar.xaml"
+        }
+      ]
+    },
+    {
+      "name": "message-scroller",
+      "type": "registry:primitive",
+      "title": "MessageScroller",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/MessageScroller/MessageScrollerEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/MessageScroller/MessageScrollerEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/MessageScroller/NaviusMessageScroller.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/MessageScroller/NaviusMessageScroller.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/MessageScroller.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/MessageScroller.xaml"
+        }
+      ]
+    },
+    {
+      "name": "meter",
+      "type": "registry:primitive",
+      "title": "Meter",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Meter/NaviusMeter.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Meter/NaviusMeter.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Meter/NaviusMeterAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Meter/NaviusMeterAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Meter/NaviusMeterLabel.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Meter/NaviusMeterLabel.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Meter/NaviusMeterValue.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Meter/NaviusMeterValue.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Meter.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Meter.xaml"
+        }
+      ]
+    },
+    {
+      "name": "navigation-menu",
+      "type": "registry:primitive",
+      "title": "NavigationMenu",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NavigationMenuHostBase.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NavigationMenuHostBase.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenu.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenu.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuArrow.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuArrow.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuBackdrop.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuBackdrop.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuContent.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuContent.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuIcon.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuIcon.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuLink.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuLink.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuList.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuList.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuSelectEventArgs.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuSelectEventArgs.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuSub.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuSub.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuTrigger.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuTrigger.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NavigationMenu/NaviusNavigationMenuViewport.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NavigationMenu/NaviusNavigationMenuViewport.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/NavigationMenu.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/NavigationMenu.xaml"
+        }
+      ]
+    },
+    {
+      "name": "number-field",
+      "type": "registry:primitive",
+      "title": "NumberField",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NumberField/NaviusNumberField.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NumberField/NaviusNumberField.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NumberField/NaviusNumberFieldAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NumberField/NaviusNumberFieldAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NumberField/NaviusNumberFieldMath.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NumberField/NaviusNumberFieldMath.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/NumberField.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/NumberField.xaml"
+        }
+      ]
+    },
+    {
+      "name": "one-time-password-field",
+      "type": "registry:primitive",
+      "title": "OneTimePasswordField",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/OneTimePasswordField/NaviusOneTimePasswordField.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/OneTimePasswordField/NaviusOneTimePasswordField.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/OneTimePasswordField/NaviusOneTimePasswordFieldInput.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/OneTimePasswordField/NaviusOneTimePasswordFieldInput.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/OneTimePasswordField/OneTimePasswordBuffer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/OneTimePasswordField/OneTimePasswordBuffer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/OneTimePasswordField/OtpRoutedEventArgs.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/OneTimePasswordField/OtpRoutedEventArgs.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/OneTimePasswordField.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/OneTimePasswordField.xaml"
+        }
+      ]
+    },
+    {
+      "name": "overlay-surface",
+      "type": "registry:primitive",
+      "title": "OverlaySurface",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/OverlaySurface/NaviusOverlayLayer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/OverlaySurface/NaviusOverlayLayer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/OverlaySurface/NaviusOverlaySurfaceBase.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/OverlaySurface/NaviusOverlaySurfaceBase.cs"
+        }
+      ]
+    },
+    {
+      "name": "pagination",
+      "type": "registry:styled",
+      "title": "Pagination",
+      "dependencies": [],
+      "registryDependencies": [
+        "toggle-group"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Pagination.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Pagination.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Pagination/NaviusPagination.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Pagination/NaviusPagination.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Pagination/PaginationCurrentPageConverter.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Pagination/PaginationCurrentPageConverter.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Pagination/PaginationEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Pagination/PaginationEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Pagination/PaginationPageToken.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Pagination/PaginationPageToken.cs"
+        }
+      ]
+    },
+    {
+      "name": "password-toggle-field",
+      "type": "registry:primitive",
+      "title": "PasswordToggleField",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/PasswordToggleField/NaviusPasswordToggleField.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/PasswordToggleField/NaviusPasswordToggleField.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/PasswordToggleField/NaviusPasswordToggleFieldIcon.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/PasswordToggleField/NaviusPasswordToggleFieldIcon.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/PasswordToggleField/NaviusPasswordToggleFieldInput.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/PasswordToggleField/NaviusPasswordToggleFieldInput.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/PasswordToggleField/NaviusPasswordToggleFieldSlot.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/PasswordToggleField/NaviusPasswordToggleFieldSlot.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/PasswordToggleField/NaviusPasswordToggleFieldToggle.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/PasswordToggleField/NaviusPasswordToggleFieldToggle.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/PasswordToggleField/PasswordToggleFieldSlotBase.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/PasswordToggleField/PasswordToggleFieldSlotBase.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/PasswordToggleField.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/PasswordToggleField.xaml"
+        }
+      ]
+    },
+    {
+      "name": "popover",
+      "type": "registry:primitive",
+      "title": "Popover",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Popover/NaviusPopover.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Popover/NaviusPopover.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Popover.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Popover.xaml"
+        }
+      ]
+    },
+    {
+      "name": "preview-card",
+      "type": "registry:primitive",
+      "title": "PreviewCard",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/PreviewCard/NaviusPreviewCard.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/PreviewCard/NaviusPreviewCard.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/PreviewCard.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/PreviewCard.xaml"
+        }
+      ]
+    },
+    {
+      "name": "progress",
+      "type": "registry:primitive",
+      "title": "Progress",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Progress/NaviusProgress.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Progress/NaviusProgress.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Progress/NaviusProgressAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Progress/NaviusProgressAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Progress/NaviusProgressLabel.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Progress/NaviusProgressLabel.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Progress/NaviusProgressValue.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Progress/NaviusProgressValue.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Progress.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Progress.xaml"
+        }
+      ]
+    },
+    {
+      "name": "radio-group",
+      "type": "registry:primitive",
+      "title": "RadioGroup",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/RadioGroup/NaviusRadioGroup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/RadioGroup/NaviusRadioGroup.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/RadioGroup/NaviusRadioGroupIndicator.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/RadioGroup/NaviusRadioGroupIndicator.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/RadioGroup/NaviusRadioGroupItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/RadioGroup/NaviusRadioGroupItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/RadioGroup.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/RadioGroup.xaml"
+        }
+      ]
+    },
+    {
+      "name": "rating",
+      "type": "registry:primitive",
+      "title": "Rating",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Rating/NaviusRating.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Rating/NaviusRating.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Rating/NaviusRatingAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Rating/NaviusRatingAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Rating/NaviusRatingItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Rating/NaviusRatingItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Rating/NaviusRatingItemAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Rating/NaviusRatingItemAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Rating/NaviusRatingMath.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Rating/NaviusRatingMath.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Rating.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Rating.xaml"
+        }
+      ]
+    },
+    {
+      "name": "resizable",
+      "type": "registry:styled",
+      "title": "Resizable",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Resizable.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Resizable.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Resizable/NaviusResizablePanelGroup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Resizable/NaviusResizablePanelGroup.cs"
+        }
+      ]
+    },
+    {
+      "name": "scroll-area",
+      "type": "registry:primitive",
+      "title": "ScrollArea",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ScrollArea/NaviusScrollArea.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ScrollArea/NaviusScrollArea.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/ScrollArea.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/ScrollArea.xaml"
+        }
+      ]
+    },
+    {
+      "name": "select",
+      "type": "registry:primitive",
+      "title": "Select",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Select/NaviusSelect.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Select/NaviusSelect.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Select/NaviusSelectBase.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Select/NaviusSelectBase.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Select/NaviusSelectEventArgs.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Select/NaviusSelectEventArgs.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Select/NaviusSelectItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Select/NaviusSelectItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Select/SelectSelectionEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Select/SelectSelectionEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Select.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Select.xaml"
+        }
+      ]
+    },
+    {
+      "name": "separator",
+      "type": "registry:primitive",
+      "title": "Separator",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NaviusSeparator.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NaviusSeparator.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NaviusSeparatorAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NaviusSeparatorAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Separator.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Separator.xaml"
+        }
+      ]
+    },
+    {
+      "name": "sidebar",
+      "type": "registry:styled",
+      "title": "Sidebar",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Sidebar.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Sidebar.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Sidebar/NaviusSidebar.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Sidebar/NaviusSidebar.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Sidebar/NaviusSidebarItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Sidebar/NaviusSidebarItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Sidebar/NaviusSidebarSection.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Sidebar/NaviusSidebarSection.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Sidebar/SidebarNavigation.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Sidebar/SidebarNavigation.cs"
+        }
+      ]
+    },
+    {
+      "name": "skeleton",
+      "type": "registry:styled",
+      "title": "Skeleton",
+      "dependencies": [],
+      "registryDependencies": [
+        "internal"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Skeleton.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Skeleton.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Skeleton/NaviusSkeleton.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Skeleton/NaviusSkeleton.cs"
+        }
+      ]
+    },
+    {
+      "name": "slider",
+      "type": "registry:primitive",
+      "title": "Slider",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Slider/NaviusSlider.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Slider/NaviusSlider.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Slider/NaviusSliderKeyboard.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Slider/NaviusSliderKeyboard.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Slider.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Slider.xaml"
+        }
+      ]
+    },
+    {
+      "name": "sortable",
+      "type": "registry:primitive",
+      "title": "Sortable",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Sortable/NaviusSortable.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Sortable/NaviusSortable.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Sortable/NaviusSortableAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Sortable/NaviusSortableAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Sortable/NaviusSortableItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Sortable/NaviusSortableItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Sortable/NaviusSortableItemHandle.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Sortable/NaviusSortableItemHandle.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Sortable/NaviusSortableOrientation.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Sortable/NaviusSortableOrientation.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Sortable/SortableKeyboardReducer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Sortable/SortableKeyboardReducer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Sortable/SortableReorderEventArgs.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Sortable/SortableReorderEventArgs.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Sortable.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Sortable.xaml"
+        }
+      ]
+    },
+    {
+      "name": "spinner",
+      "type": "registry:styled",
+      "title": "Spinner",
+      "dependencies": [],
+      "registryDependencies": [
+        "internal"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Spinner.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Spinner.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Spinner/NaviusSpinner.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Spinner/NaviusSpinner.cs"
+        }
+      ]
+    },
+    {
+      "name": "split-button",
+      "type": "registry:styled",
+      "title": "SplitButton",
+      "dependencies": [],
+      "registryDependencies": [
+        "button-group",
+        "menu"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/SplitButton.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.SplitButton.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/SplitButton/NaviusSplitButton.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/SplitButton/NaviusSplitButton.cs"
+        }
+      ]
+    },
+    {
+      "name": "switch",
+      "type": "registry:primitive",
+      "title": "Switch",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Switch/NaviusSwitch.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Switch/NaviusSwitch.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Switch.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Switch.xaml"
+        }
+      ]
+    },
+    {
+      "name": "tabs",
+      "type": "registry:primitive",
+      "title": "Tabs",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tabs/NaviusTabItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tabs/NaviusTabItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tabs/NaviusTabs.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tabs/NaviusTabs.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Tabs.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Tabs.xaml"
+        }
+      ]
+    },
+    {
+      "name": "tag-input",
+      "type": "registry:primitive",
+      "title": "TagInput",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/TagInput/NaviusTagInput.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/TagInput/NaviusTagInput.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/TagInput/TagChipVm.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/TagInput/TagChipVm.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/TagInput/TagInputEngine.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/TagInput/TagInputEngine.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/TagInput.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/TagInput.xaml"
+        }
+      ]
+    },
+    {
+      "name": "time-input",
+      "type": "registry:primitive",
+      "title": "TimeInput",
+      "dependencies": [],
+      "registryDependencies": [
+        "core",
+        "date-input"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/TimeInput/NaviusTimeInput.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/TimeInput/NaviusTimeInput.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/TimeInput.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/TimeInput.xaml"
+        }
+      ]
+    },
+    {
+      "name": "time-picker",
+      "type": "registry:primitive",
+      "title": "TimePicker",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "core",
+        "time-input"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/TimePicker/NaviusTimePicker.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/TimePicker/NaviusTimePicker.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/TimePicker.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/TimePicker.xaml"
+        }
+      ]
+    },
+    {
+      "name": "timeline",
+      "type": "registry:styled",
+      "title": "Timeline",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/Timeline.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.Timeline.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Timeline/NaviusTimeline.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Timeline/NaviusTimeline.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Timeline/NaviusTimelineConnector.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Timeline/NaviusTimelineConnector.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Timeline/NaviusTimelineContent.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Timeline/NaviusTimelineContent.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Timeline/NaviusTimelineDescription.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Timeline/NaviusTimelineDescription.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Timeline/NaviusTimelineDot.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Timeline/NaviusTimelineDot.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Timeline/NaviusTimelineItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Timeline/NaviusTimelineItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/Timeline/NaviusTimelineTitle.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/Timeline/NaviusTimelineTitle.cs"
+        }
+      ]
+    },
+    {
+      "name": "toast",
+      "type": "registry:primitive",
+      "title": "Toast",
+      "dependencies": [],
+      "registryDependencies": [
+        "button"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/DispatcherToastTimer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/DispatcherToastTimer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/IToastTimer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/IToastTimer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/NaviusToast.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/NaviusToast.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/NaviusToastAlignment.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/NaviusToastAlignment.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/NaviusToastAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/NaviusToastAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/NaviusToastViewport.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/NaviusToastViewport.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/ToastActionSpec.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/ToastActionSpec.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/ToastHandle.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/ToastHandle.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/ToastManager.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/ToastManager.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/ToastObject.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/ToastObject.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/ToastOptions.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/ToastOptions.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/ToastPriority.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/ToastPriority.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toast/ToastType.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toast/ToastType.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Toast.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Toast.xaml"
+        }
+      ]
+    },
+    {
+      "name": "toggle",
+      "type": "registry:primitive",
+      "title": "Toggle",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NaviusToggle.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NaviusToggle.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Toggle.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Toggle.xaml"
+        }
+      ]
+    },
+    {
+      "name": "toggle-group",
+      "type": "registry:primitive",
+      "title": "ToggleGroup",
+      "dependencies": [],
+      "registryDependencies": [
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ToggleGroup/NaviusToggleGroup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ToggleGroup/NaviusToggleGroup.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/ToggleGroup/NaviusToggleGroupItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/ToggleGroup/NaviusToggleGroupItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/ToggleGroup.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/ToggleGroup.xaml"
+        }
+      ]
+    },
+    {
+      "name": "tooltip",
+      "type": "registry:primitive",
+      "title": "Tooltip",
+      "dependencies": [],
+      "registryDependencies": [
+        "anchored-popup",
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tooltip/NaviusTooltip.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tooltip/NaviusTooltip.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tooltip/NaviusTooltipService.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tooltip/NaviusTooltipService.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Tooltip.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Tooltip.xaml"
+        }
+      ]
+    },
+    {
+      "name": "tree",
+      "type": "registry:primitive",
+      "title": "Tree",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/BoolInverseConverter.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/BoolInverseConverter.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/NaviusTree.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/NaviusTree.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/NaviusTreeAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/NaviusTreeAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/NaviusTreeItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/NaviusTreeItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/NaviusTreeNode.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/NaviusTreeNode.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/NaviusTreeSelectionMode.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/NaviusTreeSelectionMode.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/TreeContainerLocator.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/TreeContainerLocator.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/TreeSelectionChangedEventArgs.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/TreeSelectionChangedEventArgs.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/TreeSelectionState.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/TreeSelectionState.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/TreeVisualHelpers.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/TreeVisualHelpers.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Tree.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Tree.xaml"
+        }
+      ]
+    }
+  ]
+}

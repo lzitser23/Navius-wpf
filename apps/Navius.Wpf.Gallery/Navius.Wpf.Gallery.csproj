@@ -3,6 +3,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Navius.Wpf.Primitives\Navius.Wpf.Primitives.csproj" />
     <ProjectReference Include="..\..\src\Navius.Wpf.Motion\Navius.Wpf.Motion.csproj" />
+    <ProjectReference Include="..\..\src\Navius.Wpf.Ui\Navius.Wpf.Ui.csproj" />
+    <ProjectReference Include="..\..\src\Navius.Wpf.Charts\Navius.Wpf.Charts.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

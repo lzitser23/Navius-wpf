@@ -1,0 +1,69 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.AvatarPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); this page merges it directly. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Avatar.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/AccessibleIcon.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top">
+        <TextBlock Text="Avatar"
+                   FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" />
+        <TextBlock Margin="0,4,0,24"
+                   MaxWidth="420"
+                   Text="An image with graceful fallback: the fallback shows while idle/loading/error."
+                   Foreground="{DynamicResource Navius.MutedForeground}"
+                   TextWrapping="Wrap" />
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+            <StackPanel Margin="0,0,24,0">
+                <TextBlock Text="No source (fallback)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+                <navius:NaviusAvatar AutomationProperties.AutomationId="AvatarDemo">
+                    <navius:NaviusAvatar.Fallback>
+                        <TextBlock Text="LZ" FontWeight="SemiBold" />
+                    </navius:NaviusAvatar.Fallback>
+                </navius:NaviusAvatar>
+            </StackPanel>
+
+            <StackPanel Margin="0,0,24,0">
+                <TextBlock Text="Broken source (error -&gt; fallback)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+                <navius:NaviusAvatar AutomationProperties.AutomationId="BrokenAvatar" Source="https://example.invalid/missing.png">
+                    <navius:NaviusAvatar.Fallback>
+                        <TextBlock Text="?" FontWeight="SemiBold" />
+                    </navius:NaviusAvatar.Fallback>
+                </navius:NaviusAvatar>
+            </StackPanel>
+
+            <StackPanel>
+                <TextBlock Text="Delayed fallback (300ms)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+                <navius:NaviusAvatar AutomationProperties.AutomationId="DelayedAvatar" DelayMs="300">
+                    <navius:NaviusAvatar.Fallback>
+                        <TextBlock Text="DL" FontWeight="SemiBold" />
+                    </navius:NaviusAvatar.Fallback>
+                </navius:NaviusAvatar>
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock Text="AccessibleIcon"
+                   FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" Margin="0,8,0,0" />
+        <TextBlock Margin="0,4,0,12"
+                   MaxWidth="420"
+                   Text="Wraps decorative icon content and applies an accessible name for screen readers."
+                   Foreground="{DynamicResource Navius.MutedForeground}"
+                   TextWrapping="Wrap" />
+        <navius:NaviusAccessibleIcon AutomationProperties.AutomationId="AccessibleIconDemo" Label="Settings">
+            <Path Width="20" Height="20" Stretch="Uniform"
+                  Fill="{DynamicResource Navius.Foreground}"
+                  Data="M12,8 A4,4 0 1 1 11.99,8 Z M19,12 L21,12 M3,12 L5,12 M12,3 L12,5 M12,19 L12,21" />
+        </navius:NaviusAccessibleIcon>
+    </StackPanel>
+</UserControl>

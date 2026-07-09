@@ -1,0 +1,76 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Typography: a keyed set of TextBlock styles matching the zits/shadcn type scale, wired
+        to the warm one-ink tokens. Purely presentational (no ARIA, no As-element override, since
+        WPF's TextBlock has no semantic-element concept to swap the way an HTML tag does): pick
+        the element (TextBlock, or the control that hosts your text) and apply the style by key.
+
+        Usage:
+            <TextBlock Text="Page title" Style="{StaticResource Navius.Typography.H1}" />
+            <TextBlock Text="Supporting copy." Style="{StaticResource Navius.Typography.Lead}" TextWrapping="Wrap" />
+
+        H2's web counterpart also carries a bottom border rule; that's dropped here since a
+        border isn't a TextBlock property (hierarchy already reads from weight/size, so the rule
+        wasn't load-bearing). Blockquote's left rule is dropped for the same reason: both are
+        deliberate simplifications, not oversights.
+    -->
+
+    <Style x:Key="Navius.Typography.H1" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="FontSize" Value="34" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="Navius.Typography.H2" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="Navius.Typography.H3" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="Navius.Typography.H4" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="Navius.Typography.Lead" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.MutedForeground}" />
+        <Setter Property="FontSize" Value="18" />
+    </Style>
+
+    <Style x:Key="Navius.Typography.Muted" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.MutedForeground}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="Navius.Typography.Code" TargetType="TextBlock">
+        <Setter Property="Background" Value="{DynamicResource Navius.Muted}" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="4,1" />
+    </Style>
+
+    <Style x:Key="Navius.Typography.Blockquote" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="FontStyle" Value="Italic" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Margin" Value="16,8,0,8" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+</ResourceDictionary>

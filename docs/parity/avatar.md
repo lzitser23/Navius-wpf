@@ -77,3 +77,14 @@ Build a lookless `Control` (e.g. `NaviusAvatar`) whose `ControlTemplate` overlay
 - Whether `DelayMs`'s cancellation-on-dispose semantics (via `CancellationTokenSource`) need to also cancel/restart if `DelayMs` itself changes after initialization; the Blazor source only starts the delay once in `OnInitialized` and never reacts to a later `DelayMs` parameter change.
 - Whether the WPF port should expose `Status` as a public bindable property (useful for consumer styling/triggers) even though the Blazor `AvatarContext.Status` setter is internal and not exposed as a public parameter on `NaviusAvatar`.
 - No `data-state`/status attribute is rendered anywhere in this family, unlike most other Navius primitives; confirm this is intentional (vs. a gap) before deciding whether the WPF version should add one for template-trigger convenience without breaking parity intent.
+
+## WPF implementation notes
+
+Implemented as `Navius.Wpf.Primitives.Controls.NaviusAvatar` (`src/Navius.Wpf.Primitives/Controls/Avatar/`),
+one lookless `Control` folding all three parts into named template parts (`PART_Image`), not three
+separate CLR types. `Status` is exposed as a normal public, settable `DependencyProperty` (resolving
+the doc's own open question in favor of "yes, public"), driven internally by `Source` changes via
+`BitmapImage.DownloadCompleted`/`DownloadFailed` plus the template `Image`'s `ImageFailed` routed
+event (WPF has no literal `ImageOpened` event; `DownloadCompleted` is the equivalent signal). The
+`DelayMs` fallback-suppression window is a `DispatcherTimer`. See `docs/parity/accessible-icon.md`
+for the sibling family that shares this page's gallery demo.

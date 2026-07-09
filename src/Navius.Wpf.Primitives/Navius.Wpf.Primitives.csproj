@@ -7,4 +7,16 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>Navius.Wpf.Primitives</PackageId>
+    <Version>0.1.0-preview.1</Version>
+    <Authors>Lior Zitser</Authors>
+    <Description>Headless, accessible WPF component primitives - the Navius.Wpf brain layer, ported from the Blazor Navius.Primitives library.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>wpf;components;primitives;accessibility;headless</PackageTags>
+    <!-- repo not pushed yet: placeholder until Navius.Wpf has a public remote -->
+    <RepositoryUrl>https://github.com/lzitser23/Navius-Wpf</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
 </Project>

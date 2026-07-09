@@ -48,3 +48,14 @@ Tier B (custom lookless control). There is no single native WPF control that mat
 
 - Whether the WPF port should still emit a real (but `Visibility="Collapsed"` or zero-size) label element for tooling that inspects visual tree text, or rely purely on `AutomationProperties.Name`.
 - Whether `Attributes`/arbitrary attribute forwarding has any WPF analog worth preserving (WPF has no free-form attribute bag equivalent to Blazor's `CaptureUnmatchedValues`).
+
+## WPF implementation notes
+
+Implemented as `Navius.Wpf.Primitives.Controls.NaviusAccessibleIcon` (`src/Navius.Wpf.Primitives/Controls/AccessibleIcon/`),
+a lightweight `ContentControl` that applies `AutomationProperties.Name` directly to its `Content`
+(when `Content` is a `DependencyObject`) and, via `NaviusAccessibleIconAutomationPeer`, excludes
+itself from both the control and content views of the UIA tree when `Label` is null/empty
+(`IsControlElementCore`/`IsContentElementCore` both false) -- the WPF analog of never rendering the
+hidden label span. `Attributes` forwarding was dropped per `docs/adr/0003-web-substrate-utilities-retired.md`'s
+reasoning (no free-form attribute bag in WPF). This is also the concrete replacement pattern for
+the retired `NaviusVisuallyHidden` (docs/parity/visually-hidden.md).

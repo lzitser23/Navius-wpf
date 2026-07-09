@@ -83,6 +83,12 @@
                         <ListBoxItem Content="Sortable" />
                         <ListBoxItem Content="DataGrid" />
                         <ListBoxItem Content="MessageScroller" />
+                        <ListBoxItem Content="Avatar" />
+                        <ListBoxItem Content="AspectRatio" />
+                        <ListBoxItem Content="ColorPicker" />
+                        <ListBoxItem Content="Charts" />
+                        <ListBoxItem Content="UiDisplay" />
+                        <ListBoxItem Content="UiComposite" />
                     </ListBox>
                 </StackPanel>
             </DockPanel>

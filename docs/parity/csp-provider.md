@@ -41,3 +41,7 @@ Content-Security-Policy nonces are a browser/HTML mechanism for allow-listing in
 
 - Does any WPF-side consumer code actually branch on `NaviusCspNonce`/`NaviusCspDisableStyleElements` (e.g., a shared component library targeting both Blazor and WPF), which would justify keeping a no-op stub for compile-time parity rather than dropping the component entirely?
 - If Navius WPF ever needs a comparable "the app requests we avoid a mechanism" signal (e.g., avoiding dynamic `XamlReader`/`BindingExpression` reflection in locked-down environments), is that a genuinely analogous concept worth modeling, or is this family simply inapplicable outside the browser?
+
+## WPF implementation notes
+
+Retired; see docs/adr/0003-web-substrate-utilities-retired.md.

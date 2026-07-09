@@ -1,0 +1,96 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:item="clr-namespace:Navius.Wpf.Ui.Item">
+
+    <Style TargetType="{x:Type item:NaviusItem}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type item:NaviusItem}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource Navius.Radius.Control}"
+                        Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Variant" Value="Outline">
+                <Setter Property="BorderBrush" Value="{DynamicResource Navius.Border}" />
+            </Trigger>
+            <Trigger Property="Variant" Value="Muted">
+                <Setter Property="Background" Value="{DynamicResource Navius.Muted}" />
+            </Trigger>
+            <Trigger Property="Size" Value="Small">
+                <Setter Property="Padding" Value="12,8" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="{x:Type item:NaviusItemMedia}">
+        <Setter Property="Margin" Value="0,0,12,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type item:NaviusItemMedia}">
+                    <Border x:Name="Root" Background="Transparent">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Variant" Value="Icon">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource Navius.Muted}" />
+                            <Setter TargetName="Root" Property="Width" Value="32" />
+                            <Setter TargetName="Root" Property="Height" Value="32" />
+                            <Setter TargetName="Root" Property="CornerRadius" Value="{DynamicResource Navius.Radius.Small}" />
+                        </Trigger>
+                        <Trigger Property="Variant" Value="Image">
+                            <Setter TargetName="Root" Property="Width" Value="40" />
+                            <Setter TargetName="Root" Property="Height" Value="40" />
+                            <Setter TargetName="Root" Property="CornerRadius" Value="{DynamicResource Navius.Radius.Small}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type item:NaviusItemContent}">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style TargetType="{x:Type item:NaviusItemTitle}">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type item:NaviusItemTitle}">
+                    <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" TextElement.FontSize="{TemplateBinding FontSize}" TextElement.FontWeight="{TemplateBinding FontWeight}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type item:NaviusItemDescription}">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.MutedForeground}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type item:NaviusItemDescription}">
+                    <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" TextElement.FontSize="{TemplateBinding FontSize}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>navius-wpf</AssemblyName>
+    <RootNamespace>Navius.Wpf.Cli</RootNamespace>
+    <PackageId>navius-wpf</PackageId>
+    <Version>0.1.0-preview.1</Version>
+    <Authors>Lior Zitser</Authors>
+    <Description>Copy-paste component registry CLI for Navius.Wpf.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>wpf;cli;dotnet-tool;components;registry</PackageTags>
+    <!-- repo not pushed yet: placeholder until Navius.Wpf has a public remote -->
+    <RepositoryUrl>https://github.com/lzitser23/Navius-Wpf</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <!-- installs as `dotnet tool install -g navius-wpf` and runs as `navius-wpf` -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>navius-wpf</ToolCommandName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Bundle the registry and the source it points at as package content, so `add` and
+      `registry-sync` still work when the tool is installed globally (no local repo checkout).
+      Mirrors the zits-helm Navius.Cli packaging pattern.
+    -->
+    <None Include="..\..\registry\**\*"
+          Pack="true"
+          PackagePath="tools\$(TargetFramework)\any\registry\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\src\Navius.Wpf.Primitives\**\*.cs;..\..\src\Navius.Wpf.Primitives\**\*.xaml"
+          Exclude="..\..\src\Navius.Wpf.Primitives\bin\**;..\..\src\Navius.Wpf.Primitives\obj\**"
+          Pack="true"
+          PackagePath="tools\$(TargetFramework)\any\registry-source\src\Navius.Wpf.Primitives\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\src\Navius.Wpf.Ui\**\*.cs;..\..\src\Navius.Wpf.Ui\**\*.xaml"
+          Exclude="..\..\src\Navius.Wpf.Ui\bin\**;..\..\src\Navius.Wpf.Ui\obj\**"
+          Pack="true"
+          PackagePath="tools\$(TargetFramework)\any\registry-source\src\Navius.Wpf.Ui\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

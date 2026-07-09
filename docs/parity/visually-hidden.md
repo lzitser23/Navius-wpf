@@ -45,3 +45,9 @@ Tier C: reinterpret. WPF has no CSS/DOM-visibility concept to replicate; visuall
 
 - Is a literal `NaviusVisuallyHidden` WPF control needed at all, or should each consuming WPF control just set `AutomationProperties.Name`/`AutomationProperties.LabeledBy` directly instead of wrapping visually-hidden text nodes (the pattern this component exists to support in Blazor, e.g. accessible-but-unstyled labels)?
 - If a control is built for structural/API parity (e.g. because ported markup literally contains `<NaviusVisuallyHidden>` wrappers), confirm `Opacity="0"` + zero `Width`/`Height` (which stays in the UIA tree) is the right primitive versus `Visibility.Hidden` (which does NOT get pruned from the visual tree layout-wise but WPF's automation framework treatment differs from web `visibility:hidden`); this needs verification against actual screen-reader (Narrator/NVDA+UIA) behavior before committing to an approach.
+
+## WPF implementation notes
+
+Retired; see docs/adr/0003-web-substrate-utilities-retired.md. `NaviusAccessibleIcon`
+(docs/parity/accessible-icon.md) is the concrete example of the replacement pattern: it sets
+`AutomationProperties.Name` directly rather than wrapping a visually-hidden text node.

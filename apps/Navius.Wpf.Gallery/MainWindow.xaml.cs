@@ -76,6 +76,12 @@ public partial class MainWindow : Window
             "Sortable" => new SortablePage(),
             "DataGrid" => new DataGridPage(),
             "MessageScroller" => new MessageScrollerPage(),
+            "Avatar" => new AvatarPage(),
+            "AspectRatio" => new AspectRatioPage(),
+            "ColorPicker" => new ColorPickerPage(),
+            "Charts" => new ChartsPage(),
+            "UiDisplay" => new UiDisplayPage(),
+            "UiComposite" => new UiCompositePage(),
             _ => null,
         };
     }

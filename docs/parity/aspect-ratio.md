@@ -50,3 +50,12 @@ Tier A (derive from a `Viewbox`-adjacent layout, or more precisely a custom `Pan
 - Whether the WPF port needs an equivalent of `ForwardedAttributes`/arbitrary-attribute-forwarding at all, given WPF's `DependencyProperty` model has no free-form attribute bag comparable to Blazor's `CaptureUnmatchedValues`; likely a no-op or replaced by standard WPF property inheritance/binding on the custom control itself.
 - Whether the ratio should be exposed as a `double` (`Width/Height`) as in the source, or as a more WPF-idiomatic `double Ratio` plus convenience static values, matching call sites elsewhere in the port.
 - Whether `EffectiveRatio`'s silent fallback to `1.0` for non-positive `Ratio` values should be preserved as-is or should assert/throw in the WPF port (the source is silent about invalid input beyond this fallback).
+
+## WPF implementation notes
+
+Implemented as `Navius.Wpf.Primitives.Controls.NaviusAspectRatio` (`src/Navius.Wpf.Primitives/Controls/AspectRatio/`),
+a `ContentControl` overriding `MeasureOverride`. The fallback silently preserves `1.0` for
+non-positive `Ratio` as the doc's open question suggested. The width-vs-height-driven box math is
+factored into the pure `NaviusAspectRatioMath.ComputeDesiredSize`, unit-tested headless with plain
+`[Fact]` (no live `Control`/`Application` needed). No `ForwardedAttributes`/style-merge equivalent
+was added; the single child simply fills the computed box via the default `ContentPresenter`.

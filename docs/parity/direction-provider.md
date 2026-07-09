@@ -46,3 +46,7 @@ WPF has a native `FlowDirection` property (`System.Windows.FrameworkElement.Flow
 - The Blazor component accepts any string for `Dir` with no validation; the WPF port needs a decision on whether to use the native `FlowDirection` enum (`LeftToRight`/`RightToLeft`) directly, or preserve a string API for lower-level parity.
 - Since `NaviusDirectionProvider` doesn't render an element and doesn't itself apply the direction to anything, the WPF equivalent needs a product decision on whether it becomes a real component at all, or is simply documented as "set `FlowDirection` on the root/container" with no dedicated primitive.
 - No code was found showing whether/how anchored-popover placement logic (mentioned in the e2e RTL test) reads this cascaded direction from within the Navius.Primitives family folder itself; that consumption logic lives in the Popover/positioning family, so its exact RTL math dependency on this value could not be verified from the DirectionProvider folder alone.
+
+## WPF implementation notes
+
+Retired; see docs/adr/0003-web-substrate-utilities-retired.md.

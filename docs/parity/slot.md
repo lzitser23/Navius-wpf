@@ -42,3 +42,7 @@ Tier C: reinterpret or retire. WPF has no DOM/attribute-splatting model comparab
 - Does the WPF port need an `asChild`-equivalent at all, or can consumers just use `ContentPresenter`/`ControlTemplate` styling instead?
 - If an equivalent is wanted, is it a markup extension, an attached-property merge helper, or something templated per-control (Tier B custom control per consuming primitive) rather than one generic `Slot`?
 - `SlotMerge`'s `class`/`style` merge logic has no natural WPF analog (no string class attribute, no inline style string); confirm no dependents assume string-based style merging survives the port.
+
+## WPF implementation notes
+
+Retired; see docs/adr/0003-web-substrate-utilities-retired.md.

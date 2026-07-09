@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Navius.Wpf.Primitives\Navius.Wpf.Primitives.csproj" />
+    <ProjectReference Include="..\..\src\Navius.Wpf.Ui\Navius.Wpf.Ui.csproj" />
   </ItemGroup>
 
 </Project>

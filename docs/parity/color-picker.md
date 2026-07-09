@@ -163,4 +163,19 @@ Tier B (custom lookless control). The picker is a compound of a 2D pointer-drive
 - Should the WPF port keep the exact HSVA-as-source-of-truth model (`ColorPickerContext.H/S/V/A`) or use WPF's `System.Windows.Media.Color` (ARGB bytes) as the canonical model and derive HSV only for the UI, given the two round-trip differently at the edges (e.g. hue at S=0 or V=0 is undefined in HSV but the Blazor code stores it anyway)?
 - The `Area`'s hidden brightness (y) slider is a real, separately focusable `role="slider"` element purely for screen-reader access to the second axis; does the WPF port need an equivalent hidden-but-focusable `AutomationPeer`-only element, or can `RangeValuePattern` on a single 2D `Thumb` expose both axes some other way (e.g. two `AutomationPeer`s over one visual)?
 - `ColorMath.TryParse`/`Format` accept and emit hex/rgb(a)/hsl(a) text; is text-format parity (exact string formats, e.g. `"rgba({r}, {g}, {b}, {a})"` with a space after each comma) required for the WPF port, or is only the underlying color value expected to match?
-- `HiddenUntilFound`-style browser find integration does not apply here, but the swatch listbox's roving-tabindex/APG-listbox pattern (`SwatchesContext`) needs an explicit WPF decision: reuse `ListBox`'s native keyboard navigation (which already does roving selection) versus reimplementing the exact Home/End-on-container + Arrow-on-item split seen in the Blazor code.
+- `HiddenUntilFound`-style browser find integration does not apply here, but the swatch listbox's roving-tabindex/APG-listbox pattern (`SwatchesContext`) needs an explicit WPF decision: reuse `ListBox`'s native keyboard navigation (which already does roving selection) versus reimplementing the exact Home/End-on-item split seen in the Blazor code.
+
+## WPF implementation notes
+
+Implemented as `Navius.Wpf.Primitives.Controls.NaviusColorPicker` (`src/Navius.Wpf.Primitives/Controls/ColorPicker/`):
+one lookless `Control` owning `Hue`/`Saturation`/`Brightness`/`Alpha` as dependency properties
+directly (the HSVA-as-source-of-truth model was kept, resolving that open question), with named
+template parts for the Area/Hue/Alpha `Thumb`s, the hex `TextBox`, and a `ListBox` for swatches
+(reusing native `ListBox` keyboard navigation rather than reimplementing the roving-tabindex
+coordinator). Pointer drag uses `Thumb.DragDelta`, not a 2D pointer tracker. Pure conversion math
+(`ColorMath`) and pure keyboard step math (`ColorPickerSteps`) are unit-tested headless with plain
+`[Fact]`. The Area's screen-reader-only brightness thumb is not ported as a second hidden peer;
+this port exposes one 2D thumb with one `AutomationPeer`. The peer implements `IValueProvider` as
+read-only, surfacing `HexValue` (see `NaviusColorPickerAutomationPeer`) since the hex text lives
+only in a template `TextBox` that exposes nothing over UIA on its own. `Name`/hidden-bubble-input
+form participation is dropped (no WPF form-submission model to mirror).

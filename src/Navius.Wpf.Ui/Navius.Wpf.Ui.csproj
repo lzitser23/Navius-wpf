@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows;net10.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Navius.Wpf.Ui</PackageId>
+    <Version>0.1.0-preview.1</Version>
+    <Authors>Lior Zitser</Authors>
+    <Description>Styled, themeable WPF components built on Navius.Wpf.Primitives.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>wpf;components;ui;styled</PackageTags>
+    <!-- repo not pushed yet: placeholder until Navius.Wpf has a public remote -->
+    <RepositoryUrl>https://github.com/lzitser23/Navius-Wpf</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Navius.Wpf.Primitives\Navius.Wpf.Primitives.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -55,6 +55,10 @@
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Sortable.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/DataGrid.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/MessageScroller.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/AspectRatio.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/AccessibleIcon.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Avatar.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/ColorPicker.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

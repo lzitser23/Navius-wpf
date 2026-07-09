@@ -13,6 +13,10 @@ public static class ThemeManager
 
     public static NaviusTheme Current { get; private set; } = NaviusTheme.Light;
 
+    /// <summary>Raised after a token dictionary swap; consumers that resolve token VALUES
+    /// in code (rather than via DynamicResource) re-resolve on this signal.</summary>
+    public static event EventHandler<NaviusTheme>? ThemeChanged;
+
     /// <summary>Applies the theme application-wide.</summary>
     public static void Apply(NaviusTheme theme) => Apply(theme, Application.Current.Resources);
 
@@ -31,6 +35,7 @@ public static class ThemeManager
 
         scope.MergedDictionaries.Add(new ResourceDictionary { Source = TokenUri(theme) });
         Current = theme;
+        ThemeChanged?.Invoke(null, theme);
     }
 
     private static Uri TokenUri(NaviusTheme theme) => new(

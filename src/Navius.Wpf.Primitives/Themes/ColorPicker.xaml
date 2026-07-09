@@ -1,0 +1,230 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Navius.Wpf.Primitives.Controls">
+
+    <controls:HueToColorConverter x:Key="Navius.ColorPicker.HueToColorConverter" />
+    <controls:HsvaToColorConverter x:Key="Navius.ColorPicker.HsvaToColorConverter" />
+    <controls:ColorStringToColorConverter x:Key="Navius.ColorPicker.ColorStringToColorConverter" />
+
+    <!-- Hue thumb's own track background: the pure-hue rainbow (HueCss's spirit, the base fill the Area gradient overlays are laid on top of). -->
+    <LinearGradientBrush x:Key="Navius.ColorPicker.RainbowBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#FF0000" Offset="0.0" />
+        <GradientStop Color="#FFFF00" Offset="0.1667" />
+        <GradientStop Color="#00FF00" Offset="0.3333" />
+        <GradientStop Color="#00FFFF" Offset="0.5" />
+        <GradientStop Color="#0000FF" Offset="0.6667" />
+        <GradientStop Color="#FF00FF" Offset="0.8333" />
+        <GradientStop Color="#FF0000" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Area overlay 1: white (full saturation=0) -> transparent, left to right. -->
+    <LinearGradientBrush x:Key="Navius.ColorPicker.SaturationOverlayBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#FFFFFFFF" Offset="0.0" />
+        <GradientStop Color="#00FFFFFF" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Area overlay 2: transparent -> black (brightness=0), top to bottom. -->
+    <LinearGradientBrush x:Key="Navius.ColorPicker.BrightnessOverlayBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+        <GradientStop Color="#00000000" Offset="0.0" />
+        <GradientStop Color="#FF000000" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <DrawingBrush x:Key="Navius.ColorPicker.CheckerboardBrush"
+                  Viewport="0,0,8,8" ViewportUnits="Absolute" TileMode="Tile">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#FFFFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,8,8" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#FFCCCCCC">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="0,0,4,4" />
+                            <RectangleGeometry Rect="4,4,4,4" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <!-- Small ring-style thumb shared by the Area/Hue/Alpha tracks: a dark ring over a light
+         ring so it reads against any track color underneath, with a focus ring on keyboard focus. -->
+    <Style x:Key="Navius.ColorPicker.RingThumbStyle" TargetType="{x:Type Thumb}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Height" Value="14" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Grid>
+                        <Ellipse Stroke="Black" StrokeThickness="1" Margin="0" Opacity="0.4" />
+                        <Ellipse Stroke="White" StrokeThickness="2" Margin="1" />
+                        <Ellipse x:Name="FocusRing" Stroke="{DynamicResource Navius.Ring}" StrokeThickness="2" Margin="-2" Visibility="Collapsed" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="FocusRing" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <DataTemplate x:Key="Navius.ColorPicker.SwatchItemTemplate">
+        <Border Width="22" Height="22" CornerRadius="{DynamicResource Navius.Radius.Small}"
+                BorderBrush="{DynamicResource Navius.Border}" BorderThickness="1"
+                AutomationProperties.Name="{Binding}">
+            <Border.Background>
+                <SolidColorBrush Color="{Binding Converter={StaticResource Navius.ColorPicker.ColorStringToColorConverter}}" />
+            </Border.Background>
+        </Border>
+    </DataTemplate>
+
+    <Style TargetType="{x:Type controls:NaviusColorPicker}">
+        <Setter Property="Width" Value="220" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:NaviusColorPicker}">
+                    <StackPanel x:Name="Root">
+                        <!-- Area: 2D saturation (x) / brightness (y) surface. -->
+                        <Grid x:Name="PART_Area" Height="140" ClipToBounds="True" Margin="0,0,0,10">
+                            <Border CornerRadius="{DynamicResource Navius.Radius.Control}" ClipToBounds="True">
+                                <Grid>
+                                    <Border>
+                                        <Border.Background>
+                                            <SolidColorBrush Color="{Binding Hue, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Navius.ColorPicker.HueToColorConverter}}" />
+                                        </Border.Background>
+                                    </Border>
+                                    <Rectangle Fill="{StaticResource Navius.ColorPicker.SaturationOverlayBrush}" />
+                                    <Rectangle Fill="{StaticResource Navius.ColorPicker.BrightnessOverlayBrush}" />
+                                </Grid>
+                            </Border>
+                            <Canvas>
+                                <Thumb x:Name="PART_AreaThumb" Style="{StaticResource Navius.ColorPicker.RingThumbStyle}"
+                                       AutomationProperties.Name="Color" />
+                            </Canvas>
+                        </Grid>
+
+                        <!-- Hue slider. -->
+                        <Grid x:Name="PART_HueTrack" Height="14" Margin="0,0,0,10">
+                            <Border CornerRadius="{DynamicResource Navius.Radius.Small}" Background="{StaticResource Navius.ColorPicker.RainbowBrush}" ClipToBounds="True" />
+                            <Canvas>
+                                <Thumb x:Name="PART_HueThumb" Style="{StaticResource Navius.ColorPicker.RingThumbStyle}"
+                                       AutomationProperties.Name="Hue" />
+                            </Canvas>
+                        </Grid>
+
+                        <!-- Alpha slider: hidden entirely unless AlphaEnabled. -->
+                        <Grid x:Name="AlphaRow" Height="14" Margin="0,0,0,10">
+                            <Grid x:Name="PART_AlphaTrack">
+                                <Border CornerRadius="{DynamicResource Navius.Radius.Small}" Background="{StaticResource Navius.ColorPicker.CheckerboardBrush}" ClipToBounds="True" />
+                                <Border CornerRadius="{DynamicResource Navius.Radius.Small}" ClipToBounds="True">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                            <GradientStop Offset="0" Color="Transparent" />
+                                            <GradientStop Offset="1">
+                                                <GradientStop.Color>
+                                                    <MultiBinding Converter="{StaticResource Navius.ColorPicker.HsvaToColorConverter}">
+                                                        <Binding Path="Hue" RelativeSource="{RelativeSource TemplatedParent}" />
+                                                        <Binding Path="Saturation" RelativeSource="{RelativeSource TemplatedParent}" />
+                                                        <Binding Path="Brightness" RelativeSource="{RelativeSource TemplatedParent}" />
+                                                    </MultiBinding>
+                                                </GradientStop.Color>
+                                            </GradientStop>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                                <Canvas>
+                                    <Thumb x:Name="PART_AlphaThumb" Style="{StaticResource Navius.ColorPicker.RingThumbStyle}"
+                                           AutomationProperties.Name="Opacity" />
+                                </Canvas>
+                            </Grid>
+                        </Grid>
+
+                        <!-- Hex field + current-color preview. -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="28" Height="28" Margin="0,0,8,0"
+                                    CornerRadius="{DynamicResource Navius.Radius.Small}"
+                                    BorderBrush="{DynamicResource Navius.Border}" BorderThickness="1"
+                                    Background="{StaticResource Navius.ColorPicker.CheckerboardBrush}">
+                                <Border CornerRadius="{DynamicResource Navius.Radius.Small}">
+                                    <Border.Background>
+                                        <SolidColorBrush>
+                                            <SolidColorBrush.Color>
+                                                <MultiBinding Converter="{StaticResource Navius.ColorPicker.HsvaToColorConverter}">
+                                                    <Binding Path="Hue" RelativeSource="{RelativeSource TemplatedParent}" />
+                                                    <Binding Path="Saturation" RelativeSource="{RelativeSource TemplatedParent}" />
+                                                    <Binding Path="Brightness" RelativeSource="{RelativeSource TemplatedParent}" />
+                                                    <Binding Path="Alpha" RelativeSource="{RelativeSource TemplatedParent}" />
+                                                </MultiBinding>
+                                            </SolidColorBrush.Color>
+                                        </SolidColorBrush>
+                                    </Border.Background>
+                                </Border>
+                            </Border>
+                            <TextBox x:Name="PART_HexField" Grid.Column="1"
+                                     Padding="8,6"
+                                     Background="{DynamicResource Navius.Background}"
+                                     Foreground="{DynamicResource Navius.Foreground}"
+                                     BorderBrush="{DynamicResource Navius.Input}" BorderThickness="1"
+                                     AutomationProperties.Name="Hex color" />
+                        </Grid>
+
+                        <!-- Swatches. -->
+                        <ListBox x:Name="PART_Swatches"
+                                 ItemsSource="{Binding Colors, RelativeSource={RelativeSource TemplatedParent}}"
+                                 ItemTemplate="{StaticResource Navius.ColorPicker.SwatchItemTemplate}"
+                                 Background="Transparent" BorderThickness="0"
+                                 AutomationProperties.Name="Swatches">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="{x:Type ListBoxItem}">
+                                    <Setter Property="Margin" Value="0,0,4,4" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                <Border x:Name="SelectionRing" BorderThickness="2" BorderBrush="Transparent" CornerRadius="{DynamicResource Navius.Radius.Small}">
+                                                    <ContentPresenter />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="SelectionRing" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="AlphaEnabled" Value="False">
+                            <Setter TargetName="AlphaRow" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
