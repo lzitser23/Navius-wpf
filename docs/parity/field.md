@@ -160,3 +160,18 @@ Deltas and resolved open questions:
 - The `ControlProps`/@attributes splat pattern is replaced by WPF's ordinary Content model: put any control inside `NaviusFieldControl` and the field registers it; nothing needs to be splatted.
 - `NaviusFieldValidity` (render-prop exposing the validity snapshot) has no separate control: consumers bind directly to the public read-only DPs, which is the idiomatic WPF equivalent of a render prop.
 - `NaviusFieldError` carries `AutomationProperties.LiveSetting=Assertive`, the UIA analog of `role="alert"`.
+
+## M6 audit (2026-07-09)
+
+Adversarial parity audit of the WPF port against this doc. Default assumption: every claim FALSE until proven at file:line.
+
+CONFIRMED (fixed):
+
+- Description accessibility association was missing. This doc's WPF port notes (the "GUID id registry is dropped entirely" paragraph) claimed "WPF label/description associations use element references (Label.Target, AutomationProperties)", naming the description. In reality only the label was associated (via `NaviusField.WireDescendants` setting `NaviusFieldLabel.Target`); the description had no accessibility wiring anywhere in the family (no `AutomationProperties.HelpText`, and WPF has no `DescribedBy`), so the web contract's `aria-describedby` description behavior was silently dropped. Fixed in code: `WireDescendants` now sets `AutomationProperties.HelpText` on the registered control from the first `NaviusFieldDescription` descendant's string content (the WPF UIA analog of `aria-describedby` supplementary text). Regression test: `FieldTests.FieldDescription_IsAssociatedWithControl_ViaAutomationHelpText`.
+
+Verified accurate (no change): tri-state `IsFieldValid` (null until `Reveal()`), `IsFieldInvalid`, `IsDirty`/`IsFilled` on TextChanged, `IsTouched`/`IsFieldFocused` on GotFocus/LostFocus (NaviusField.cs); ValidationMode reveal gates OnSubmit/OnBlur/OnChange (RecomputeValidity + the descendant handlers); `ServerInvalid` auto-clears on next descendant TextChanged; `Name` renamed to `FieldName` with no leftover `Name` DP; GUID id registry (ControlId/DescribedBy/message ordering) genuinely absent; `NaviusFieldError` carries `AutomationProperties.LiveSetting=Assertive` (NaviusFieldError.cs line 46) and `Match` matches a message string not a validity key; Field.xaml uses only DynamicResource and every key (Navius.Foreground, Navius.Destructive, Navius.MutedForeground, Navius.Background, Navius.Input, Navius.Ring, Navius.Radius.Control) exists in both Tokens.Light and Tokens.Dark.
+
+PLAUSIBLE (unfixed, not a proven defect):
+
+- Field label to control accessible-name relationship relies solely on WPF's native `Label.Target` (set in WireDescendants), not an explicit `AutomationProperties.LabeledBy` the way `NaviusLabel` and `NaviusFieldset` set it. Native `Label.Target` is expected to establish the UIA LabeledBy relationship, but this was not independently verified with a screen reader or UIA client in a live window, so the guarantee is unconfirmed.
+- The error message text is surfaced only as an assertive live region, not also mirrored into the control's HelpText, so a screen reader that reads describedby/help on focus (rather than the live announcement) would not hear the current error. This is a legitimate but different a11y mechanism from the web's `aria-describedby` error ids; parity of announcement was not verified with AT.
