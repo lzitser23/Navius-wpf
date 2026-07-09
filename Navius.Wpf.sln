@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Navius.Wpf.Cli", "tools\Nav
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Navius.Wpf.Cli.Tests", "tests\Navius.Wpf.Cli.Tests\Navius.Wpf.Cli.Tests.csproj", "{6F97854C-55F4-48DE-8AE1-A816F7354761}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Navius.Wpf.Captures", "tools\Navius.Wpf.Captures\Navius.Wpf.Captures.csproj", "{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -175,6 +177,18 @@ Global
 		{6F97854C-55F4-48DE-8AE1-A816F7354761}.Release|x64.Build.0 = Release|Any CPU
 		{6F97854C-55F4-48DE-8AE1-A816F7354761}.Release|x86.ActiveCfg = Release|Any CPU
 		{6F97854C-55F4-48DE-8AE1-A816F7354761}.Release|x86.Build.0 = Release|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Debug|x64.Build.0 = Debug|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Debug|x86.Build.0 = Debug|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Release|x64.ActiveCfg = Release|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Release|x64.Build.0 = Release|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Release|x86.ActiveCfg = Release|Any CPU
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -191,5 +205,6 @@ Global
 		{A466A228-E3D7-46E8-B40D-16D4BD684D09} = {308E0C0B-218D-4C7F-9481-7EEF9D6A1B85}
 		{21B529BA-2248-4B7D-970B-46A095263F4F} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{6F97854C-55F4-48DE-8AE1-A816F7354761} = {308E0C0B-218D-4C7F-9481-7EEF9D6A1B85}
+		{9C1D9A9B-3E9C-4B7A-9A9D-2A0B1E7F6C5A} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 EndGlobal
