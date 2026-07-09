@@ -140,3 +140,20 @@ port of any specific web animation.
 **Part mapping**: `PART_Track` and `PART_Indicator` are `ProgressBar`'s own required template part
 names; the base class already sizes `PART_Indicator`'s width from `Value`/`Minimum`/`Maximum`, so no
 manual binding/converter math was needed for the Track/Indicator part pair.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification against the C#/XAML at file:line. No confirmed disparities found.
+
+CONFIRMED (fixed): none.
+
+Verified true (spot checks):
+- Non-interactive contract is honest: no key handlers anywhere in `Controls/Progress/`; the doc's "Keyboard: None" holds.
+- "Validate, don't clamp" is real: `CoerceValue` flips `IsIndeterminate` via `SetCurrentValue` for negative/`>Max` and returns the raw value unclamped (NaviusProgress.cs:95-118), covered by `Value_AboveMaximum_BecomesIndeterminateWithoutClamping` (asserts `Value == 999`) and `Value_Negative_BecomesIndeterminate`. Re-entering range clears indeterminate (lines 112-115), covered by `Value_ReenteringValidRange_ClearsIndeterminate`.
+- NaN/Infinity are rejected by `RangeBase.ValueProperty`'s own validate callback before coercion runs, covered by `Value_NaN_IsRejectedByNativeValidation`. `Maximum <= 0` falls back to 100 (`CoerceMaximum`, lines 120-124).
+- `GetValueLabel` is `Func<double, double, string?>?` as documented (line 25); `FormatValueText` returns null while indeterminate (lines 85-93), covered by `FormatValueText_NullWhileIndeterminate`.
+- Automation: `NaviusProgressAutomationPeer : ProgressBarAutomationPeer` (peer.cs:11) inherits `IRangeValueProvider` and `AutomationControlType.ProgressBar`; `GetItemStatusCore` returns value text, empty while indeterminate (peer.cs:19), covered by two peer tests. `IsComplete` is a read-only DP; `IsProgressing` is computed (lines 28-74).
+- `Themes/Progress.xaml` uses only `DynamicResource`; every key exists in both token dictionaries. The indeterminate visual is an opacity-pulse storyboard on an overlay rectangle, as documented.
+
+PLAUSIBLE (residual, unfixed):
+- While `IsIndeterminate` is true, the inherited `ProgressBarAutomationPeer` still surfaces a `RangeValue.Value` to UIA, whereas the web contract omits `aria-valuenow` entirely in the indeterminate state. The WPF notes never claim to suppress it, so this is not a false claim, but it is a genuine residual parity gap in the UIA surface. Left unfixed: suppressing RangeValue for an indeterminate `ProgressBar` peer would require a fragile pattern override, and no consumer depends on it.

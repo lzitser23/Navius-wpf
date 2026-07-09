@@ -205,6 +205,23 @@ public class FieldTests
     }
 
     [StaFact]
+    public void FieldDescription_IsAssociatedWithControl_ViaAutomationHelpText()
+    {
+        var label = new NaviusFieldLabel();
+        var fieldControl = new NaviusFieldControl();
+        var description = new NaviusFieldDescription { Content = "We never share your email." };
+        var field = new NaviusField
+        {
+            Resources = CreateThemedScope(),
+            Content = new StackPanel { Children = { label, fieldControl, description } },
+        };
+
+        Assert.Equal(
+            "We never share your email.",
+            System.Windows.Automation.AutomationProperties.GetHelpText(field.RegisteredControl!));
+    }
+
+    [StaFact]
     public void FieldsetDisabled_CascadesIntoField_ViaIsEnabledInheritance()
     {
         var scope = new ResourceDictionary();

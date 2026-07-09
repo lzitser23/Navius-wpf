@@ -173,7 +173,7 @@ Shipped as `Navius.Wpf.Primitives.Controls.NaviusPopover` (`src/Navius.Wpf.Primi
 - **`Modal` vs. `TrapFocus`.** The web only engages a focus trap when `Modal` is true; `Navius.Wpf.Primitives.Overlays.OverlayOptions.TrapFocus` conflates "move focus into the popup on open" and "cycle Tab within it" into one flag with no way to request the first without the second. Splitting that flag was out of scope for this batch (`Overlays/` ownership boundary), so the WPF `NaviusPopover` always sets `TrapFocus = true` regardless of `Modal`; `Modal` is still tracked and forwarded to `OverlayOptions.Modal` (available to consumers via `OverlaySession.IsModal`, e.g. to decide whether to render a backdrop) but does not currently gate focus behavior differently. Documented here per the "resolve `Modal` focus-trap" open question above.
 - **Arrow simplified.** No `PlacementResult.ArrowOffset`-driven arrow: `NaviusAnchoredPopup` does not currently surface `ArrowOffset`, and editing it was out of scope. No arrow glyph ships in the default template.
 - **Automation.** `aria-haspopup`/`aria-expanded`/`role="dialog"` are approximated only via `AutomationProperties.AutomationId` on the trigger/popup parts, not a custom `AutomationPeer`. Per the WAI-ARIA APG a real dialog-role peer with an `ExpandCollapseState`-aware trigger peer would be more correct; deferred as a follow-up given the size of this batch.
-- **Enter/exit animation.** A plain WPF `DoubleAnimation` (opacity 0→1 + a small `TranslateTransform` offset resolved from `EffectiveSide`) plays over 150ms on open; no exit animation (see the same tradeoff explained in `docs/parity/tooltip.md`).
+- **Enter/exit animation.** A plain WPF `DoubleAnimation` (opacity 0→1 + a small `TranslateTransform` offset resolved from the input `Side` DP, not the flip-resolved `EffectiveSide`) plays over 150ms on open; no exit animation (see the same tradeoff explained in `docs/parity/tooltip.md`).
 - **No cancelable dismiss callbacks.** `OnEscapeKeyDown`/`OnPointerDownOutside`/etc. are not exposed as public events; dismissal always proceeds once requested (see the corresponding note in `docs/parity/tooltip.md`).
 
 ## ArrowOffset surface (M3)
@@ -185,3 +185,24 @@ Orchestrator note, added alongside the M3 ScrollArea/Menu-Menubar wave (not part
 - `ArrowOffsetXText` / `ArrowOffsetYText` (double, attached read-only properties on `Child`): mirror `ArrowOffsetX`/`ArrowOffsetY` onto the popup content root, the same pattern `EffectiveSideText` already uses, so a popup-content template can position an arrow glyph via `{Binding Path=(controls:NaviusAnchoredPopup.ArrowOffsetXText), RelativeSource={RelativeSource Self}}` without a reference back to the owning `NaviusAnchoredPopup`.
 
 This is additive-only: no existing `NaviusAnchoredPopup` member changed shape, and `Tooltip`/`Popover`/`PreviewCard` were deliberately **not** touched to consume it - per this wave's scope, their owners adopt `ArrowSize`/`ArrowOffsetX(Text)`/`ArrowOffsetY(Text)` (and add an arrow glyph to their default templates) in a future wave. `PlacementMath`'s own arrow-offset math was already covered by `PlacementMathTests` (centering, edge-clamping, and the `ArrowSize == 0` null case) before this change; no gap was found there. New coverage for this change lives in `tests/Navius.Wpf.Tests/AnchoredPopupTests.cs` (DP wiring: `ArrowSize`/`ArrowOffsetX`/`ArrowOffsetY` defaults and round-trip, the attached `ArrowOffsetXText`/`ArrowOffsetYText` mirrors default to `NaN` and null-check like `EffectiveSideText` does, and that changing `ArrowSize` safely re-triggers placement without throwing when no `Anchor` is set yet). A full live-placement assertion (`ArrowOffsetX`/`Y` populated from a real anchored pass) is not covered: like `EffectiveSide` elsewhere in this suite, `UpdatePlacement()` only runs once `Anchor` has a real `PresentationSource` (a shown/hosted `HwndSource` with the anchor as `RootVisual`), which no existing test in this codebase establishes - this is a pre-existing gap in the suite, not one newly introduced here.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification of the sections above against the shipped C#/XAML.
+
+### CONFIRMED (fixed)
+
+- **Enter-animation note said `EffectiveSide`, code uses `Side` (doc-only, fixed).** The "Enter/exit animation" note claimed the translate offset is "resolved from `EffectiveSide`". `NaviusPopover.PlayEnterAnimation` (`NaviusPopover.cs:252`) actually switches on the input `Side` DP, not the flip-resolved `NaviusAnchoredPopup.EffectiveSide`. The code's behavior is fine (a small directional slide); only the note was wrong, so the note was corrected to say `Side`.
+
+### Verified accurate (no change needed)
+
+- Part collapse: `Content` is the trigger (`PART_Trigger` `Button`), `PopoverContent`/`Side`/`Align`/`SideOffset`/`AlignOffset` are the positioner; no separate Anchor part. Matches the notes.
+- `CloseCommand` is a static `RoutedCommand` whose `CommandBinding` is added directly on `PART_PopupContent` in `OnApplyTemplate` (`NaviusPopover.cs:156-159`), not class-registered, exactly as documented and covered by `PopoverTests.CloseCommand_ExecutedFromPopupContent_ClosesThePopover`.
+- `Modal` vs `TrapFocus`: `OpenCore` always pushes `TrapFocus = true` regardless of `Modal` (`NaviusPopover.cs:212-219`), matching the documented `OverlayOptions.TrapFocus` conflation; `Modal` DP default `false`. Covered by `PopoverTests.Open_PushesAFocusTrappedDismissableOverlaySession`.
+- Automation is approximated via `AutomationProperties.AutomationId` on trigger/popup plus `Name`/`HelpText` from `Title`/`Description`, no custom peer, exactly as the notes admit.
+- No cancelable dismiss callbacks are exposed (confirmed: no `OnEscapeKeyDown`/etc. events on `NaviusPopover`).
+- `Themes/Popover.xaml` uses only `DynamicResource` for themeable values; all keys exist in both token files.
+
+### PLAUSIBLE / residual (not fixed)
+
+- **Clicking the trigger to close an open popover may close-then-reopen.** The trigger `Button` lives in the window's own HwndSource while the session `Root`/input-root is the popup content in the `Popup`'s separate HwndSource, so a mouse-down on the trigger is "outside" the session: `OverlayStack`'s window-level `PreviewMouseDown` fires `HandleOutsidePress` and closes the session on mouse-down, then the `Button.Click` (mouse-up) runs `OnTriggerClick` and toggles `IsOpen` from false back to true, reopening it. This requires real mouse routing to confirm (the `SimulateClick` test bypasses it by calling `OnClick` directly), and any robust fix (treat a press on the trigger as inside, or suppress the reopen) touches the outside-press routing in `Overlays/OverlayStack.cs`, so it is left for the Overlays owner.

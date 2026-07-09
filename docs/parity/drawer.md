@@ -164,3 +164,22 @@ Shipped in `Navius.Wpf.Primitives.Controls.Drawer.NaviusDrawer` (see `docs/parit
 - **Role/AutomationPeer.** Same mapping as Dialog: `NaviusDrawerAutomationPeer` overrides `GetAutomationControlTypeCore() => AutomationControlType.Window` and `IsDialogCore() => true` — a docked sheet is still semantically a dialog to assistive tech, matching `role="dialog"` (not `alertdialog`) in the source.
 - **Missing-title warning: closed the gap, uniformly.** Resolves this doc's own open question: rather than leaving Drawer without the dev-time warning Dialog has, `NaviusOverlaySurfaceBase.Engage()` applies the same `AutomationProperties.SetName`/`SetHelpText`-from-`Title`/`Description` treatment to all three families, so an unset `Title` is an accessible-name gap regardless of which family exposes it.
 - **CloseOnEscape/CloseOnOutside.** Same as Dialog: `CloseOnEscape` fixed `true`; `CloseOnOutsideClick` is a settable DP (default `true`).
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification of the sections above against the shipped C#/XAML.
+
+### CONFIRMED (fixed)
+
+- **Canceled `Closing` desynced `IsOpen` (shared-base code bug, fixed).** Drawer inherits `NaviusOverlaySurfaceBase`, which ignored `OverlaySession.RequestClose`'s return value: a `Closing` handler that set `Cancel = true` kept the session open but left the two-way `IsOpen` DP stuck at `false` (and swallowed the next `Open()` because `_session` stayed non-null). Fixed in `Controls/OverlaySurface/NaviusOverlaySurfaceBase.cs` `OnIsOpenChanged` (reverts `IsOpen` to `true` on a canceled close). Full write-up and the regression test (`DialogTests.CancelingClosing_KeepsTheDialogOpenAndIsOpenStaysTrue`) are documented in `docs/parity/dialog.md`'s M6 audit section; the fix is in the base both families share, so Drawer is covered by the same change.
+
+### Verified accurate (no change needed)
+
+- `Side` is the `NaviusDrawerSide { Left, Right, Top, Bottom }` enum, not a free string (`NaviusDrawerSide.cs`, `NaviusDrawer.cs:42-46`); grep confirms no `typeof(string)` Side DP survives.
+- Slide animation overrides `PlayEnterAnimation`/`PlayExitAnimation` and translates `PART_Panel` between `DrawerGeometry.GetOffscreenOffset(Side, extent)` and `(0,0)`, with a 360px fallback extent (`NaviusDrawer.cs:104-145`, `DefaultExtent = 360`). `DrawerGeometry` is pure and unit-tested (`DrawerTests.GetOffscreenOffset_PointsPastTheDockedEdge`). The default `Themes/Drawer.xaml` sets the offset-axis extent per `Side` via `ControlTemplate.Triggers` (Bottom/Top height 280, Left/Right width 360).
+- `NaviusDrawerAutomationPeer` maps to `AutomationControlType.Window` + `IsDialogCore() => true` (a docked sheet is still a dialog to AT), matching `role="dialog"` in the source.
+- `Themes/Drawer.xaml` uses only `DynamicResource`; every referenced token key exists in both `Tokens.Light.xaml` and `Tokens.Dark.xaml`.
+
+### PLAUSIBLE / residual (not fixed)
+
+- **Non-modal Drawer does not restore focus on close**, same root cause as the Dialog residual (focus-restore capture in `Overlays/OverlayStack.cs` is gated on `TrapFocus`, which tracks modality). Left for the Overlays owner.

@@ -156,3 +156,19 @@ Shipped as `Controls/MessageScroller/` (`MessageScrollerEngine` + `NaviusMessage
 - `role="log"` + `aria-relevant="additions"`: `AutomationProperties.LiveSetting = Polite` set in the constructor, plus `RaiseNotificationEvent` ("N new messages", `CurrentThenMostRecent`) raised only when messages arrive while disengaged (Toast precedent, including the Win10-1709+/no-AT fallback note). A following reader is watching the transcript move; announcing every appended row would be noise the web's own docs warn about (`aria-busy` seam).
 - The web Viewport's `role="region"` + `aria-label="Messages"` + `tabindex="0"`: the inner `ScrollViewer` is natively focusable and keyboard-scrollable; consumers set `AutomationProperties.Name` on the control (the demo page does). No custom keyboard handling was added, matching the web family's zero custom key handlers; WPF `ScrollViewer` increments differ from browser-native scrollable-div increments, accepted per the open question.
 - Items: the web applies no ARIA role to rows; the WPF `ItemsControl`'s default `ContentPresenter` containers likewise surface no interactive control type, so the AT contract stays minimal without extra suppression work.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification against the C#/XAML at file:line. No confirmed disparities found; the implementation notes above match the code.
+
+CONFIRMED (fixed): none.
+
+Verified true (spot checks):
+- No false keyboard claims. There are zero custom key handlers in `NaviusMessageScroller.cs`; the auto-scroll-pause-on-reader-intent behavior is real (`MessageScrollerEngine.OnUserScrolled` recomputes follow from position, engine.cs:118). Scroll keys are left to the native `ScrollViewer` per the contract.
+- `NewMessageCount`/`IsFollowing` are read-only DPs (NaviusMessageScroller.cs:42-52); `AutoScroll` default `false` and `ScrollEdgeThreshold` default `8` match the contract (lines 34-40) and are covered by `Defaults_MatchTheContract`.
+- Live-region a11y: `AutomationProperties.SetLiveSetting(this, Polite)` in the constructor (line 72) plus `RaiseNotificationEvent` in `AnnounceNewMessages` (lines 261-277), guarded by `IsLoaded`.
+- `Themes/MessageScroller.xaml` uses `DynamicResource` for every brush/radius token; all referenced keys (`Navius.Primary`, `Navius.PrimaryForeground`, `Navius.Border`, `Navius.Radius.Control`, `Navius.Background`, `Navius.Foreground`) exist in both `Tokens.Light.xaml` and `Tokens.Dark.xaml`.
+
+PLAUSIBLE (residual, unfixed):
+- The `JumpToLatest` button pulls its style via `Style="{StaticResource Navius.MessageScroller.JumpToLatestButtonStyle}"` (MessageScroller.xaml:64). This is a `StaticResource` to a `Style` defined earlier in the same dictionary, not a color/brush token, and the brushes inside that style are `DynamicResource`, so runtime theme switching is unaffected. Acceptable, but the only `StaticResource` in the four audited themes.
+- The native `ScrollViewer`'s keyboard-scroll increments differ from a browser's native scrollable-`div` increments; already recorded as an accepted open question, not a regression.

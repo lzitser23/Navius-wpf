@@ -58,3 +58,20 @@ Tier A (derive from `System.Windows.Controls.Label`). WPF's `Label` already has 
 - Resolved open question 4 (confirmed by the porting brief, not decided locally): `Attributes` splat is dropped globally across all four families in this batch; no extensibility story was built for it.
 - Dropped: the `data-navius-label` marker attribute has no WPF equivalent (no arbitrary `data-*` attribute concept) and was not replicated onto any attached property.
 - Theme: `Themes/Label.xaml` gives `NaviusLabel` a token-driven `Foreground`/`FontSize` and a plain `ContentPresenter` template (`RecognizesAccessKey="True"` preserved from the native `Label` default so mnemonics still work); no visual novelty beyond brand tokens, since the source has no distinct visual state machine.
+
+## M6 audit (2026-07-09)
+
+Adversarial parity audit of the WPF port against this doc. Default assumption: every claim FALSE until proven at file:line.
+
+CONFIRMED (fixed): none. Every WPF implementation note was verified true.
+
+Verified accurate (no change):
+
+- `For` is a plain `string?` DP resolved by name lookup walking up NameScopes via `FindName` (NaviusLabel.cs `ResolveTarget` lines 62-86), retried on `Loaded` (line 39) and eagerly on the property-changed callback (line 49); covered by `LabelTests.For_ResolvesTargetByNameAndSetsLabeledBy`.
+- Click-to-focus authored from scratch in the `OnMouseDown` override (line 88), with the double/triple-click text-selection guard `e.ClickCount > 1` setting `e.Handled = true` (lines 92-97), mirroring the source's `e.Detail > 1`; covered by `LabelTests.MouseDown_SingleClick_DoesNotSuppressDefault` and `MouseDown_MultiClick_SuppressesDefault_ToPreventTextSelection`.
+- `AutomationProperties.SetLabeledBy(resolved, this)` is set on the resolved target alongside `Target` (line 58); asserted by the resolve test.
+- Label.xaml preserves `RecognizesAccessKey="True"` (line 18), uses only DynamicResource, and its one token (Navius.Foreground) exists in both token dictionaries.
+
+PLAUSIBLE (unfixed, not a proven defect):
+
+- `OnMouseDown` fires for any mouse button (the guard and focus-forward are not restricted to the left button); the web's `onmousedown` is likewise button-agnostic, so this is arguably parity, but right-click focus-forwarding was not evaluated against AT expectations.

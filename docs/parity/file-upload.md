@@ -220,3 +220,31 @@ would need `OpenFolderDialog` and different semantics), `Capture` (mobile camera
 analog), and `Name` (HTML form field name) have no WPF equivalent and were omitted rather than
 stubbed. `data-dragging`/`data-invalid` map to read-only `IsDragging`/`Invalid` DPs consumed by
 template triggers; `Disabled` is native `IsEnabled`.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification against the actual C#/XAML. This family held up: every checked claim
+traced to real code.
+
+CONFIRMED correct (no fix needed):
+- Keyboard: the dropzone `PART_Dropzone` is a real `Button` (`Themes/FileUpload.xaml`), and both
+  Space and Enter on a focused dropzone open the picker. Verified empirically by raising real
+  KeyDown/KeyUp routed events on the dropzone button through the actual routing (Space and Enter
+  each invoked the injected `IFilePicker` exactly once), so the "Space and Enter both activate a
+  focused WPF Button" note in the WPF implementation notes is accurate, not aspirational.
+- Engine quirks (`FileUploadEngine.Process`, lines 63-118): the four preserved web quirks
+  (non-multiple replace-only-if-accepted, `MaxFiles` only when `Multiple`, silent duplicate drop by
+  name+size, check order accept->size->count->duplicate) all match the prose and are pinned by
+  `FileUploadEngineTests`.
+- Peer: `NaviusFileUploadAutomationPeer` correctly overrides `GetPattern` to surface its read-only
+  `ValuePattern` (line 415), so the file-name value is genuinely reachable over UIA (contrast the
+  NumberField peer bug found in this same audit wave).
+- Theme: every brush/radius reference is `DynamicResource`; all referenced token keys
+  (`Navius.Card/Border/Background/Ring/Accent/Destructive/Foreground/MutedForeground`,
+  `Navius.Radius.Small/Card`) exist in both `Tokens.Light.xaml` and `Tokens.Dark.xaml`.
+
+PLAUSIBLE (unfixed, low severity):
+- `Themes/FileUpload.xaml` line 120 uses one `StaticResource` (`Navius.FileUpload.DefaultItem`).
+  This references a `DataTemplate` defined in the same dictionary, not a themeable Color/Brush, so
+  it does not break runtime re-theming; flagged only because the family theme convention is
+  otherwise all-DynamicResource.

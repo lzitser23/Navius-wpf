@@ -1,6 +1,8 @@
 using System.Windows;
+using System.Windows.Threading;
 using Navius.Wpf.Primitives.Controls.Dialog;
 using Navius.Wpf.Primitives.Controls.OverlaySurface;
+using Navius.Wpf.Primitives.Overlays;
 
 namespace Navius.Wpf.Tests;
 
@@ -116,6 +118,50 @@ public class DialogTests
     {
         Assert.NotNull(NaviusOverlaySurfaceBase.CloseCommand);
         Assert.Equal(nameof(NaviusOverlaySurfaceBase.CloseCommand), NaviusOverlaySurfaceBase.CloseCommand.Name);
+    }
+
+    [StaFact]
+    public void CancelingClosing_KeepsTheDialogOpenAndIsOpenStaysTrue()
+    {
+        // Regression (M6): a Closing handler that sets Cancel = true must keep the surface open
+        // AND leave IsOpen == true. Previously OnIsOpenChanged ignored RequestClose's return, so a
+        // canceled close left the session open but the IsOpen DP stuck at false (a lying property,
+        // and any later Open() was swallowed because _session was still non-null).
+        var dialog = new NaviusDialog { Title = "Discard changes?" };
+        var layer = new NaviusOverlayLayer();
+        layer.Children.Add(dialog);
+        var window = new Window
+        {
+            Content = layer,
+            Width = 60,
+            Height = 60,
+            ShowActivated = false,
+            WindowStyle = WindowStyle.None,
+            ShowInTaskbar = false,
+        };
+
+        try
+        {
+            window.Show();
+            // Flush the Loaded queue so NaviusOverlayLayer registers itself for this window.
+            window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+
+            dialog.Open();
+            Assert.True(dialog.IsOpen);
+            Assert.NotNull(OverlayStack.GetFor(window).Topmost);
+
+            dialog.Closing += (_, e) => e.Cancel = true;
+
+            dialog.Close();
+
+            Assert.True(dialog.IsOpen);
+            Assert.Equal(Visibility.Visible, dialog.Visibility);
+            Assert.NotNull(OverlayStack.GetFor(window).Topmost);
+        }
+        finally
+        {
+            window.Close();
+        }
     }
 
     /// <summary>Exposes the protected *_Effective hooks so tests can assert on them without widening the public API.</summary>

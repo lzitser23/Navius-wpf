@@ -115,3 +115,27 @@ bool consumed by a template trigger (Destructive border), NOT to `Validation.Has
 the source's "validation is the consumer's concern". `data-disabled` is native `IsEnabled`.
 No custom AutomationPeer: `TextBoxAutomationPeer` (ControlType.Edit + ValuePattern) already covers
 the bare-native-input contract.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification against the actual C#/XAML. The masking core and control wiring held
+up; one undocumented parameter rename found.
+
+CONFIRMED correct (no fix needed):
+- Single input path: `NaviusMaskedInput` overrides only `OnTextChanged` (line 149) with a
+  reentrancy guard; there is no `KeyDown` handler, matching the contract's "all input funnels
+  through one event" claim. Typing, Backspace/Delete, and paste all reformat through the same
+  `RunPipeline` -> `MaskEngine.Format` call, and the caret-stability guarantee is exhaustively
+  pinned by `MaskEngineTests` (mid-string insert, Backspace over a literal, mid-string delete,
+  paste with garbage, non-collapsed selection, placeholder skeletons, clamp).
+- `Overwrite` really is a no-op stub (registered DP, never read), matching the web source's own
+  stub, as the notes claim.
+- Theme: all `DynamicResource`; keys `Navius.Background/Foreground/Input/Ring/Destructive` and
+  `Navius.Radius.Control` all exist in both token dictionaries.
+
+CONFIRMED disparity (doc fixed here):
+- The web parameter table lists the char parameter as `Placeholder`, but the WPF DP is named
+  `PlaceholderChar` (`NaviusMaskedInput.cs` line 35). This rename (to avoid colliding with the
+  string `Placeholder` watermark used across Select/Combobox/TagInput/etc.) was not recorded in the
+  original WPF implementation notes. Recorded now: the web `Placeholder` (`char?`) maps to the WPF
+  `PlaceholderChar` (`char?`); behavior is identical, only the name differs.

@@ -104,3 +104,19 @@ different control type.
 from `Value`/`Minimum`/`Maximum`, no manual binding). `NaviusMeterValue`/`NaviusMeterLabel` are
 companion `TextBlock` subclasses wired via `Source`/`AutomationProperties.LabeledBy` respectively,
 identical idiom to `NaviusProgressValue`/`NaviusProgressLabel`.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification against the C#/XAML at file:line. No confirmed disparities found.
+
+CONFIRMED (fixed): none.
+
+Verified true (spot checks):
+- Non-interactive contract is honest: the doc claims no keyboard/focus, and there are no key handlers anywhere in `Controls/Meter/`.
+- `IsIndeterminate` is genuinely locked to `false`: `CoerceIsIndeterminate` always returns `false` (NaviusMeter.cs:79), covered by `IsIndeterminate_AlwaysCoercedToFalse`.
+- Value is genuinely clamped (no `CoerceValueCallback` override, so `RangeBase`'s default clamp applies; the override metadata supplies only a `PropertyChangedCallback`, NaviusMeter.cs:39), covered by `Value_IsClampedIntoRange_UnlikeProgress` and `Value_Negative_IsClampedToMinimum`. `Maximum <= Minimum` falls back to `Minimum + 100` (`CoerceMaximum`, lines 72-77).
+- Defaults match the contract: `Value` 0, `Minimum` 0, `Maximum` 100 (override metadata lines 39-42), covered by `Defaults_MatchContract`. `GetValueLabel` is `Func<double, string?>?` exactly as the contract specifies (line 23).
+- Automation: `NaviusMeterAutomationPeer : ProgressBarAutomationPeer` (peer.cs:14), so it inherits `IRangeValueProvider` (min/max/current exposed to UIA, read-only) and `AutomationControlType.ProgressBar`; the RangeValue pattern is implemented by inheritance, not merely by the DPs existing. `GetItemStatusCore` returns the value text (peer.cs:22), covered by `AutomationPeer_ItemStatus_MatchesFormattedValueText`. The absence of a distinct Meter UIA control type is an honestly disclosed platform gap, not a false claim.
+- `Themes/Meter.xaml` uses only `DynamicResource`; every key (`Navius.Primary`, `Navius.Secondary`, `Navius.Radius.Small`, `Navius.Foreground`, `Navius.MutedForeground`) exists in both token dictionaries.
+
+PLAUSIBLE (residual, unfixed): none.
