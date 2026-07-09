@@ -103,3 +103,16 @@ Tier A: derive from `System.Windows.Controls.TabControl` (with `TabItem` for the
 - Does the WPF port need to support `ActivationMode="manual"` (focus-without-select), or is `TabControl`'s single automatic-selection model sufficient for v1.
 - `Loop` (wrap-at-edges) is not a `TabControl` built-in; confirm whether both loop and no-loop variants are needed or if the port standardizes on one.
 - `data-activation-direction` exists purely to drive CSS transition direction; decide whether the WPF port needs an equivalent for `VisualStateManager` transitions or can drop it.
+
+## WPF implementation notes
+
+Implemented in `Controls/Tabs/NaviusTabs.cs` (derives `TabControl`) and `Controls/Tabs/NaviusTabItem.cs` (derives `TabItem`), styled by `Themes/Tabs.xaml`.
+
+- Part collapse: the four contract parts (NaviusTabs / NaviusTabsList / NaviusTabsTab / NaviusTabsPanel) collapse into two WPF types. `NaviusTabsList`'s arrow-key/Home/End navigation moves onto the root (`NaviusTabs`, since WPF's internal `TabPanel` is not a separately addressable public part), and `NaviusTabsTab` + `NaviusTabsPanel` unify into `NaviusTabItem` (`Header` = trigger content, `Content` = panel content), since those already live on one `TabItem` object natively.
+- Open question 1 (ActivationMode) resolved: implemented in full. `ActivationMode="automatic"` (default) makes arrow/Home/End navigation both move focus and select, matching native `TabControl`'s own default feel; `"manual"` moves focus only, requiring Enter/Space/click to select. WPF's own directional navigation does not know either mode, so `KeyboardNavigation.DirectionalNavigation` is switched off and both modes are hand-rolled in a `PreviewKeyDown` handler.
+- Open question 2 (Loop) resolved: implemented as a `Loop` bool DP (default true), wrap vs. clamp handled by the same custom key handler.
+- Open question 3 (`data-activation-direction`) resolved: exposed as a read-only `ActivationDirection` string DP (`"none"`/`"left"`/`"right"`/`"up"`/`"down"`), recomputed in `OnSelectionChanged` from the old/new selected index and `Orientation`, for `Style`/`VisualStateManager` triggers to consume.
+- `KeepMounted` on the Panel is dropped. Native `TabControl` only ever instantiates a single shared `ContentPresenter` bound to the selected item's content; there is no per-item persistent panel to "keep mounted while hidden" without a much larger custom-template rewrite. Treated as an intentional Tier A tradeoff, not an oversight.
+- `DefaultValue` collapses into `Value`: like the RadioGroup family, this port exposes one `Value` DP used both controlled and uncontrolled (native `TabControl` selecting its first item on load already covers the "uncontrolled default" case without a separate property).
+- `data-navius-tabs`/`data-orientation`/`dir` marker attributes are dropped; the equivalent state is already queryable via native/added DPs (`IsSelected`, `IsEnabled`, `Orientation`, `ActivationDirection`) and consumed directly by `Style` triggers instead of synthetic `data-*` attached properties.
+- Disabled tabs map straight to `TabItem.IsEnabled`; no separate `Disabled` DP.

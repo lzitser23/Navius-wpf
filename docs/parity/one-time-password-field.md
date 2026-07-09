@@ -101,3 +101,18 @@ Tier B (custom lookless control). No native WPF OTP control exists; model as a l
 - `ValidationType` classification uses `char.IsLetter`/`char.IsDigit` (culture-aware in .NET); confirm the WPF port should use the same semantics rather than ASCII-only matching.
 - `AutoSubmit` submits the closest HTML form via JS interop; WPF has no forms, so this needs a product decision (e.g. raise `OnAutoSubmit` only, or invoke a bound `ICommand`).
 - `Densify` uses `' '` (space) as the internal sentinel for an interior gap when round-tripping the aggregate string through `Value`; if `ValidationType`/`SanitizeValue` in a future config ever admitted spaces as valid characters this encoding would be ambiguous. Worth flagging for the WPF value-buffer design even though today's validation classes (numeric/alpha/alphanumeric) never admit spaces.
+
+## WPF port notes (implemented 2026-07-09)
+
+Shipped as `Controls/OneTimePasswordField/`: `NaviusOneTimePasswordField` (lookless Control whose template exposes a `PART_Cells` panel; the control builds `Length` cells in code, following the RadioGroup/CheckboxGroup owns-its-parts precedent) plus `NaviusOneTimePasswordFieldInput` (thin themable TextBox cell) and a pure, WPF-free `OneTimePasswordBuffer` implementing the whole keyboard table (SetChar advance, Backspace shift-back/retreat, Delete shift-back, Ctrl+Backspace clear-all, paste-from-slot-0), unit-tested without an STA thread.
+
+Contract deltas, recorded per the open questions above:
+
+- Cell 0's `maxlength=Length` quirk does not port: WPF surfaces paste through the separate `DataObject.Pasting` event, fully decoupled from typed `PreviewTextInput`, so every cell uses a uniform `MaxLength=1` and multi-char paste detection needs no length heuristic.
+- `NaviusOneTimePasswordFieldHiddenInput` and the `Name`/`Form` parameters drop entirely per `docs/adr/0001-web-form-participation-params.md` (no HTML form submission in WPF).
+- `AutoSubmit`: Enter always raises a bubbling `SubmitRequested` routed event (the WPF analog of "submit the closest enclosing form"; any ancestor can subscribe), and with `AutoSubmit=true` a separate `AutoSubmitted` event fires once every cell fills, immediately after `Complete`. Nothing is invoked directly.
+- `autocomplete="one-time-code"` / SMS autofill has no WPF analog and is dropped, as predicted by the extraction.
+- `ValidationType` keeps the culture-aware `char.IsDigit`/`char.IsLetter`/`char.IsLetterOrDigit` semantics of the source (open question resolved: same semantics, not ASCII-only).
+- IME/composition input is not specially handled, matching the web source, which also has none.
+- Accessibility: root automation peer reports `Group`; each cell carries `AutomationProperties.Name = "Character N of M"`. `Type="password"` masks the cell glyph with a bullet while the logical character stays in the buffer.
+- The space-sentinel `Densify` encoding is preserved exactly (interior gaps round-trip as spaces through `Value`), keeping slot indices stable.

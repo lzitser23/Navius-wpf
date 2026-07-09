@@ -24,6 +24,23 @@
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Menubar.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/NavigationMenu.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Toast.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Select.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Combobox.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Autocomplete.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Tabs.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Accordion.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Collapsible.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/ToggleGroup.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Switch.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/NumberField.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Rating.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Meter.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/ScrollArea.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/OneTimePasswordField.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/PasswordToggleField.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Field.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Fieldset.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Form.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

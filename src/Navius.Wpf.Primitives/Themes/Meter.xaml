@@ -1,0 +1,41 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Navius.Wpf.Primitives.Controls">
+
+    <Style TargetType="{x:Type controls:NaviusMeter}">
+        <Setter Property="Height" Value="8" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Primary}" />
+        <Setter Property="Background" Value="{DynamicResource Navius.Secondary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:NaviusMeter}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{DynamicResource Navius.Radius.Small}"
+                        ClipToBounds="True">
+                        <!-- PART_Track/PART_Indicator are ProgressBar's own required part names; the
+                             native base class sizes PART_Indicator's Width from Value/Minimum/Maximum. -->
+                        <Grid x:Name="PART_Track">
+                            <Rectangle
+                                x:Name="PART_Indicator"
+                                HorizontalAlignment="Left"
+                                Fill="{TemplateBinding Foreground}" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type controls:NaviusMeterLabel}">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style TargetType="{x:Type controls:NaviusMeterValue}">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.MutedForeground}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+</ResourceDictionary>

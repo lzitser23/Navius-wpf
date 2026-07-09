@@ -1,0 +1,55 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.TabsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:tabs="clr-namespace:Navius.Wpf.Primitives.Controls.Tabs;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Self-contained: merges its own family theme directly, since Generic.xaml
+                     is owned by a concurrent wave this cycle and is not touched here. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Tabs.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <StackPanel Margin="24">
+        <TextBlock Text="Tabs" FontSize="18" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" Margin="0,0,0,12" />
+
+        <TextBlock Text="Automatic activation (default; arrow keys select as focus moves)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <tabs:NaviusTabs Value="account" Margin="0,0,0,24">
+            <tabs:NaviusTabItem Value="account" Header="Account">
+                <TextBlock Text="Account settings go here." Margin="12" Foreground="{DynamicResource Navius.Foreground}" />
+            </tabs:NaviusTabItem>
+            <tabs:NaviusTabItem Value="password" Header="Password">
+                <TextBlock Text="Password settings go here." Margin="12" Foreground="{DynamicResource Navius.Foreground}" />
+            </tabs:NaviusTabItem>
+            <tabs:NaviusTabItem Value="disabled" Header="Disabled" IsEnabled="False">
+                <TextBlock Text="Unreachable." Margin="12" />
+            </tabs:NaviusTabItem>
+        </tabs:NaviusTabs>
+
+        <TextBlock Text="Manual activation (arrows move focus only; Enter/Space/click selects)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <tabs:NaviusTabs Value="one" ActivationMode="manual" Margin="0,0,0,24">
+            <tabs:NaviusTabItem Value="one" Header="One">
+                <TextBlock Text="Panel one." Margin="12" Foreground="{DynamicResource Navius.Foreground}" />
+            </tabs:NaviusTabItem>
+            <tabs:NaviusTabItem Value="two" Header="Two">
+                <TextBlock Text="Panel two." Margin="12" Foreground="{DynamicResource Navius.Foreground}" />
+            </tabs:NaviusTabItem>
+            <tabs:NaviusTabItem Value="three" Header="Three">
+                <TextBlock Text="Panel three." Margin="12" Foreground="{DynamicResource Navius.Foreground}" />
+            </tabs:NaviusTabItem>
+        </tabs:NaviusTabs>
+
+        <TextBlock Text="Vertical orientation (Up/Down navigate)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <tabs:NaviusTabs Value="alpha" Orientation="vertical">
+            <tabs:NaviusTabItem Value="alpha" Header="Alpha">
+                <TextBlock Text="Alpha panel." Margin="12" Foreground="{DynamicResource Navius.Foreground}" />
+            </tabs:NaviusTabItem>
+            <tabs:NaviusTabItem Value="beta" Header="Beta">
+                <TextBlock Text="Beta panel." Margin="12" Foreground="{DynamicResource Navius.Foreground}" />
+            </tabs:NaviusTabItem>
+        </tabs:NaviusTabs>
+    </StackPanel>
+</UserControl>

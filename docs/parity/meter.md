@@ -58,3 +58,49 @@ Tier A (derive from native `ProgressBar`, restyled to non-interactive read-only 
 
 - WPF's `RangeValuePattern`/`ProgressBar` semantically implies "progress" (task completion over time); confirm downstream consumers/screen readers won't announce a static Meter (e.g., disk usage) as an active progress operation.
 - Whether `GetValueLabel`-style custom value-text formatting should be a `IValueConverter` or a bindable `Func` delegate in the WPF port.
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/Meter/NaviusMeter.cs` (derives `ProgressBar`),
+`NaviusMeterAutomationPeer.cs`, `NaviusMeterValue.cs`, `NaviusMeterLabel.cs`, `Themes/Meter.xaml`,
+`tests/Navius.Wpf.Tests/MeterTests.cs`, `apps/Navius.Wpf.Gallery/Pages/MeterPage.xaml(.cs)`.
+Structured as a near-mirror of `NaviusProgress`'s own implementation notes, with the deltas below.
+
+**Value model -- genuinely clamped, unlike Progress**: `NaviusMeter.Value` relies entirely on
+`RangeBase`'s own default `CoerceValueCallback` (no override), so it clamps into
+`[Minimum, Maximum]` exactly per the contract. This is the opposite choice from
+`NaviusProgress`'s deliberate "validate, don't clamp" `CoerceValueCallback` override -- Meter's
+contract wants real clamping, so no custom coercion was needed at all, only a
+`PropertyChangedCallback` (`OnStateChanged`) to refresh derived display state.
+
+**`IsIndeterminate` locked to false**: `IsIndeterminateProperty.OverrideMetadata` adds a
+`CoerceValueCallback` that always returns `false`, so `meter.IsIndeterminate = true` is silently
+rejected -- Meter is contractually always a static, determinate readout, unlike Progress. This also
+resolves the "Open questions" concern about screen readers announcing Meter as an active progress
+operation: the indeterminate pulsing visual/behavior from `NaviusProgress` is not reachable here.
+
+**`Maximum <= Minimum` fallback**: `Minimum + 100`, per the contract's own rule (`CoerceMaximum`),
+distinct from `NaviusProgress`'s unrelated `Maximum <= 0 -> 100` fallback rule.
+
+**`GetValueLabel` signature**: `Func<double, string?>?` (single `value` parameter), matching the
+contract's `Func<double, string?>` exactly -- unlike `NaviusProgress.GetValueLabel`, which deviates
+to a two-parameter `Func<double, double, string?>` for its own reasons. No deviation here: this
+resolves the contract's second open question in favor of a plain delegate property, same choice
+Progress made.
+
+**NaN/Infinity constraint (inherited, not re-solved)**: same as documented in
+`docs/parity/progress.md` "WPF implementation notes" -- `RangeBase.ValueProperty`'s own
+`ValidateValueCallback` rejects `NaN`/`Infinity` with an `ArgumentException` before any
+`NaviusMeter` logic runs; only in-range and out-of-range-but-finite values are reachable, and
+out-of-range values are clamped (not flipped to any indeterminate-like state, since Meter has none).
+
+**Automation / `aria-valuetext`**: `NaviusMeterAutomationPeer : ProgressBarAutomationPeer` overrides
+`GetItemStatusCore()` exactly like `NaviusProgressAutomationPeer`. `AutomationControlType` is left
+as the inherited `ProgressBar` value -- WPF has no distinct Meter automation type, the same
+acknowledged gap the contract's own "Open questions" section flags; no attempt was made to spoof a
+different control type.
+
+**Parts**: `PART_Track`/`PART_Indicator` are `ProgressBar`'s own required part names (free sizing
+from `Value`/`Minimum`/`Maximum`, no manual binding). `NaviusMeterValue`/`NaviusMeterLabel` are
+companion `TextBlock` subclasses wired via `Source`/`AutomationProperties.LabeledBy` respectively,
+identical idiom to `NaviusProgressValue`/`NaviusProgressLabel`.

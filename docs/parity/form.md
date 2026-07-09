@@ -70,3 +70,18 @@ Tier B (custom lookless control). No native WPF control models a DOM `<form>`'s 
 - `FormData.Get` is documented (in FormData.cs's XML comments) as reading "the latest value strings surfaced by each field's `NaviusFormControl`... from its splatted `value` attribute": that wiring lives in the Field family and is out of scope here, so the exact value-sourcing contract for a WPF `FormData` equivalent is unresolved.
 - `OnClearErrors` is a non-generic `EventCallback` (no argument carrying which errors were cleared); unclear whether a WPF port needs a richer signature.
 - `FocusFirstInvalidAsync` silently no-ops on `JSException` (best-effort focus); it's unclear whether a WPF port should hard-fail or preserve the same silent-fallback behavior when a target field control is unfocusable.
+
+## WPF port notes (implemented 2026-07-09)
+
+Shipped as `Controls/Form/`: `NaviusForm` + `NaviusFormSubmit`. The web's `FormContext` registry (Register/Unregister/FindField bookkeeping) is not ported: `NaviusForm` is a scope root that discovers every descendant `NaviusField` with a logical-tree walk at each orchestration point, which is always correct and needs no lifecycle management. Field validity itself is WPF-native (each field's `IsFieldInvalid` is fed by bubbling `Validation.Error` from Binding validation / INotifyDataErrorInfo, see field.md notes), per the locked plan.
+
+Submit flow (`SubmitCommand`, also raised by `NaviusFormSubmit`): clear injected errors, raise `ClearErrorsRequested` (the `OnClearErrors` analog; it also fires on `Reset()`, matching the web's two call sites), re-apply the `Errors` dictionary, `Reveal()` every field (the reveal-all-errors-on-submit-attempt semantic), then either raise the bubbling `Submitted` event (all valid) or focus the first invalid field in tree order.
+
+Deltas and resolved open questions:
+
+- `PreventDefault` is dropped, not stubbed: there is no browser default action to prevent.
+- The JS `focusElementById` fallback is gone; focus goes through `NaviusField.FocusRegisteredControl()` (a direct element reference) and silently no-ops when a field has no registered control, mirroring the web's best-effort behavior without the async path.
+- `Errors` injection: setting the dictionary pushes `string[]` messages into each matching field's `ExternalErrors` (keyed by `FieldName`) and clears it from non-matching fields; injected errors make the field invalid after reveal and block `Submitted`.
+- `NaviusFormSubmit` derives from Button (Tier A) and auto-wires its `Command` to the ancestor form's `SubmitCommand` on Loaded, unless the consumer already bound one. Enter-to-submit inside an input is available the native WPF way: set `IsDefault=True` on the `NaviusFormSubmit` in a dialog/window scope (open question resolved: emulate via IsDefault, no implicit behavior added).
+- `FormData` (name-to-value snapshot) is not ported: WPF consumers read values from their own bound view models, which is strictly more capable than a string snapshot; nothing in the ported submit flow needs it.
+- `OnClearErrors` stays argument-less (`ClearErrorsRequested` RoutedEventArgs), no richer signature was needed.

@@ -53,6 +53,22 @@
                         <ListBoxItem Content="Menubar" />
                         <ListBoxItem Content="NavigationMenu" />
                         <ListBoxItem Content="Toast" />
+                        <ListBoxItem Content="Select" />
+                        <ListBoxItem Content="Combobox" />
+                        <ListBoxItem Content="Autocomplete" />
+                        <ListBoxItem Content="Tabs" />
+                        <ListBoxItem Content="Accordion" />
+                        <ListBoxItem Content="Collapsible" />
+                        <ListBoxItem Content="ToggleGroup" />
+                        <ListBoxItem Content="Switch" />
+                        <ListBoxItem Content="NumberField" />
+                        <ListBoxItem Content="Rating" />
+                        <ListBoxItem Content="Meter" />
+                        <ListBoxItem Content="ScrollArea" />
+                        <ListBoxItem Content="OneTimePasswordField" />
+                        <ListBoxItem Content="PasswordToggleField" />
+                        <ListBoxItem Content="Field" />
+                        <ListBoxItem Content="Form" />
                     </ListBox>
                 </StackPanel>
             </DockPanel>

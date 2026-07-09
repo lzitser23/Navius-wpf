@@ -76,3 +76,36 @@ Tier A: derive from `System.Windows.Controls.Primitives.ToggleButton` (or `Check
 - WPF has no native `ReadOnly` semantics on `ToggleButton`/`CheckBox`; confirm the override approach (block `OnClick` while still focusable) matches intended behavior.
 - Form-submission mirroring (`Name`/`Value`/`Form`) has no WPF analog; confirm this parameter set is dropped rather than ported.
 - Should `NaviusSwitchThumb` become a mandatory template part (`PART_Thumb`) baked into the default `ControlTemplate`, or remain an optional child like the Blazor version.
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/Switch/NaviusSwitch.cs` (derives `ToggleButton`),
+`Themes/Switch.xaml`, `tests/Navius.Wpf.Tests/SwitchTests.cs`,
+`apps/Navius.Wpf.Gallery/Pages/SwitchPage.xaml(.cs)`.
+
+**ReadOnly (first open question resolved)**: overridden via `OnToggle()`, exactly the pattern
+already used by `NaviusCheckbox` and `NaviusRadioGroupItem` in this codebase -- while `ReadOnly`,
+`OnToggle()` no-ops (does not call `base.OnToggle()`), leaving `IsEnabled`/`Focusable` untouched, so
+the control stays focusable and keeps native Space/Enter routing but the value never flips.
+Programmatic changes (`toggle.IsChecked = true`) still work while `ReadOnly`, matching the
+contract's "the value cannot change" framing as a user-input guard, not a hard lock.
+
+**Form-submission mirroring (second open question resolved)**: dropped entirely, per this wave's
+brief that all web form-mirroring parameters (`Name`, `Value`, `Form`, `Required`'s native-validation
+half) drop from the WPF port. `ReadOnly` and `Required` are kept as plain bool dependency properties
+for API parity (matching `NaviusCheckbox`/`NaviusRadioGroupItem`'s precedent of always exposing
+`ReadOnly`+`Required` together), but `Required` has no enforcement behavior in this port -- it is a
+property a consumer can read/bind to, same as the sibling families.
+
+**`PART_Thumb` (third open question resolved)**: mandatory template part, not an optional
+component. It is declared via `[TemplatePart(Name = "PART_Thumb", ...)]` on `NaviusSwitch` and has
+no dedicated CLR type; `Themes/Switch.xaml` styles it directly off the same `IsChecked`/`IsEnabled`
+triggers as the track (a `Border` named `Track`), rather than a separate cascaded-context component.
+
+**Peer**: no custom `AutomationPeer` -- the inherited `ToggleButtonAutomationPeer` (UIA
+`TogglePattern`) is used as-is, matching `NaviusToggle`'s identical choice; this is the closest
+native mapping to `role="switch"`/`aria-checked` available in WPF.
+
+**Thumb animation**: a 120ms `DoubleAnimation` on a `TranslateTransform.X` applied to the
+`PART_Thumb` Ellipse, driven by `Trigger.EnterActions`/`ExitActions` on `IsChecked` in
+`Themes/Switch.xaml` (plain WPF `Storyboard`, no motion library dependency).

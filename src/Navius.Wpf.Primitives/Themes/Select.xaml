@@ -1,0 +1,203 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Navius.Wpf.Primitives.Controls"
+    xmlns:select="clr-namespace:Navius.Wpf.Primitives.Controls.Select">
+
+    <!--
+        Not merged into Generic.xaml (out of scope: another family owns that file, same precedent
+        as Themes/Menu.xaml / Themes/Popover.xaml). Pages that use the Select family merge this
+        dictionary themselves:
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Select.xaml" />
+
+        Hard rule for this wave: hairline borders, no DropShadowEffect, one-ink brand. The popup
+        surface below deliberately uses a 1px Navius.Border and NO shadow (unlike Popover.xaml).
+
+        One Style targets the non-generic NaviusSelectBase; every closed NaviusSelect<T> shares it
+        because each points its DefaultStyleKey at the base type.
+    -->
+
+    <!-- Option row (contract's NaviusSelectItem, role="option"). -->
+    <Style TargetType="{x:Type select:NaviusSelectItem}">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.PopoverForeground}" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type select:NaviusSelectItem}">
+                    <Border
+                        x:Name="Bd"
+                        Background="Transparent"
+                        CornerRadius="{DynamicResource Navius.Radius.Small}"
+                        Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- data-selected: check glyph, drawn hairline, no fill. -->
+                            <Path
+                                x:Name="Check"
+                                Grid.Column="0"
+                                Width="12" Height="12"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Data="M 1,6 L 4.5,9.5 L 11,2"
+                                Stroke="{TemplateBinding Foreground}"
+                                StrokeThickness="1.6"
+                                StrokeStartLineCap="Round"
+                                StrokeEndLineCap="Round"
+                                StrokeLineJoin="Round"
+                                Visibility="Collapsed" />
+
+                            <TextBlock
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Text="{TemplateBinding DisplayText}" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelectedValue" Value="True">
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <!-- data-highlighted -->
+                        <Trigger Property="IsHighlightedValue" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Navius.AccentForeground}" />
+                        </Trigger>
+                        <!-- data-disabled (own Disabled flag or inherited IsEnabled) -->
+                        <Trigger Property="Disabled" Value="True">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The Select shell: trigger (role="combobox") + anchored listbox popup (role="listbox"). -->
+    <Style TargetType="{x:Type select:NaviusSelectBase}">
+        <Setter Property="MinWidth" Value="200" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type select:NaviusSelectBase}">
+                    <Grid>
+                        <ToggleButton
+                            x:Name="PART_Trigger"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Center"
+                            IsChecked="{Binding IsOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                    <Border
+                                        x:Name="TriggerBorder"
+                                        Background="{DynamicResource Navius.Background}"
+                                        BorderBrush="{DynamicResource Navius.Input}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource Navius.Radius.Control}">
+                                        <ContentPresenter
+                                            Margin="12,8"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="TriggerBorder" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="TriggerBorder" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock
+                                    x:Name="Label"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    TextTrimming="CharacterEllipsis"
+                                    Foreground="{TemplateBinding Foreground}"
+                                    Text="{TemplateBinding DisplayText}" />
+
+                                <!-- chevron-down; rotates 180 when open (see IsOpen trigger below) -->
+                                <Path
+                                    x:Name="Chevron"
+                                    Grid.Column="1"
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Data="M 0,0 L 4,4 L 8,0"
+                                    Stroke="{DynamicResource Navius.MutedForeground}"
+                                    StrokeThickness="1.4"
+                                    StrokeStartLineCap="Round"
+                                    StrokeEndLineCap="Round"
+                                    StrokeLineJoin="Round"
+                                    RenderTransformOrigin="0.5,0.5" />
+                            </Grid>
+                        </ToggleButton>
+
+                        <controls:NaviusAnchoredPopup
+                            x:Name="PART_Popup"
+                            Anchor="{Binding ElementName=PART_Trigger}"
+                            Side="{TemplateBinding Side}"
+                            Align="{TemplateBinding Align}"
+                            SideOffset="{TemplateBinding SideOffset}"
+                            AlignOffset="{TemplateBinding AlignOffset}"
+                            IsOpen="{TemplateBinding IsOpen}">
+                            <Border
+                                x:Name="PART_PopupContent"
+                                MinWidth="{Binding ActualWidth, ElementName=PART_Trigger}"
+                                Padding="4"
+                                Background="{DynamicResource Navius.Popover}"
+                                BorderBrush="{DynamicResource Navius.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource Navius.Radius.Control}"
+                                Focusable="False"
+                                FocusVisualStyle="{x:Null}">
+                                <ScrollViewer
+                                    MaxHeight="300"
+                                    CanContentScroll="False"
+                                    VerticalScrollBarVisibility="Auto">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </controls:NaviusAnchoredPopup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- data-placeholder: nothing selected -> muted label -->
+                        <Trigger Property="HasSelection" Value="False">
+                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource Navius.MutedForeground}" />
+                        </Trigger>
+                        <!-- data-popup-open: flip the chevron -->
+                        <Trigger Property="IsOpen" Value="True">
+                            <Setter TargetName="Chevron" Property="RenderTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="180" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <!-- data-disabled -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="PART_Trigger" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,39 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.SwitchPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); this page merges it directly. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Switch.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock Text="Switch" FontSize="18" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" Margin="0,0,0,12" />
+
+        <TextBlock Text="Unchecked" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusSwitch AutomationProperties.AutomationId="UncheckedSwitch"
+                              HorizontalAlignment="Left" Margin="0,0,0,16" />
+
+        <TextBlock Text="Checked" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusSwitch AutomationProperties.AutomationId="CheckedSwitch"
+                              HorizontalAlignment="Left" IsChecked="True" Margin="0,0,0,16" />
+
+        <TextBlock Text="Read-only, checked" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusSwitch AutomationProperties.AutomationId="ReadOnlySwitch"
+                              HorizontalAlignment="Left" ReadOnly="True" IsChecked="True" Margin="0,0,0,16" />
+
+        <TextBlock Text="Disabled" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusSwitch AutomationProperties.AutomationId="DisabledSwitch"
+                              HorizontalAlignment="Left" IsEnabled="False" Margin="0,0,0,16" />
+
+        <TextBlock Text="Disabled + checked" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusSwitch AutomationProperties.AutomationId="DisabledCheckedSwitch"
+                              HorizontalAlignment="Left" IsChecked="True" IsEnabled="False" />
+    </StackPanel>
+</UserControl>

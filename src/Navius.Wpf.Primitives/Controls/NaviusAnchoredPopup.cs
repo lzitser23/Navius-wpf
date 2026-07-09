@@ -39,6 +39,15 @@ public class NaviusAnchoredPopup : FrameworkElement
         nameof(AlignOffset), typeof(double), typeof(NaviusAnchoredPopup),
         new PropertyMetadata(0d, OnPlacementInputChanged));
 
+    /// <summary>
+    /// Arrow glyph size fed into <see cref="AnchoredPlacementOptions.ArrowSize"/>; 0 (default)
+    /// disables arrow-offset computation, matching <see cref="AnchoredPlacementOptions"/>'s own
+    /// default. Input, not read-only: callers opt in by setting a nonzero size.
+    /// </summary>
+    public static readonly DependencyProperty ArrowSizeProperty = DependencyProperty.Register(
+        nameof(ArrowSize), typeof(double), typeof(NaviusAnchoredPopup),
+        new PropertyMetadata(0d, OnPlacementInputChanged));
+
     public static readonly DependencyProperty IsOpenProperty = DependencyProperty.Register(
         nameof(IsOpen), typeof(bool), typeof(NaviusAnchoredPopup),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnIsOpenChanged));
@@ -68,6 +77,50 @@ public class NaviusAnchoredPopup : FrameworkElement
     {
         ArgumentNullException.ThrowIfNull(element);
         return (string?)element.GetValue(EffectiveSideTextProperty);
+    }
+
+    /// <summary>
+    /// The arrow glyph's local-to-popup X offset for the current/last placement, as computed by
+    /// <see cref="PlacementMath.Place"/> (see <see cref="Positioning.PlacementResult.ArrowOffset"/>).
+    /// <see cref="double.NaN"/> when <see cref="ArrowSize"/> is 0 (arrow computation disabled).
+    /// </summary>
+    private static readonly DependencyPropertyKey ArrowOffsetXPropertyKey = DependencyProperty.RegisterReadOnly(
+        nameof(ArrowOffsetX), typeof(double), typeof(NaviusAnchoredPopup),
+        new PropertyMetadata(double.NaN));
+
+    public static readonly DependencyProperty ArrowOffsetXProperty = ArrowOffsetXPropertyKey.DependencyProperty;
+
+    /// <summary>Same as <see cref="ArrowOffsetX"/>, the Y component.</summary>
+    private static readonly DependencyPropertyKey ArrowOffsetYPropertyKey = DependencyProperty.RegisterReadOnly(
+        nameof(ArrowOffsetY), typeof(double), typeof(NaviusAnchoredPopup),
+        new PropertyMetadata(double.NaN));
+
+    public static readonly DependencyProperty ArrowOffsetYProperty = ArrowOffsetYPropertyKey.DependencyProperty;
+
+    /// <summary>Attached read-only mirror of <see cref="ArrowOffsetX"/> onto <see cref="Child"/>, same rationale as <see cref="EffectiveSideTextProperty"/>.</summary>
+    private static readonly DependencyPropertyKey ArrowOffsetXTextPropertyKey = DependencyProperty.RegisterAttachedReadOnly(
+        "ArrowOffsetXText", typeof(double), typeof(NaviusAnchoredPopup),
+        new PropertyMetadata(double.NaN));
+
+    public static readonly DependencyProperty ArrowOffsetXTextProperty = ArrowOffsetXTextPropertyKey.DependencyProperty;
+
+    /// <summary>Attached read-only mirror of <see cref="ArrowOffsetY"/> onto <see cref="Child"/>, same rationale as <see cref="EffectiveSideTextProperty"/>.</summary>
+    private static readonly DependencyPropertyKey ArrowOffsetYTextPropertyKey = DependencyProperty.RegisterAttachedReadOnly(
+        "ArrowOffsetYText", typeof(double), typeof(NaviusAnchoredPopup),
+        new PropertyMetadata(double.NaN));
+
+    public static readonly DependencyProperty ArrowOffsetYTextProperty = ArrowOffsetYTextPropertyKey.DependencyProperty;
+
+    public static double GetArrowOffsetXText(DependencyObject element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        return (double)element.GetValue(ArrowOffsetXTextProperty);
+    }
+
+    public static double GetArrowOffsetYText(DependencyObject element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        return (double)element.GetValue(ArrowOffsetYTextProperty);
     }
 
     public NaviusAnchoredPopup()
@@ -112,6 +165,13 @@ public class NaviusAnchoredPopup : FrameworkElement
         set => SetValue(AlignOffsetProperty, value);
     }
 
+    /// <summary>Arrow glyph size in DIPs, fed into <see cref="AnchoredPlacementOptions.ArrowSize"/>. 0 (default) disables arrow-offset computation.</summary>
+    public double ArrowSize
+    {
+        get => (double)GetValue(ArrowSizeProperty);
+        set => SetValue(ArrowSizeProperty, value);
+    }
+
     public bool IsOpen
     {
         get => (bool)GetValue(IsOpenProperty);
@@ -126,6 +186,12 @@ public class NaviusAnchoredPopup : FrameworkElement
 
     /// <summary>The side actually used for the current/last placement, after flip resolution.</summary>
     public PlacementSide EffectiveSide => (PlacementSide)GetValue(EffectiveSideProperty);
+
+    /// <summary>The arrow glyph's local-to-popup X offset for the current/last placement. <see cref="double.NaN"/> when <see cref="ArrowSize"/> is 0.</summary>
+    public double ArrowOffsetX => (double)GetValue(ArrowOffsetXProperty);
+
+    /// <summary>The arrow glyph's local-to-popup Y offset for the current/last placement. <see cref="double.NaN"/> when <see cref="ArrowSize"/> is 0.</summary>
+    public double ArrowOffsetY => (double)GetValue(ArrowOffsetYProperty);
 
     private static void OnPlacementInputChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((NaviusAnchoredPopup)d).UpdatePlacement();
@@ -195,6 +261,7 @@ public class NaviusAnchoredPopup : FrameworkElement
             Align = Align,
             SideOffset = SideOffset,
             AlignOffset = AlignOffset,
+            ArrowSize = ArrowSize,
         };
 
         var result = PlacementMath.Place(anchorRect, popupSize, workArea, options);
@@ -204,5 +271,13 @@ public class NaviusAnchoredPopup : FrameworkElement
 
         SetValue(EffectiveSidePropertyKey, result.EffectiveSide);
         child.SetValue(EffectiveSideTextPropertyKey, result.EffectiveSide.ToString());
+
+        var arrowOffsetX = result.ArrowOffset?.X ?? double.NaN;
+        var arrowOffsetY = result.ArrowOffset?.Y ?? double.NaN;
+
+        SetValue(ArrowOffsetXPropertyKey, arrowOffsetX);
+        SetValue(ArrowOffsetYPropertyKey, arrowOffsetY);
+        child.SetValue(ArrowOffsetXTextPropertyKey, arrowOffsetX);
+        child.SetValue(ArrowOffsetYTextPropertyKey, arrowOffsetY);
     }
 }

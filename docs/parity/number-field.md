@@ -106,3 +106,49 @@ Tier B (custom lookless control). There is no native WPF NumberBox (that's a Win
 - `Format` is applied with `InvariantCulture` only; does the WPF port need current-culture / locale-aware number formatting and parsing (the Blazor side also parses with `NumberStyles.Float` + `InvariantCulture`)?
 - No `aria-labelledby`/label association is wired on the group or input; how should the WPF control associate an external `Label`?
 - `SetTextAsync` reverts to the current value on unparseable input by re-applying `CurrentValue` (forcing a re-render back to `Display`): confirm this "snap back on invalid text" behavior is the desired WPF behavior versus rejecting keystrokes outright.
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/NumberField/NaviusNumberField.cs` (Tier B lookless
+`Control`), `NaviusNumberFieldAutomationPeer.cs`, `NaviusNumberFieldMath.cs` (pure step/clamp/
+format/parse math), `Themes/NumberField.xaml`, `tests/Navius.Wpf.Tests/NumberFieldTests.cs`,
+`apps/Navius.Wpf.Gallery/Pages/NumberFieldPage.xaml(.cs)`.
+
+**Auto-repeat (first open question resolved)**: adopted immediately rather than deferred.
+`PART_Increment`/`PART_Decrement` are native `RepeatButton`, so press-and-hold auto-repeat is free
+in this port even though the web source tracks it as a not-yet-implemented follow-up -- there was
+no reason to withhold behavior WPF provides for nothing. Scrub-area pointer-lock dragging is not
+ported (no WPF analog attempted; out of scope for this wave).
+
+**Culture (second open question resolved)**: kept `InvariantCulture`-only for both formatting
+(`NaviusNumberFieldMath.Format`) and parsing (`TryParse`, using `NumberStyles.Float`), matching the
+contract exactly rather than switching to current-culture. No deviation.
+
+**Label association (third open question)**: left unresolved/deferred, consistent with
+`NaviusProgressLabel`'s `AutomationProperties.LabeledBy` idiom used elsewhere in this codebase, but
+no `NaviusNumberFieldLabel` part was added this wave since the contract itself has no Label part
+for NumberField (unlike Meter/Progress) -- a consumer wires a plain `Label`/`TextBlock` externally.
+
+**Invalid text (fourth open question resolved)**: "snap back on invalid text" was implemented
+exactly as contracted, not "reject keystrokes outright" -- `CommitText(string)` parses on
+`LostFocus`/Enter; on parse failure the input reverts to `Display` (the last valid formatted
+value), matching `SetTextAsync`. Keystrokes themselves are never blocked while typing.
+
+**Parts**: the contract's 5 parts (Root/Group/Input/Increment/Decrement) fold into one `Control`
+with three named template parts (`PART_Input` a `TextBox`, `PART_Increment`/`PART_Decrement`
+`RepeatButton`s, `tabindex="-1"` mapped to `Focusable="False"`). `Group` has no behavior of its own
+in the contract beyond a `role="group"` wrapper `div`, so it stays a plain `Border` in
+`Themes/NumberField.xaml` with no dedicated CLR type -- the same minimalism `NaviusSlider` and
+`NaviusProgress` use for their own non-interactive template parts.
+
+**Automation**: `NaviusNumberFieldAutomationPeer : FrameworkElementAutomationPeer, IRangeValueProvider`
+reports `AutomationControlType.Spinner` (the closest native mapping to `role="spinbutton"`) and
+exposes `Value`/`Minimum`/`Maximum`/`SmallChange`(=`Step`)/`LargeChange`(=`LargeStep`); unset
+`Minimum`/`Maximum` surface as `NegativeInfinity`/`PositiveInfinity` since `IRangeValueProvider`
+has no "unbounded" concept. `SetValue` throws `ElementNotEnabledException` when `ReadOnly` or
+disabled, matching UIA's read-only-provider convention.
+
+**Keyboard**: `ArrowUp`/`ArrowDown` step by `Step`, or `LargeStep` under Shift, or `SmallStep`
+under Alt; `PageUp`/`PageDown` always step by `LargeStep` unconditionally; `Home`/`End` jump to
+`Minimum`/`Maximum` (no-op when unset). All routed through `StepBy(double)`/`SetToBound(double?)`,
+public methods so they are directly unit-testable without constructing real `KeyEventArgs`.

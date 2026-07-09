@@ -1,0 +1,239 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
+    xmlns:combobox="clr-namespace:Navius.Wpf.Primitives.Controls.Combobox"
+    xmlns:controls="clr-namespace:Navius.Wpf.Primitives.Controls">
+
+    <!--
+        Not merged into Generic.xaml (out of scope: another family owns that file). Pages that use the
+        Combobox family merge this dictionary themselves, e.g. in the hosting page's own Resources:
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Combobox.xaml" />
+
+        One Style, keyed to the NON-generic NaviusComboboxBase, is shared by every closed
+        NaviusCombobox<T> because the generic subclass overrides DefaultStyleKey onto the base type.
+        Hard rule for this wave: hairline borders, no shadows, one-ink brand (contrast Popover.xaml,
+        which uses a DropShadowEffect; deliberately absent here).
+    -->
+
+    <!-- Default filtered-row template. Uses DataContext (ComboboxRowVm) bindings only: a custom
+         ItemTemplate cannot reach this control across the Popup boundary via RelativeSource, so the
+         control swaps the whole ItemTemplate in code instead (see NaviusComboboxBase.ApplyItemTemplate). -->
+    <DataTemplate x:Key="Navius.Combobox.DefaultRow" DataType="{x:Type combobox:ComboboxRowVm}">
+        <Border
+            x:Name="RowRoot"
+            Padding="8,6"
+            Background="Transparent"
+            CornerRadius="{DynamicResource Navius.Radius.Small}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    x:Name="Check"
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource Navius.Foreground}"
+                    Text="&#x2713;"
+                    Visibility="Collapsed" />
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource Navius.PopoverForeground}"
+                    Text="{Binding Text}"
+                    TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </Border>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                <Setter TargetName="RowRoot" Property="Background" Value="{DynamicResource Navius.Accent}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Default chip template. Chips live in the field (main visual tree), one per committed value.
+         The remove button removes BY VALUE via RemoveChipCommand with the chip's value as parameter,
+         never by displayed index (the historical web regression the port guards against). -->
+    <DataTemplate x:Key="Navius.Combobox.DefaultChip" DataType="{x:Type combobox:ComboboxChipVm}">
+        <Border
+            Margin="0,0,4,0"
+            Padding="6,2"
+            Background="{DynamicResource Navius.Muted}"
+            BorderBrush="{DynamicResource Navius.Border}"
+            BorderThickness="1"
+            CornerRadius="{DynamicResource Navius.Radius.Small}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource Navius.Foreground}"
+                    Text="{Binding Text}" />
+                <Button
+                    Margin="4,0,0,0"
+                    Padding="2,0"
+                    VerticalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Command="{x:Static combobox:NaviusComboboxBase.RemoveChipCommand}"
+                    CommandParameter="{Binding Value}"
+                    Content="&#x2715;"
+                    Cursor="Hand"
+                    FocusVisualStyle="{x:Null}"
+                    Foreground="{DynamicResource Navius.MutedForeground}"
+                    IsTabStop="False" />
+            </StackPanel>
+        </Border>
+    </DataTemplate>
+
+    <Style TargetType="{x:Type combobox:NaviusComboboxBase}">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="MinWidth" Value="240" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type combobox:NaviusComboboxBase}">
+                    <StackPanel x:Name="Root">
+                        <Border
+                            x:Name="PART_Anchor"
+                            Padding="8,4"
+                            Background="{DynamicResource Navius.Card}"
+                            BorderBrush="{DynamicResource Navius.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource Navius.Radius.Control}">
+                            <DockPanel LastChildFill="True">
+                                <Button
+                                    x:Name="PART_Clear"
+                                    DockPanel.Dock="Right"
+                                    Margin="4,0,0,0"
+                                    Padding="2,0"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Content="&#x2715;"
+                                    Cursor="Hand"
+                                    FocusVisualStyle="{x:Null}"
+                                    Foreground="{DynamicResource Navius.MutedForeground}"
+                                    IsTabStop="False"
+                                    ToolTip="Clear"
+                                    Visibility="Collapsed" />
+                                <TextBlock
+                                    x:Name="Chevron"
+                                    DockPanel.Dock="Right"
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Foreground="{DynamicResource Navius.MutedForeground}"
+                                    Text="&#x2304;" />
+                                <StackPanel>
+                                    <ItemsControl
+                                        x:Name="PART_Chips"
+                                        Margin="0,2,0,2"
+                                        ItemTemplate="{StaticResource Navius.Combobox.DefaultChip}"
+                                        ItemsSource="{TemplateBinding SelectedChips}"
+                                        Visibility="Collapsed">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                    <Grid>
+                                        <TextBlock
+                                            x:Name="PART_Placeholder"
+                                            Margin="2,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Foreground="{DynamicResource Navius.MutedForeground}"
+                                            IsHitTestVisible="False"
+                                            Text="{TemplateBinding Placeholder}"
+                                            Visibility="Collapsed" />
+                                        <TextBox
+                                            x:Name="PART_Input"
+                                            Padding="0"
+                                            VerticalContentAlignment="Center"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            CaretBrush="{DynamicResource Navius.Foreground}"
+                                            FocusVisualStyle="{x:Null}"
+                                            Foreground="{DynamicResource Navius.Foreground}"
+                                            IsReadOnly="{TemplateBinding ReadOnly}"
+                                            Text="{Binding Query, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    </Grid>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+
+                        <controls:NaviusAnchoredPopup
+                            x:Name="PART_Popup"
+                            Align="{TemplateBinding Align}"
+                            AlignOffset="{TemplateBinding AlignOffset}"
+                            Anchor="{Binding ElementName=PART_Anchor}"
+                            IsOpen="{TemplateBinding IsOpen}"
+                            Side="{TemplateBinding Side}"
+                            SideOffset="{TemplateBinding SideOffset}">
+                            <Border
+                                x:Name="PART_PopupContent"
+                                MinWidth="{Binding ActualWidth, ElementName=PART_Anchor}"
+                                MaxHeight="300"
+                                Padding="4"
+                                Background="{DynamicResource Navius.Popover}"
+                                BorderBrush="{DynamicResource Navius.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource Navius.Radius.Card}">
+                                <DockPanel LastChildFill="True">
+                                    <TextBlock
+                                        x:Name="PART_Status"
+                                        DockPanel.Dock="Bottom"
+                                        Margin="8,4,8,2"
+                                        automation:AutomationProperties.LiveSetting="Polite"
+                                        FontSize="11"
+                                        Foreground="{DynamicResource Navius.MutedForeground}"
+                                        Text="{TemplateBinding StatusText}" />
+                                    <TextBlock
+                                        x:Name="EmptyText"
+                                        Margin="8,6"
+                                        Foreground="{DynamicResource Navius.MutedForeground}"
+                                        Text="No results"
+                                        Visibility="Collapsed" />
+                                    <ScrollViewer
+                                        HorizontalScrollBarVisibility="Disabled"
+                                        VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl
+                                            x:Name="PART_List"
+                                            ItemTemplate="{StaticResource Navius.Combobox.DefaultRow}"
+                                            ItemsSource="{TemplateBinding FilteredRows}" />
+                                    </ScrollViewer>
+                                </DockPanel>
+                            </Border>
+                        </controls:NaviusAnchoredPopup>
+                    </StackPanel>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Multiple" Value="True">
+                            <Setter TargetName="PART_Chips" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="HasSelection" Value="True">
+                            <Setter TargetName="PART_Clear" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsEmpty" Value="True">
+                            <Setter TargetName="EmptyText" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="Disabled" Value="True">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.5" />
+                            <Setter TargetName="PART_Input" Property="IsEnabled" Value="False" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Query" Value="" />
+                                <Condition Property="HasSelection" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PART_Placeholder" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

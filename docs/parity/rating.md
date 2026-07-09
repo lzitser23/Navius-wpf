@@ -85,3 +85,57 @@ Tier B (custom lookless control). There is no native WPF star-rating control. Bu
 - Whether WPF should model `Value` as `decimal?` (exact parity) or fall back to `double?` for easier XAML/binding ergonomics, given `AllowHalf`'s 0.5-step snapping logic (`Normalize` in `NaviusRating.razor`) depends on decimal rounding.
 - How to replicate hover-preview (`HoverValue`) state, since WPF mouse-enter/leave on templated sub-elements (each star, each half-zone) needs careful `MouseEnter`/`MouseLeave` vs `PreviewMouseMove` wiring to avoid flicker that the DOM `pointerenter`/`pointerleave` model handles for free.
 - Whether the accessible-name difference between the checked star (announces the real fractional value) and all other stars (announce their whole value) is achievable cleanly via a single `AutomationPeer.GetName()` override or needs per-star peers.
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/Rating/NaviusRating.cs` (root, Tier B lookless
+`Control`), `NaviusRatingItem.cs`, `NaviusRatingMath.cs` (pure step/clamp/select math),
+`NaviusRatingAutomationPeer.cs`, `NaviusRatingItemAutomationPeer.cs`, `Themes/Rating.xaml`,
+`tests/Navius.Wpf.Tests/RatingTests.cs`, `apps/Navius.Wpf.Gallery/Pages/RatingPage.xaml(.cs)`.
+
+**`Value` type (first open question resolved)**: kept `decimal?`, exact parity with the contract,
+not `double?`. `NaviusRatingMath` does all step/clamp/select arithmetic in `decimal` so
+`AllowHalf`'s 0.5-step snapping stays exact.
+
+**Hover preview (second open question resolved)**: `NaviusRatingItem` overrides
+`OnMouseEnter`/`OnMouseLeave` (not `PreviewMouseMove`) and raises a bubbling `HoverChanged` routed
+event that the owning `NaviusRating` handles centrally (`_hoverValue` field), the same
+bubble-to-owner shape `NaviusRadioGroup` already uses for `OnItemChecked`. `IsHalf` is `null` only
+on leave (clears hover); enter carries `true`/`false` based on which half of the star's bounds the
+pointer is in. No debouncing was added beyond WPF's native `MouseEnter`/`MouseLeave` semantics; no
+flicker was observed in manual testing since each star is a single hit-test-visible element (the
+half zones are geometric X-position checks within one `OnMouseEnter`, not separate overlay elements
+receiving their own enter/leave).
+
+**Asymmetric accessible name (third open question resolved)**: a single
+`NaviusRatingItemAutomationPeer.GetNameCore()` override, not per-star peer subclasses. It walks up
+the visual tree to find the owning `NaviusRating`, compares this item's `Index` against
+`NaviusRatingMath.FocusIndex(group.Value, group.Max)` to decide "is this the checked star", and
+announces the real `group.Value` (fractional) when checked or the item's own whole `Index`
+otherwise, via `group.Label` or `NaviusRating.DefaultLabel`.
+
+**Deviation -- ChildContent dropped**: the contract's `ChildContent` override (a custom star glyph,
+replacing the auto-generated `Max` stars) has no WPF equivalent without a bespoke items-template
+system and was dropped; the star is a single fixed `PathGeometry` in `Themes/Rating.xaml`
+(`Navius.Rating.StarGeometry`), styleable but not swappable per-instance without editing the
+template.
+
+**Deviation -- half-zone clip is not RTL-mirrored**: the half-fill visual
+(`RectangleGeometry Rect="0,0,12,24"` clipping the left half of the 24x24 star box) always clips
+the geometric left half regardless of `FlowDirection`; keyboard arrow mirroring under `rtl` is
+correct (implemented in `HandleKey`), but a half-rated star's visual fill does not flip sides
+under RTL layout. Flagged here rather than fixed, given this wave's scope.
+
+**Keyboard**: `NaviusRating.HandleKey(Key)` is `public` (not the more natural `internal`) so
+`RatingTests` can drive the full keyboard table (`Key.Up`/`Down`/`Left`/`Right` with RTL mirroring,
+`Home`/`End`, `Backspace`/`Delete`, digit `1`-`9`) without constructing real `KeyEventArgs` --
+the same public-for-testability tradeoff `NaviusProgress.FormatValueText()` makes elsewhere in this
+codebase. `PreviewKeyDown` on the root calls `HandleKey` and then focuses the resulting star,
+mirroring `NaviusRadioGroup`'s roving-tabindex-after-edit behavior.
+
+**Roving tabindex / peer selection**: `GetItem(int)`/`SelectItem(NaviusRatingItem)` are `internal`
+(same-assembly access from the automation peers is sufficient, no `InternalsVisibleTo` needed) and
+back both `NaviusRatingAutomationPeer.GetSelection()`/`ISelectionProvider` and
+`NaviusRatingItemAutomationPeer.Select()`/`ISelectionItemProvider`. `AutomationControlType.Group`
+is used for the root (not `List`), matching `NaviusRadioGroupAutomationPeer`'s existing precedent
+in this codebase, since WPF has no built-in radiogroup-of-buttons peer.
