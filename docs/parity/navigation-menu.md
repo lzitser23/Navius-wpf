@@ -248,7 +248,7 @@ Tier B (custom lookless control). There is no native WPF control that models a n
 
 ## WPF implementation notes
 
-Implemented in `src/Navius.Wpf.Primitives/Controls/NavigationMenu/` (+ `Themes/NavigationMenu.xaml`, gallery `Pages/NavigationMenuPage.xaml(.cs)`, tests `tests/Navius.Wpf.Tests/NavigationMenuTests.cs`, 13 tests). Tier B custom lookless controls, per the strategy above; no native control derivation beyond `Button`-for-Trigger/Link.
+Implemented in `src/Navius.Wpf.Primitives/Controls/NavigationMenu/` (+ `Themes/NavigationMenu.xaml`, gallery `Pages/NavigationMenuPage.xaml(.cs)`, tests `tests/Navius.Wpf.Tests/NavigationMenuTests.cs`, 15 tests). Tier B custom lookless controls, per the strategy above; no native control derivation beyond `Button`-for-Trigger/Link.
 
 ### Scope: per-item popup mode only; shared viewport is a stub
 
@@ -288,3 +288,16 @@ Discovered via the test suite: a subclass that does not call its own `DefaultSty
 ### Deferred per the Open Questions above
 
 `data-activation-direction` (directional enter animation) is not implemented; `OnOpenChangeComplete` fires synchronously right after `Value` changes (no separate presence-transition phase exists in this port to wait for). The Popup's `AutomationControlType` is left as the default `FrameworkElementAutomationPeer` inference rather than an explicit Custom/Group/Pane choice, pending the cross-family consistency decision the Open Questions call for.
+
+## M6 audit (2026-07-09)
+
+Adversarial parity re-audit of the NavigationMenu family against the C#/XAML. Hover-intent timing is real: `NavigationMenuHostBase.Delay`/`CloseDelay` default `50` ms and drive `DispatcherTimer`s in `NaviusNavigationMenuTrigger` (open on enter, close on leave, cancel-on-reenter via `CancelPendingClose`), matching the contract's `delay`/`closeDelay=50`. The "enter content" keys are wired exactly (`ArrowDown` horizontal / `ArrowRight` vertical in `OnKeyDown`); the List roving controller cycles rovable triggers/links on Arrow/Home/End with the correct per-orientation axis; the Trigger's `ButtonAutomationPeer` genuinely implements `IExpandCollapseProvider` reflecting and driving `host.Value` (test-exercised). The `NaviusNavigationMenuArrow` default size is metadata-overridden to 10x5 and its geometry is computed from `Width`/`Height` (not hardcoded); there is no active-trigger-tracking "indicator" to mis-position because shared-viewport mode is an explicit stub (`UseSharedViewport=true` throws `NotSupportedException`, test-verified). `Themes/NavigationMenu.xaml` is `DynamicResource`-only with all keys resolving.
+
+### CONFIRMED (fixed)
+
+- **Doc test count wrong.** Notes claimed `NavigationMenuTests.cs` has "13 tests"; it actually has **15** `[StaFact]` methods. Corrected to 15.
+
+### PLAUSIBLE (not fixed)
+
+- Dismissal nested-popup gap: a press inside one host's open Content panel while a *different* host's (or nested `NaviusNavigationMenuSub`'s) popup is open is invisible to both window-level hooks and won't auto-close the other. Already documented as a known gap in the WPF notes; traces into `NaviusAnchoredPopup`'s separate transparent child-HWND rendering (forbidden shared infra), so reported rather than fixed.
+- `NaviusNavigationMenuLink.Active` maps `aria-current="page"` onto `AutomationProperties.ItemStatus="page"`. Defensible (no exact UIA aria-current equivalent) but an approximation; noted for cross-family consistency review.

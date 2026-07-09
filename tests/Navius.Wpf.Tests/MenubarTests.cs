@@ -175,6 +175,23 @@ public class MenubarTests
     }
 
     [StaFact]
+    public void CheckboxItem_ProgrammaticCheckedSet_RaisesCheckedChanged()
+    {
+        // Regression: CheckedChanged must fire on a direct Checked assignment, not only via a
+        // click, matching the canonical "always raises on change" strategy documented in the
+        // parity notes and the sibling NaviusMenuCheckboxItem's behavior.
+        var item = new NaviusMenubarCheckboxItem();
+        var changes = new List<bool?>();
+        item.CheckedChanged += (_, value) => changes.Add(value);
+
+        item.Checked = true;
+        item.Checked = null;
+        item.Checked = false;
+
+        Assert.Equal(new bool?[] { true, null, false }, changes);
+    }
+
+    [StaFact]
     public void CheckboxItem_Select_PreventDefault_KeepsCheckedToggleButSkipsClose()
     {
         var item = new NaviusMenubarCheckboxItem();

@@ -68,6 +68,12 @@ public class NaviusMenubarCheckboxItem : MenuItem
         var item = (NaviusMenubarCheckboxItem)d;
         var value = (bool?)e.NewValue;
         item.IsChecked = value == true;
+
+        // Raise from the DP-change callback (not just from OnClick) so the paired event fires on
+        // every Checked change, programmatic or click-driven, matching the canonical
+        // "always raises on change, controlled or not" strategy and the sibling
+        // NaviusMenuCheckboxItem's behavior.
+        item.CheckedChanged?.Invoke(item, value);
     }
 
     /// <summary>
@@ -79,10 +85,9 @@ public class NaviusMenubarCheckboxItem : MenuItem
     /// </summary>
     protected override void OnClick()
     {
-        // Indeterminate/false -> true; true -> false.
-        var next = Checked != true;
-        Checked = next;
-        CheckedChanged?.Invoke(this, next);
+        // Indeterminate/false -> true; true -> false. The Checked setter's DP-change callback
+        // raises CheckedChanged; OnClick does not raise it again (avoids a double-raise per click).
+        Checked = Checked != true;
 
         var args = new NaviusMenubarSelectEventArgs();
         Select?.Invoke(this, args);
