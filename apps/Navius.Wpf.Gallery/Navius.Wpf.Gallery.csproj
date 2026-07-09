@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Navius.Wpf.Primitives\Navius.Wpf.Primitives.csproj" />
+    <ProjectReference Include="..\..\src\Navius.Wpf.Motion\Navius.Wpf.Motion.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

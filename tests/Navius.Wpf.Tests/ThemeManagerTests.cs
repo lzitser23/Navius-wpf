@@ -11,7 +11,14 @@ public class ThemeManagerTests
         // pack://application URIs only resolve once an Application exists in the process.
         if (Application.Current is null)
         {
-            _ = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            try
+            {
+                _ = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            }
+            catch (InvalidOperationException)
+            {
+                // Another test class won the race; Application.Current is now set.
+            }
         }
     }
 

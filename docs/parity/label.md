@@ -47,3 +47,14 @@ Tier A (derive from `System.Windows.Controls.Label`). WPF's `Label` already has 
 - Whether the multi-click text-selection-suppression nuance (skip on single click, prevent on double/triple) is meaningful to port at all, given WPF's `TextBox` has its own native double-click-to-select-word behavior that is a different interaction model than DOM text selection.
 - The Blazor code gets click-to-focus-target "for free" from the browser's native `for=` handling; nothing in `NaviusLabel.razor` implements it explicitly, so the WPF port must author the focus-forwarding logic from scratch rather than translate existing code.
 - `Attributes` (`CaptureUnmatchedValues`) splatting has no direct WPF analog; the port needs an extensibility story (styles, attached properties, etc.) for arbitrary passthrough attributes.
+
+## WPF implementation notes
+
+- Implemented as a single new file, `Controls/NaviusLabel.cs` : `Label`.
+- Resolved open question 1: `For` stays a plain `string?` dependency property (not a bound object reference). It resolves to a `FrameworkElement` by name lookup (`FindName`), walking up from the label to the nearest ancestor `NameScope` that has it, and the resolved element is assigned to the inherited `Label.Target`. Resolution is retried on `Loaded` (covers XAML declaration order where `For` is set before the target is registered) and eagerly on `For`'s property-changed callback.
+- Resolved open question 3: click-to-focus is authored from scratch via an `OnMouseDown` override, since WPF's native `Label.Target` only drives access-key/mnemonic activation, not a plain click.
+- Resolved open question 2: the double/triple-click guard was ported (`e.ClickCount > 1` mirrors the source's `e.Detail > 1`), setting `e.Handled = true` instead of forwarding focus a second time on rapid multi-click.
+- `AutomationProperties.LabeledBy` is set on the resolved target at the same time `Target` is assigned, preserving the DOM `for=`'s screen-reader association per the contract's suggestion.
+- Resolved open question 4 (confirmed by the porting brief, not decided locally): `Attributes` splat is dropped globally across all four families in this batch; no extensibility story was built for it.
+- Dropped: the `data-navius-label` marker attribute has no WPF equivalent (no arbitrary `data-*` attribute concept) and was not replicated onto any attached property.
+- Theme: `Themes/Label.xaml` gives `NaviusLabel` a token-driven `Foreground`/`FontSize` and a plain `ContentPresenter` template (`RecognizesAccessKey="True"` preserved from the native `Label` default so mnemonics still work); no visual novelty beyond brand tokens, since the source has no distinct visual state machine.

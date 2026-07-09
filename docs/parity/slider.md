@@ -103,3 +103,51 @@ Tier A: derive from `System.Windows.Controls.Slider` (or `RangeBase`) as the bas
 - Hidden `<input>` form-submission mirroring (`Name`/`Form`) has no WPF equivalent, confirm whether form-post parity is even a WPF port goal.
 - `LargeStep` heuristic and `MinStepsBetweenThumbs` are Navius extensions beyond WPF `Slider`; need new dependency properties.
 - Should RTL support use WPF's `FlowDirection` directly instead of a `Dir` string parameter.
+
+## WPF implementation notes
+
+M1 delivered: `src/Navius.Wpf.Primitives/Controls/Slider/NaviusSlider.cs` (derives `Slider`),
+`Controls/Slider/NaviusSliderKeyboard.cs` (pure keyboard-to-value logic), `Themes/Slider.xaml`,
+`tests/Navius.Wpf.Tests/SliderTests.cs` (18 tests), `apps/Navius.Wpf.Gallery/Pages/SliderPage.xaml(.cs)`.
+
+**Deferred**: multi-thumb range sliders. `NaviusSlider` is single-thumb only; `MinStepsBetweenThumbs`
+is exposed as a dependency property for API parity but is a no-op (no adjacent thumb to separate
+from). A future M-something would need either a custom `ItemsControl`-of-thumbs or a fixed 1-2 thumb
+template, per the first open question above.
+
+**Part mapping**: `PART_Track` is `Slider`'s own required part name (native `Track`, unchanged).
+`PART_Range` is `Track.DecreaseRepeatButton` (a `RepeatButton`, not a decorative-only element like
+the web `<span>`) restyled to a plain filled bar; it is still clickable/page-steps like a normal
+`RepeatButton`, which is a minor behavioral difference from the web `NaviusSliderRange`. `PART_Thumb`
+is `Track.Thumb`, unchanged.
+
+**Orientation**: `Track` inside the template is always `Orientation="Horizontal"`; a vertical
+`NaviusSlider` rotates the whole template visual tree 270 degrees via `LayoutTransform` on an
+`Orientation="Vertical"` trigger, rather than shipping a second full vertical template. Track's
+own value-to-position math is unaffected since it never sees an orientation change, only the
+rendered visual is rotated.
+
+**Step/LargeStep**: `Step` is a new dependency property kept in sync with native `SmallChange` and
+`TickFrequency` (so pointer-drag snapping via `IsSnapToTickEnabled=true` uses the same value).
+`LargeStep` implements the contract's exact heuristic (`EffectiveLargeStep`) via
+`NaviusSliderKeyboard.ComputeEffectiveLargeStep`, a pure static method, unit tested directly.
+
+**Keyboard**: `OnKeyDown` is fully overridden (not delegated to base `Slider` key handling) and
+routes through `NaviusSliderKeyboard.TryGetTargetValue`, a pure static function taking
+key/shift/`IsDirectionReversed`/value/bounds/step and returning a clamped target value. This was
+split out specifically so the contract's keyboard table (Arrow/Shift+Arrow/PageUp/PageDown/Home/End)
+is unit-testable without constructing real WPF `KeyEventArgs` (which require a live
+`PresentationSource`); the existing test suite (see `OverlayStackTests`) follows the same
+pure-logic-first pattern. Arrow keys flip under `IsDirectionReversed`; Page/Home/End do not, per
+the contract's keyboard table (only "(direction flips under RTL for horizontal, or Inverted)" is
+called out for Arrow keys).
+
+**ValueCommitted**: a new routed event, distinct from native `ValueChanged`. Raised on
+`Thumb.DragCompleted` (pointer-up) and immediately after every keyboard edit, matching the
+contract's "each key edit commits immediately."
+
+**Decisions on open questions**: RTL uses native `FlowDirection` directly, no `Dir` string
+property was added (open question resolved: yes, use `FlowDirection`). `Inverted` is not
+duplicated as a wrapper property; consumers set `IsDirectionReversed` directly (native Slider
+property, 1:1 with the contract's `Inverted`). Hidden-input form mirroring (`Name`/`Form`) is
+dropped entirely, per the top-level instruction that form mirroring is a web-only parameter.

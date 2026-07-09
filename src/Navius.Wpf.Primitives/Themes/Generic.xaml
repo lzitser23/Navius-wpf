@@ -5,6 +5,14 @@
     <!-- One dictionary per control family; merged here so Generic.xaml stays conflict-free. -->
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Button.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Toggle.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Checkbox.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/RadioGroup.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Label.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Slider.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Progress.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Separator.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/OverlayBackdrop.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

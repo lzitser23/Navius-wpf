@@ -57,3 +57,11 @@ Tier A: derive from `System.Windows.Controls.Primitives.ToggleButton`. This maps
 
 - Note the source's `IsControlled` here is keyed on `PressedChanged.HasDelegate`, not on whether `Pressed` was explicitly passed (unlike `NaviusSwitch`/`NaviusSlider`/etc., which check parameter presence in `SetParametersAsync`). Confirm whether this inconsistency is intentional upstream or a latent bug worth flagging before porting the same controlled/uncontrolled detection strategy.
 - Should the WPF port unify `Toggle` and `Switch` on one shared `ToggleButton`-derived base (both are boolean on/off controls differing mainly in default visual/AutomationPeer semantics), or keep them fully separate controls as in the Blazor source.
+
+## WPF implementation notes
+
+- Implemented as `Controls/NaviusToggle.cs` : `ToggleButton`, with `IsThreeState` forced to `false` in the constructor (the contract's Toggle is strictly two-state, unlike Checkbox). No other members were added; `ToggleButton.IsChecked` is used directly as `Pressed`.
+- Dropped parameters: `ChildContent` maps onto WPF's inherited `Content`; `Attributes` (splat) has no WPF analog and is dropped globally per the porting brief, along with all web-only form-mirroring parameters (not applicable to Toggle, which has none).
+- No custom `AutomationPeer` was needed: the native `ToggleButtonAutomationPeer` already reports `AutomationControlType.Button` with `TogglePattern`, matching the contract's `aria-pressed` semantics.
+- The controlled/uncontrolled `PressedChanged`/`DefaultPressed` duality collapses onto WPF's single bindable `IsChecked` dependency property (a `Binding` covers controlled use, a plain set covers uncontrolled use); this is the same simplification applied consistently across the other three families in this batch.
+- Theme: `Themes/Toggle.xaml` renders a bordered `Border` + `ContentPresenter` with triggers on `IsChecked` (pressed), `IsMouseOver`, `IsFocused`, and `IsEnabled` (disabled), using only the documented `Navius.*` DynamicResource tokens.

@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Controls;
+using Navius.Wpf.Gallery.Pages;
 using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Gallery;
@@ -11,6 +13,30 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Nav.SelectedIndex = 0;
+    }
+
+    private void OnNavChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (Host is null || Nav.SelectedItem is not ListBoxItem item)
+        {
+            return;
+        }
+
+        Host.Content = (string)item.Content switch
+        {
+            "Gate" => new GatePage(),
+            "Toggle" => new TogglePage(),
+            "Checkbox" => new CheckboxPage(),
+            "RadioGroup" => new RadioGroupPage(),
+            "Label" => new LabelPage(),
+            "Slider" => new SliderPage(),
+            "Progress" => new ProgressPage(),
+            "Separator" => new SeparatorPage(),
+            "Positioning" => new PositioningPage(),
+            "Overlay" => new OverlayPage(),
+            _ => null,
+        };
     }
 
     private void OnToggleTheme(object sender, RoutedEventArgs e)

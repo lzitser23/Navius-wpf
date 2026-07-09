@@ -5,22 +5,47 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
         mc:Ignorable="d"
-        Title="Navius Gallery" Height="450" Width="800"
+        Title="Navius Gallery" Height="640" Width="960"
         Background="{DynamicResource Navius.Background}">
-    <StackPanel Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top">
-        <TextBlock Text="Navius.Wpf workbench"
-                   FontSize="20" FontWeight="SemiBold"
-                   Foreground="{DynamicResource Navius.Foreground}" />
-        <TextBlock x:Name="ThemeLabel"
-                   AutomationProperties.AutomationId="ThemeLabel"
-                   Margin="0,4,0,24" Text="Light"
-                   Foreground="{DynamicResource Navius.MutedForeground}" />
-        <navius:NaviusButton AutomationProperties.AutomationId="DemoButton"
-                             HorizontalAlignment="Left"
-                             Content="Primary action" />
-        <navius:NaviusButton AutomationProperties.AutomationId="ThemeToggle"
-                             Margin="0,12,0,0" HorizontalAlignment="Left"
-                             Content="Toggle theme"
-                             Click="OnToggleTheme" />
-    </StackPanel>
+    <DockPanel>
+        <Border DockPanel.Dock="Left" Width="200"
+                BorderBrush="{DynamicResource Navius.Border}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="12">
+                <StackPanel DockPanel.Dock="Bottom">
+                    <TextBlock x:Name="ThemeLabel"
+                               AutomationProperties.AutomationId="ThemeLabel"
+                               Text="Light"
+                               Foreground="{DynamicResource Navius.MutedForeground}"
+                               Margin="4,0,0,8" />
+                    <navius:NaviusButton AutomationProperties.AutomationId="ThemeToggle"
+                                         Content="Toggle theme"
+                                         HorizontalAlignment="Stretch"
+                                         Click="OnToggleTheme" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Navius.Wpf"
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Navius.Foreground}"
+                               Margin="4,0,0,12" />
+                    <ListBox x:Name="Nav"
+                             AutomationProperties.AutomationId="Nav"
+                             SelectionChanged="OnNavChanged"
+                             Background="Transparent" BorderThickness="0"
+                             Foreground="{DynamicResource Navius.Foreground}">
+                        <ListBoxItem Content="Gate" />
+                        <ListBoxItem Content="Toggle" />
+                        <ListBoxItem Content="Checkbox" />
+                        <ListBoxItem Content="RadioGroup" />
+                        <ListBoxItem Content="Label" />
+                        <ListBoxItem Content="Slider" />
+                        <ListBoxItem Content="Progress" />
+                        <ListBoxItem Content="Separator" />
+                        <ListBoxItem Content="Positioning" />
+                        <ListBoxItem Content="Overlay" />
+                    </ListBox>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+        <ContentControl x:Name="Host" Margin="8" />
+    </DockPanel>
 </Window>

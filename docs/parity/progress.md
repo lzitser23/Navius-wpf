@@ -84,3 +84,59 @@ Tier A (derive from native WPF control). Base the root on `System.Windows.Contro
 - Whether `IsValidValue`'s strict validate-don't-clamp behavior (value outside `[0, Max]` becomes fully indeterminate, not clamped) should be preserved exactly, since WPF's `ProgressBar` silently clamps `Value` to `[Minimum, Maximum]` by default.
 - How to replicate the `HasLabel`/`Changed`-event driven `aria-labelledby` wiring (a child registering itself and forcing a parent re-render) in WPF's synchronous layout/binding model, since AutomationPeers are typically queried on demand rather than pushed to.
 - Whether `GetValueLabel`'s free-form `Func<double?, double, string?>` should become a `IValueConverter`, a delegate property, or a routed "formatting" event in the WPF port.
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/Progress/NaviusProgress.cs` (derives `ProgressBar`),
+`NaviusProgressAutomationPeer.cs`, `NaviusProgressValue.cs`, `NaviusProgressLabel.cs`,
+`Themes/Progress.xaml`, `tests/Navius.Wpf.Tests/ProgressTests.cs` (20 tests),
+`apps/Navius.Wpf.Gallery/Pages/ProgressPage.xaml(.cs)`.
+
+**Value model**: rather than a nullable `double? Value`, the WPF port keeps native
+`ProgressBar.Value` (non-nullable `double`) paired with native `IsIndeterminate` (bool), matching
+1:1. `Value`'s `CoerceValueCallback` is overridden to implement "validate, don't clamp": a
+negative value or a value above `Maximum` flips `IsIndeterminate = true` via
+`SetCurrentValue` and returns the raw value unchanged (not clamped into range), deliberately
+replacing `RangeBase`'s default clamp-to-range coercion. Resolves the first open question:
+preserved, via a `CoerceValueCallback` override rather than a clamp.
+
+**Deviation - NaN/Infinity are not reachable**: `RangeBase.ValueProperty`'s own
+`ValidateValueCallback` (inherited, not overridable per-subclass in WPF) rejects `NaN` and
+`Infinity` with an `ArgumentException` before `NaviusProgress`'s coercion ever runs. Only
+negative/`>Max` values are portable to the "becomes indeterminate" behavior; setting `Value` to
+`NaN` or `Infinity` throws instead (see `ProgressTests.Value_NaN_IsRejectedByNativeValidation`).
+`Maximum <= 0` still falls back to 100 via a `CoerceValueCallback` on `MaximumProperty`.
+
+**GetValueLabel**: exposed as `Func<double, double, string?>?` (non-nullable first parameter,
+since there is no nullable-Value state to pass through at this layer) rather than the contract's
+`Func<double?, double, string?>?`. Resolves the third open question: a plain delegate property, not
+an `IValueConverter` or routed event.
+
+**Automation / aria-valuetext**: `NaviusProgressAutomationPeer : ProgressBarAutomationPeer`
+overrides `GetItemStatusCore()` to return `GetValueLabel`/default-percentage text (empty while
+indeterminate), since `ProgressBarAutomationPeer` has no first-class value-text slot. `ItemStatus`
+was chosen over `HelpText` as the closer UIA analog to `aria-valuetext` for a range control.
+
+**aria-labelledby / HasLabel (open question resolved differently than speculated)**: rather than a
+push-based "label registers itself with a cascaded context," the WPF port uses the same idiom
+WPF's own `Label.Target` uses: the consumer sets
+`AutomationProperties.LabeledBy="{Binding ElementName=...}"` on the `NaviusProgress`, pointing at a
+`NaviusProgressLabel` (a plain `TextBlock` subclass, styleable, otherwise inert). This is simpler
+than replicating Blazor's cascading-context registration and is the idiomatic WPF pattern; see
+`ProgressPage.xaml` for a worked example.
+
+**NaviusProgressValue as a "part"**: `ProgressBar` (unlike a `ContentControl`) has no content model
+to literally nest a value part inside, so `NaviusProgressValue` (a `TextBlock` subclass) is a
+companion element wired via an explicit `Source` property (`{Binding ElementName=...}`) rather than
+a visual-tree ancestor lookup or a cascaded context. It subscribes to a new `NaviusProgress.StateChanged`
+routed event (raised whenever `Value`/`Maximum`/`IsIndeterminate` change) to refresh its `Text`:
+`TextOverride ?? Source.FormatValueText()`, defaulting to the rounded percentage and going empty
+while indeterminate, matching the contract. `NaviusProgress.IsComplete` (new read-only dependency
+property) and `IsProgressing` (computed property) surface the contract's `data-complete` /
+`data-progressing`; `data-indeterminate` maps directly to native `IsIndeterminate`. The indeterminate
+visual is a looping opacity pulse on an overlay rectangle (`Themes/Progress.xaml`), not a literal
+port of any specific web animation.
+
+**Part mapping**: `PART_Track` and `PART_Indicator` are `ProgressBar`'s own required template part
+names; the base class already sizes `PART_Indicator`'s width from `Value`/`Minimum`/`Maximum`, so no
+manual binding/converter math was needed for the Track/Indicator part pair.

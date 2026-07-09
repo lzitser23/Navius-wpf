@@ -1,0 +1,110 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Navius.Wpf.Primitives.Controls">
+
+    <!-- The filled band from the track start to the thumb (PART_Range, contract's NaviusSliderRange). -->
+    <Style x:Key="Navius.Slider.RangeRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border
+                        Height="4"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource Navius.Primary}"
+                        CornerRadius="{DynamicResource Navius.Radius.Small}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The unfilled remainder of the track, from the thumb to the end. -->
+    <Style x:Key="Navius.Slider.TrackRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border Background="Transparent" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Thumb: ink circle with a paper border, per the one-ink brand language. -->
+    <Style x:Key="Navius.Slider.ThumbStyle" TargetType="{x:Type Thumb}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Ellipse
+                        x:Name="ThumbEllipse"
+                        Fill="{DynamicResource Navius.Primary}"
+                        Stroke="{DynamicResource Navius.Background}"
+                        StrokeThickness="2" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="ThumbEllipse" Property="Opacity" Value="0.85" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="ThumbEllipse" Property="Stroke" Value="{DynamicResource Navius.Ring}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type controls:NaviusSlider}">
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Height" Value="20" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:NaviusSlider}">
+                    <!--
+                        A single horizontal layout, rotated via LayoutTransform for Orientation="Vertical"
+                        rather than a second full template: Track's own Value<->position math always runs
+                        in its native horizontal mode, decoupled from the visual rotation.
+                    -->
+                    <Grid x:Name="LayoutRoot" Background="Transparent" SnapsToDevicePixels="True">
+                        <Border
+                            Height="4"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource Navius.Secondary}"
+                            CornerRadius="{DynamicResource Navius.Radius.Small}" />
+                        <Track x:Name="PART_Track" Orientation="Horizontal">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton x:Name="PART_Range" Style="{StaticResource Navius.Slider.RangeRepeatButtonStyle}" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource Navius.Slider.TrackRepeatButtonStyle}" />
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb x:Name="PART_Thumb" Style="{StaticResource Navius.Slider.ThumbStyle}" />
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Vertical">
+                            <Setter TargetName="LayoutRoot" Property="LayoutTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="270" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="LayoutRoot" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -46,3 +46,33 @@ Tier B (custom lookless control). WPF ships `System.Windows.Controls.Separator`,
 
 - Whether `Decorative` should be modeled as two different automation-peer behaviors (as above) or as two structurally different lookless templates, given the source literally renders two different `div`s (with/without `role`) rather than toggling an attribute.
 - Whether the WPF port needs a dependency-property-level guard reproducing `isValidOrientation`'s silent fallback-to-horizontal behavior, or whether an `OrientationConverter`/enum (`Horizontal`/`Vertical`) makes invalid values structurally impossible, obsoleting the guard entirely.
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/NaviusSeparator.cs`,
+`NaviusSeparatorAutomationPeer.cs`, `Themes/Separator.xaml`,
+`tests/Navius.Wpf.Tests/SeparatorTests.cs` (9 tests), `apps/Navius.Wpf.Gallery/Pages/SeparatorPage.xaml(.cs)`.
+
+**Decisions on open questions**: `Decorative` is modeled as one automation-peer behavior (a single
+boolean-driven `Core` override), not two templates or two peer classes - resolves the first open
+question. `Orientation` is the native `System.Windows.Controls.Orientation` enum
+(`Horizontal`/`Vertical`), which makes `isValidOrientation`'s invalid-token guard (e.g. a
+hypothetical `"diagonal"`) structurally impossible rather than needing a runtime check - resolves
+the second open question in favor of "the enum obsoletes the guard."
+
+**Automation mapping**: `NaviusSeparatorAutomationPeer : FrameworkElementAutomationPeer` maps
+non-decorative to `AutomationControlType.Separator` with an orientation-aware
+`GetOrientationCore()`, and `Decorative = true` to `IsControlElementCore()` /
+`IsContentElementCore()` both returning `false` (removed from the accessibility tree), per the
+contract's WPF strategy verbatim.
+
+**Testability deviation**: `IsControlElementCore()`/`IsContentElementCore()` combine the
+decorative decision with `base.IsControlElementCore()`/`IsContentElementCore()`, and that base
+implementation depends on `UIElement.IsVisible` - which is `false` for any element outside a real,
+shown window (verified independently against a stock WPF `Button`/`ButtonAutomationPeer`, not
+specific to this control). To keep the decorative-vs-not decision unit-testable without spinning up
+a real `Window.Show()` (this repo's test suite otherwise avoids simulating real windows/input, see
+`OverlayStackTests`), the pure boolean logic is split into a public static
+`NaviusSeparatorAutomationPeer.IsAccessibilityTreeMember(bool decorative)`, tested directly; the
+"decorative always forces false regardless of the base" case is additionally verified on a real
+peer instance since it short-circuits before the visibility-dependent base call.
