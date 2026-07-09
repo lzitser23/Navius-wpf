@@ -306,7 +306,7 @@ This family is the closest 1:1 match to a native WPF control among the three: WP
 
 ## WPF implementation notes
 
-Implemented in `src/Navius.Wpf.Primitives/Controls/Menubar/` (+ `Themes/Menubar.xaml`, gallery `Pages/MenubarPage.xaml(.cs)`, tests `tests/Navius.Wpf.Tests/MenubarTests.cs`, 15 tests).
+Implemented in `src/Navius.Wpf.Primitives/Controls/Menubar/` (+ `Themes/Menubar.xaml`, gallery `Pages/MenubarPage.xaml(.cs)`, tests `tests/Navius.Wpf.Tests/MenubarTests.cs`, 14 tests).
 
 ### Type collapse (native Menu/MenuItem absorbs most parts)
 
@@ -358,3 +358,17 @@ Confirmed via direct experimentation while writing `MenubarTests.cs`: setting `M
 ### Overlap with the Menu family
 
 Per the task brief, this agent built its own types under `Controls/Menubar/` rather than depending on or editing the sibling Menu family's in-flight files, even though several of them are conceptually identical native-`MenuItem`-derived types (`NaviusMenubarItem`/`NaviusMenuItem`, `NaviusMenubarSeparator`/`NaviusMenuSeparator`, `NaviusMenubarLabel`/`NaviusMenuLabel`, the checkbox/radio-item tri-state-glyph-and-double-toggle-workaround pattern, etc., assuming the Menu agent reached similar native-substrate conclusions independently). The orchestrator should audit both `Controls/Menu/` and `Controls/Menubar/` once both land and consider extracting a shared base (e.g. a common `MenuItemPart : MenuItem` for the Disabled-is-IsEnabled/TextValue/OnClick-Select-event pattern) if the duplication is as large as expected, rather than keeping two independent copies long-term.
+
+## M6 audit (2026-07-09)
+
+Adversarial parity re-audit of the Menubar family against the C#/XAML. `NaviusMenubarMenu`/`NaviusMenubarRadioItem` required-`Value` throws are wired in `OnInitialized` (tests exercise them); the `Loop=false` clamp (`OnPreviewKeyDownForLoop`) matches the "best-effort, no-menu-open, rtl-aware" prose; the "never call `base.OnClick()`" workaround holds for both checkbox and radio items; `NaviusMenubarLabel` is non-interactive with a `Text`-typed automation peer; `NaviusMenubarRadioGroup` is a non-visual `DependencyObject` coordinator as documented. `Themes/Menubar.xaml` is `DynamicResource`-only with all keys resolving in the token dictionaries (the tri-state checkbox glyph uses `Checked`/`{x:Null}` template triggers as claimed).
+
+### CONFIRMED (fixed)
+
+- **`CheckedChanged` did not raise on a programmatic `Checked` set (code bug).** `NaviusMenubarCheckboxItem` raised `CheckedChanged` only inside `OnClick`; its `Checked` DP-change callback (`OnCheckedChanged`) set native `IsChecked` but never raised the paired event. So `item.Checked = true` in code changed state silently, contradicting this doc's own claim that every stateful DP here has a "paired event [that] always raises on change, controlled or not", and diverging from the sibling `NaviusMenuCheckboxItem`, which raises from its DP callback. Fixed by raising `CheckedChanged` in `OnCheckedChanged` and dropping the now-redundant manual raise in `OnClick` (so a click still raises exactly once). Regression test `CheckboxItem_ProgrammaticCheckedSet_RaisesCheckedChanged` added; `MenubarTests.cs` is now 14 facts (doc updated).
+- **Doc test count wrong.** Notes claimed `MenubarTests.cs` has "15 tests"; it had **13** before this audit (now 14 with the regression test). Corrected.
+
+### PLAUSIBLE (not fixed)
+
+- `NaviusMenubar.Value`'s DP-change callback (`OnValueChanged`) does not itself raise `ValueChanged`; the event only fires through the `SubmenuOpened`/`SubmenuClosed` cascade (`OnChildSubmenuOpened`/`Closed`). At runtime in a real window a programmatic `Value` change does reach the event via that cascade, but in a headless context (or if the target menu is already open) it may not, so the "always raises on change" wording is only cascade-true. Left as-is: adding a direct raise would double-fire against the cascade and the existing `_syncingFromSubmenuEvent` guard does not cover that path.
+- Bound `Command`/`CommandParameter` on `NaviusMenubarCheckboxItem`/`NaviusMenubarRadioItem` never executes (both bypass `base.OnClick()`). Documented as an accepted OnSelect-driven delta, not a regression.
