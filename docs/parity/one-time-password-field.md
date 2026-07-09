@@ -1,0 +1,103 @@
+# OneTimePasswordField
+
+## Parts
+
+| Part | Element rendered | Purpose |
+|---|---|---|
+| NaviusOneTimePasswordField (Root) | `<div role="group" data-navius-otp>` | Owns the authoritative per-character buffer; cascades `OneTimePasswordFieldContext`; auto-renders `Length` cells (or accepts custom `ChildContent`) plus an implicit hidden input when `Name` is set and no custom content is used |
+| NaviusOneTimePasswordFieldInput | `<input data-navius-otp-input>` | A single-character cell; one per slot (`Index`) |
+| NaviusOneTimePasswordFieldHiddenInput | `<input type="hidden" data-navius-otp-hidden>` | Carries the concatenated aggregate value for real form submission |
+
+## Parameters
+
+**NaviusOneTimePasswordField (Root)**
+
+| Name | Type | Default | Notes |
+|---|---|---|---|
+| Length | `int` | 6 | Number of single-character cells; also the max value length |
+| Value | `string?` | null | Controlled aggregate value; use with `ValueChanged` |
+| DefaultValue | `string?` | null | Uncontrolled initial aggregate value |
+| Disabled | `bool` | false | Disables every cell |
+| ReadOnly | `bool` | false | Marks every cell read-only |
+| InputMode | `string` | "numeric" | `inputmode` applied to each cell |
+| ValidationType | `string` | "numeric" | `"numeric"`, `"alpha"`, or `"alphanumeric"`; input outside the class is rejected |
+| SanitizeValue | `Func<string, string>?` | null | Optional transform applied to each character/pasted value after `ValidationType` filtering |
+| Type | `string` | "text" | `"text"` or `"password"` (masks glyphs) |
+| Orientation | `string` | "vertical" | `"vertical"` or `"horizontal"`; determines which arrow keys navigate |
+| Placeholder | `string?` | null | Applied to empty cells |
+| AutoFocus | `bool` | false | Focuses the first cell on mount |
+| Name | `string?` | null | Form field name for the hidden input carrying the aggregate value |
+| Form | `string?` | null | Id of a form to associate the hidden input with, when outside that form |
+| AutoSubmit | `bool` | false | Submits the owning form once every cell is filled |
+| ChildContent | `RenderFragment?` | null | Custom cell markup; disables auto-rendering of cells and the implicit hidden input |
+| Attributes | `IDictionary<string, object>?` | null | CaptureUnmatchedValues |
+
+**NaviusOneTimePasswordFieldInput**
+
+| Name | Type | Default | Notes |
+|---|---|---|---|
+| Index | `int` | 0 | Zero-based slot this cell occupies |
+| Attributes | `IDictionary<string, object>?` | null | CaptureUnmatchedValues |
+
+**NaviusOneTimePasswordFieldHiddenInput**
+
+| Name | Type | Default | Notes |
+|---|---|---|---|
+| Name | `string?` | null | Form field name submitted with the owning form |
+| Form | `string?` | null | Id of an associated form element when outside that form |
+| Attributes | `IDictionary<string, object>?` | null | CaptureUnmatchedValues |
+
+## Events
+
+| Part | Event | Type |
+|---|---|---|
+| NaviusOneTimePasswordField (Root) | ValueChanged | `EventCallback<string>` |
+| NaviusOneTimePasswordField (Root) | OnComplete | `EventCallback<string>`, raised when every cell is occupied |
+| NaviusOneTimePasswordField (Root) | OnAutoSubmit | `EventCallback<string>`, raised alongside `AutoSubmit` firing (after `OnComplete`) |
+
+Cell and hidden-input parts have no public `EventCallback` parameters; they call back into `OneTimePasswordFieldContext` methods (`SetCharAsync`, `PasteAsync`, `KeyAsync`, `SubmitAsync`, `FocusAsync`) wired by the root.
+
+## State + data attributes
+
+Root div: `role="group"`, `data-navius-otp`, `data-orientation`, `data-disabled`.
+
+Cell input: `type` (`Context.Type`), `inputmode`, `autocomplete="one-time-code"`, `maxlength` (`Context.Length` when `Index == 0`, otherwise `1`), `value` = `Context.CharAt(Index)`, `placeholder`, `aria-label="Character N of M"`, `disabled`, `readonly`, `data-navius-otp-input`, `data-index`, `data-filled` (present when the cell holds a character), `data-orientation`, `data-disabled`, `data-readonly`.
+
+Hidden input: `type="hidden"`, `name`, `value` = `Context.Value` (aggregate), `form`, `data-navius-otp-hidden`.
+
+Public state on `OneTimePasswordFieldContext`: `Length`, `Disabled`, `ReadOnly`, `InputMode`, `Type`, `Orientation`, `Placeholder`, `Value` (dense aggregate string, no interior gaps), `CharAt(index)`.
+
+Internally the root keeps a positional `char?[]` buffer; interior gaps are represented as spaces in the aggregate string round-trip so slot indices survive `Value`/`SetValueInternalAsync`.
+
+## Keyboard
+
+Handled in `NaviusOneTimePasswordFieldInput.OnKeyDownAsync`, dispatched to the root via `KeyKind`.
+
+| Key | Behavior |
+|---|---|
+| Any character | Writes the cell (last char of raw input wins) and advances focus to the next cell; a keystroke that fails `ValidationType`/`SanitizeValue` is rejected and reverted, leaving the buffer untouched |
+| Backspace | Non-empty focused cell: clears it, shifts remainder back, focus retreats one cell. Empty focused cell: clears the previous cell instead, focus retreats one cell |
+| Cmd/Ctrl+Backspace | Clears the whole field and focuses the first cell |
+| Delete | Clears the focused character and shifts the remaining characters back one slot |
+| ArrowUp / ArrowDown | Previous/next cell when `Orientation="vertical"` (default) |
+| ArrowLeft / ArrowRight | Previous/next cell when `Orientation="horizontal"` |
+| Home | Focus first cell |
+| End | Focus last cell |
+| Enter | Requests submission of the closest enclosing form (via JS interop) |
+| Paste (multi-char input event) | Replaces the entire field with the sanitized pasted text starting at slot 0 (regardless of which cell was focused), then focuses the last filled cell (or `Length - 1`) |
+
+## Accessibility
+
+Root carries `role="group"` to label the cluster of single-character inputs as one control. Each cell has a dynamically generated `aria-label="Character {Index + 1} of {Length}"`. Cells set `autocomplete="one-time-code"` so mobile keyboards/SMS autofill can target the group. Focus is managed entirely programmatically via `ElementReference.FocusAsync()` calls from the root (advance on type, retreat on backspace, arrow navigation, Home/End, paste landing): there is no roving-tabindex pattern; natural DOM tab order plus explicit focus calls handle movement.
+
+## WPF strategy
+
+Tier B (custom lookless control). No native WPF OTP control exists; model as a lookless `Control`/`ItemsControl` hosting `Length` `TextBox` cells inside a template, or a custom `Control` that owns an internal collection of textbox-like parts bound to dependency properties mirroring `Length`/`Value`/`Disabled`/`ReadOnly`/`Type`/`Orientation`. AutomationPeer: root as `AutomationControlType.Group` (`GroupPattern`), cells as `AutomationControlType.Edit` with `AutomationProperties.Name` bound to the same "Character N of M" text. All focus advancement (type/backspace/delete/arrows/Home/End/paste-landing) must be re-implemented manually via `Keyboard.Focus()`/`UIElement.Focus()` in `PreviewKeyDown`, since WPF has no equivalent to HTML `autocomplete="one-time-code"` or native SMS/mobile autofill: that affordance will not translate. The `AutoSubmit`/`RequestSubmitAsync` behavior (JS interop submitting the closest HTML `<form>`) has no WPF form equivalent and needs a different mapping (see open questions).
+
+## Open questions
+
+- Cell 0's `maxlength` is set to `Context.Length` rather than `1` (every other cell is `1`). This looks like it exists to let a raw browser paste/autofill event land fully in the first cell so the component's `oninput` length-based routing (`raw.Length > 1` → paste) can detect it. Confirm whether this is intentional before deciding how WPF (which has no native paste-into-maxlength-1-field constraint) should replicate multi-char paste detection.
+- No IME/composition-event handling is visible in the keydown/input handlers; is CJK/IME composition input in scope for the WPF port?
+- `ValidationType` classification uses `char.IsLetter`/`char.IsDigit` (culture-aware in .NET); confirm the WPF port should use the same semantics rather than ASCII-only matching.
+- `AutoSubmit` submits the closest HTML form via JS interop; WPF has no forms, so this needs a product decision (e.g. raise `OnAutoSubmit` only, or invoke a bound `ICommand`).
+- `Densify` uses `' '` (space) as the internal sentinel for an interior gap when round-tripping the aggregate string through `Value`; if `ValidationType`/`SanitizeValue` in a future config ever admitted spaces as valid characters this encoding would be ambiguous. Worth flagging for the WPF value-buffer design even though today's validation classes (numeric/alpha/alphanumeric) never admit spaces.

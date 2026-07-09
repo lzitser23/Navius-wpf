@@ -1,0 +1,87 @@
+# Rating
+
+## Parts
+
+| Part | Element rendered | Purpose |
+|---|---|---|
+| NaviusRating | `div` (`role="radiogroup"`) | Root. Owns the authoritative `decimal?` value plus a transient hover-preview value, cascades `RatingContext`, auto-renders `Max` `NaviusRatingItem` stars when no `ChildContent` is supplied, owns the keyboard model (arrows / Home / End / digit keys / Backspace/Delete), and renders a hidden `NaviusBubbleInput` (`type="hidden"`) when `Name` is set. |
+| NaviusRatingItem | `button` (`role="radio"`), plus two `aria-hidden` overlay `span`s (`data-navius-rating-item-half="start"`/`"end"`) when `AllowHalf` and not disabled | One visual star. Roving tabindex; registers with the group in document order to get a 1-based `Index`; computes its own `full`/`half`/`empty` fill state from `RatingContext.Effective`; the half-zone overlay spans provide pointer-driven half-star selection (not separate registered parts/components). |
+
+## Parameters
+
+**NaviusRating**
+
+| Name | Type | Default | Notes |
+|---|---|---|---|
+| Value | `decimal?` | `null` | Controlled value; use `@bind-Value`. Controlled mode is detected via `SetParametersAsync` observing whether `Value` was supplied, not via `ValueChanged.HasDelegate`. |
+| ValueChanged | `EventCallback<decimal?>` | | |
+| DefaultValue | `decimal?` | `null` | Uncontrolled initial value. |
+| Max | `int` | `5` | Number of visual stars; coerced to `>= 1` in `RatingContext.Configure`. |
+| AllowHalf | `bool` | `false` | Enables half-star pointer zones and 0.5 keyboard steps. |
+| AllowClear | `bool` | `true` | Re-selecting the current value, or arrowing below the lowest star, clears to unrated. |
+| ReadOnly | `bool` | `false` | Focusable but non-editable. |
+| Disabled | `bool` | `false` | |
+| Required | `bool` | `false` | Mirrored onto the hidden bubble input. |
+| Invalid | `bool` | `false` | Drives `aria-invalid`. |
+| Name | `string?` | `null` | When set (non-empty), renders a hidden bubble input for native form submission. |
+| Label | `Func<decimal, string>?` | `null` | Accessible-name factory per star value; defaults to `"N star(s)"` (`"1 star"` singular). |
+| Dir | `string?` | `null` | Reading direction; falls back to cascaded `NaviusDirection`. Mirrors horizontal arrows under `"rtl"`. |
+| ChildContent | `RenderFragment?` | `null` | When supplied, replaces the auto-generated `Max` `NaviusRatingItem` stars. |
+| Attributes | `IDictionary<string, object>?` | `null` | `CaptureUnmatchedValues`. |
+
+**NaviusRatingItem**
+
+| Name | Type | Default | Notes |
+|---|---|---|---|
+| ChildContent | `RenderFragment?` | `null` | Star glyph content. |
+| Attributes | `IDictionary<string, object>?` | `null` | `CaptureUnmatchedValues`. |
+
+Note: `NaviusRatingItem` has no public `Index`/`Value` parameter; its 1-based `Index` is assigned internally by registration order via `RatingContext.RegisterItem`.
+
+## Events
+
+- **NaviusRating**: `ValueChanged` (`EventCallback<decimal?>`), fires in controlled mode on click/keyboard selection or clear. Hover preview (`SetHoverAsync`/`OnPointerLeaveAsync`) is internal state only, not exposed as a public event.
+- **NaviusRatingItem**: no `EventCallback` parameters; clicks and pointer-enter route back through the cascaded `RatingContext` (`SelectAsync`, `SetHoverAsync`).
+
+## State + data attributes
+
+Root: `data-navius-rating`, `data-disabled` (`""` when `Disabled`), `data-readonly` (`""` when `ReadOnly`).
+
+Item: `data-navius-rating-item`, `data-index` (1-based), `data-value` (the star's own full value, formatted invariant-culture), `data-state` (`"full"` / `"half"` / `"empty"`, computed from `RatingContext.Effective` = hover value if present else committed value), `data-checked`/`data-unchecked` (mutually exclusive), `data-highlighted` (`""` while under hover preview), `data-readonly`, `data-disabled`. Half-zone overlays: `data-navius-rating-item-half="start"` / `"end"`, `aria-hidden="true"`.
+
+Public context state (`RatingContext`): `Max`, `AllowHalf`, `AllowClear`, `ReadOnly`, `Disabled`, `Required`, `Name`, `Label`, `Value`, `HoverValue`, `Step` (`0.5` with `AllowHalf`, else `1`), `Effective` (`HoverValue ?? Value ?? 0`).
+
+## Keyboard
+
+Handled on the root's `@onkeydown` (the root owns the value and moves focus onto the resulting star after every edit); native `<button>` semantics separately provide Space/Enter activation of the focused star:
+
+| Key | Behavior |
+|---|---|
+| ArrowUp | Increase by `Step` (0.5 with `AllowHalf`, else 1), clamped to `Max`. |
+| ArrowRight (ArrowLeft under `rtl`) | Same as ArrowUp (horizontal-next, mirrored by direction). |
+| ArrowDown | Decrease by `Step`; if the result would fall below `Step`, clears to unrated when `AllowClear`, otherwise floors at `Step`. |
+| ArrowLeft (ArrowRight under `rtl`) | Same as ArrowDown (horizontal-prev, mirrored by direction). |
+| Home | Jump to `1`. |
+| End | Jump to `Max`. |
+| Backspace / Delete | Clear to unrated when `AllowClear`, otherwise no-op (stays at current value). |
+| Digit `1`-`9` | Jump directly to that value, clamped to `Max`. |
+| Space / Enter (on the focused star's native `button`) | Activates (selects) the focused star via native button-click semantics; re-selecting the current value clears it when `AllowClear`. Not implemented via explicit `onkeydown` code, since `<button>` handles this natively. |
+
+After any keyboard edit, focus moves to the star that holds the new value (`Math.Ceiling` of the target, clamped to `[1, Max]`); all keyboard handling no-ops when `Disabled` or `ReadOnly`.
+
+## Accessibility
+
+- Root: `role="radiogroup"`, `aria-label` (defaults to `"Rating"` unless the consumer already supplied `aria-label`/`aria-labelledby` in `Attributes`), `aria-required`, `aria-invalid`, `aria-readonly`, `aria-disabled`, `dir` (explicit/cascaded only).
+- Item: `role="radio"`, `aria-checked` (`"true"`/`"false"`), `aria-label` (from `Label` factory or the default `"N star(s)"`; the checked star announces its real possibly-fractional value, e.g. `"3.5 stars"`, every other star announces the whole value it would select), `aria-readonly` (only when the group is read-only).
+- Roving tabindex: the star holding the current value is `tabindex="0"`; when unrated, star 1 is `tabindex="0"`; all others `-1`. Disabled stars are always `-1`.
+- Half-zone overlay spans are `aria-hidden="true"` (pointer-only, not separately reachable/announced).
+
+## WPF strategy
+
+Tier B (custom lookless control). There is no native WPF star-rating control. Build a custom `Control` (or `ItemsControl`-derived) exposing a `decimal?` `Value` dependency property, `Max`/`AllowHalf`/`AllowClear`/`ReadOnly`/`Required`/`Invalid` properties, and a templated star-repeater; back it with a custom `AutomationPeer` implementing `ISelectionProvider`/`ISelectionItemProvider` per star (mirroring `role="radiogroup"`/`role="radio"`) since WPF has no built-in radiogroup-of-buttons peer. Fractional half-star fill state (`data-state` full/half/empty) and the pointer half-zone overlay spans need bespoke hit-testing (e.g. splitting each star's `Grid` column in half) since WPF has no equivalent to CSS-positioned overlay elements. RTL arrow mirroring can lean on `FlowDirection`, but the digit-key jump-to-value and Home/End/Backspace-clear keyboard model must be hand-implemented in a `PreviewKeyDown`/`KeyDown` handler exactly as above.
+
+## Open questions
+
+- Whether WPF should model `Value` as `decimal?` (exact parity) or fall back to `double?` for easier XAML/binding ergonomics, given `AllowHalf`'s 0.5-step snapping logic (`Normalize` in `NaviusRating.razor`) depends on decimal rounding.
+- How to replicate hover-preview (`HoverValue`) state, since WPF mouse-enter/leave on templated sub-elements (each star, each half-zone) needs careful `MouseEnter`/`MouseLeave` vs `PreviewMouseMove` wiring to avoid flicker that the DOM `pointerenter`/`pointerleave` model handles for free.
+- Whether the accessible-name difference between the checked star (announces the real fractional value) and all other stars (announce their whole value) is achievable cleanly via a single `AutomationPeer.GetName()` override or needs per-star peers.
