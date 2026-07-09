@@ -1,0 +1,50 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.PopoverPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); pages that use
+                     NaviusPopover merge this dictionary themselves. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Popover.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top">
+        <TextBlock Text="Popover"
+                   FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" />
+        <TextBlock Margin="0,4,0,24"
+                   MaxWidth="420"
+                   Text="Click the trigger to toggle the popover. Focus moves into the panel; Tab cycles inside it; Escape, an outside click, or the Close button all dismiss it."
+                   Foreground="{DynamicResource Navius.MutedForeground}"
+                   TextWrapping="Wrap" />
+
+        <navius:NaviusPopover
+            HorizontalAlignment="Left"
+            Content="Edit profile"
+            Title="Edit profile"
+            Description="Update your name and email.">
+            <navius:NaviusPopover.PopoverContent>
+                <StackPanel>
+                    <TextBox
+                        Margin="0,0,0,8"
+                        AutomationProperties.AutomationId="PopoverNameInput"
+                        Text="Name" />
+                    <TextBox
+                        Margin="0,0,0,16"
+                        AutomationProperties.AutomationId="PopoverEmailInput"
+                        Text="Email" />
+                    <navius:NaviusButton
+                        AutomationProperties.AutomationId="PopoverCloseButton"
+                        HorizontalAlignment="Right"
+                        Command="{x:Static navius:NaviusPopover.CloseCommand}"
+                        Content="Close" />
+                </StackPanel>
+            </navius:NaviusPopover.PopoverContent>
+        </navius:NaviusPopover>
+    </StackPanel>
+</UserControl>

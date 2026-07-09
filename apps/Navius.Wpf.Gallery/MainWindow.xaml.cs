@@ -35,6 +35,17 @@ public partial class MainWindow : Window
             "Separator" => new SeparatorPage(),
             "Positioning" => new PositioningPage(),
             "Overlay" => new OverlayPage(),
+            "Tooltip" => new TooltipPage(),
+            "Popover" => new PopoverPage(),
+            "PreviewCard" => new PreviewCardPage(),
+            "Dialog" => new DialogPage(),
+            "AlertDialog" => new AlertDialogPage(),
+            "Drawer" => new DrawerPage(),
+            "Menu" => new MenuPage(),
+            "ContextMenu" => new ContextMenuPage(),
+            "Menubar" => new MenubarPage(),
+            "NavigationMenu" => new NavigationMenuPage(),
+            "Toast" => new ToastPage(),
             _ => null,
         };
     }

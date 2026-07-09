@@ -1,0 +1,67 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.MenubarPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:menubar="clr-namespace:Navius.Wpf.Primitives.Controls.Menubar;assembly=Navius.Wpf.Primitives"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here, another family owns that
+                     file); pages that use the Menubar family merge this dictionary themselves. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Menubar.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <menubar:NaviusMenubarRadioGroup x:Key="ThemeGroup" Value="light" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="32">
+        <TextBlock Text="Menubar"
+                   FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" />
+        <TextBlock Margin="0,4,0,24"
+                   MaxWidth="480"
+                   Text="Derived from the native Menu/MenuItem: F10, arrow-key navigation between top-level menus, hover-to-follow-focus, and typeahead all come from WPF for free."
+                   Foreground="{DynamicResource Navius.MutedForeground}"
+                   TextWrapping="Wrap" />
+
+        <menubar:NaviusMenubar AutomationProperties.AutomationId="GalleryMenubar" HorizontalAlignment="Left">
+            <menubar:NaviusMenubarMenu Value="file" Header="File">
+                <menubar:NaviusMenubarItem Header="New" />
+                <menubar:NaviusMenubarItem Header="Open..." />
+                <menubar:NaviusMenubarSeparator />
+                <menubar:NaviusMenubarSubTrigger Header="Recent">
+                    <menubar:NaviusMenubarItem Header="report.docx" />
+                    <menubar:NaviusMenubarItem Header="budget.xlsx" />
+                </menubar:NaviusMenubarSubTrigger>
+                <menubar:NaviusMenubarSeparator />
+                <menubar:NaviusMenubarItem Header="Exit" />
+            </menubar:NaviusMenubarMenu>
+
+            <menubar:NaviusMenubarMenu Value="edit" Header="Edit">
+                <menubar:NaviusMenubarItem Header="Cut" />
+                <menubar:NaviusMenubarItem Header="Copy" />
+                <menubar:NaviusMenubarItem Header="Paste" />
+                <menubar:NaviusMenubarSeparator />
+                <menubar:NaviusMenubarLabel Header="Options" />
+                <menubar:NaviusMenubarCheckboxItem x:Name="WordWrapItem" Header="Word wrap" />
+                <menubar:NaviusMenubarCheckboxItem x:Name="AutoSaveItem" Header="Autosave" Checked="{x:Null}" />
+            </menubar:NaviusMenubarMenu>
+
+            <menubar:NaviusMenubarMenu Value="view" Header="View">
+                <menubar:NaviusMenubarLabel Header="Theme" />
+                <menubar:NaviusMenubarRadioItem Value="light" Group="{StaticResource ThemeGroup}" Header="Light" />
+                <menubar:NaviusMenubarRadioItem Value="dark" Group="{StaticResource ThemeGroup}" Header="Dark" />
+                <menubar:NaviusMenubarRadioItem Value="system" Group="{StaticResource ThemeGroup}" Header="System" />
+            </menubar:NaviusMenubarMenu>
+        </menubar:NaviusMenubar>
+
+        <TextBlock x:Name="StatusText"
+                   Margin="0,16,0,0"
+                   Foreground="{DynamicResource Navius.MutedForeground}" />
+    </StackPanel>
+</UserControl>

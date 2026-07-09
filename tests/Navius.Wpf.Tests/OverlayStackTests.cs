@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Navius.Wpf.Primitives.Overlays;
 
 namespace Navius.Wpf.Tests;
@@ -260,5 +261,116 @@ public class OverlayStackTests
         Assert.False(OverlayDismissPolicy.ShouldRestoreFocus(restoreFocusOption: true, focusIsWithinOverlaySubtree: false));
         Assert.False(OverlayDismissPolicy.ShouldRestoreFocus(restoreFocusOption: false, focusIsWithinOverlaySubtree: true));
         Assert.False(OverlayDismissPolicy.ShouldRestoreFocus(restoreFocusOption: false, focusIsWithinOverlaySubtree: false));
+    }
+
+    // --- OverlaySession.RegisterInputRoot: Escape/outside-press routing inside a Popup's own HwndSource ---
+
+    // KeyEventArgs requires a non-null PresentationSource; a hidden native window (never shown,
+    // style = 0 means no WS_VISIBLE bit) is the lightest real one available headlessly.
+    private static readonly PresentationSource TestSource =
+        new System.Windows.Interop.HwndSource(0, 0, 0, 0, 0, "NaviusOverlayStackTests", System.IntPtr.Zero);
+
+    private static KeyEventArgs MakeEscapeKeyDown() =>
+        new(Keyboard.PrimaryDevice, TestSource, 0, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
+
+    private static MouseButtonEventArgs MakePreviewMouseDown() =>
+        new(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.PreviewMouseDownEvent };
+
+    [StaFact]
+    public void RegisterInputRoot_EscapeRaisedOnRegisteredRoot_ClosesTheSession()
+    {
+        var stack = NewStack();
+        var session = stack.Push(new Grid(), new OverlayOptions { CloseOnEscape = true });
+        var popupRoot = new Grid();
+
+        session.RegisterInputRoot(popupRoot);
+        popupRoot.RaiseEvent(MakeEscapeKeyDown());
+
+        Assert.True(session.IsClosed);
+    }
+
+    [StaFact]
+    public void RegisterInputRoot_PressInsideRegisteredRoot_CountsAsInsideForItsOwnOutsidePressCheck()
+    {
+        var stack = NewStack();
+        var session = stack.Push(new Grid(), new OverlayOptions { CloseOnOutsideClick = true });
+        var popupRoot = new Grid();
+
+        session.RegisterInputRoot(popupRoot);
+        popupRoot.RaiseEvent(MakePreviewMouseDown());
+
+        Assert.False(session.IsClosed);
+    }
+
+    [StaFact]
+    public void RegisterInputRoot_PressInsideAHigherSessionsRegisteredRoot_BlocksALowerCandidateToo()
+    {
+        var stack = NewStack();
+        var lower = stack.Push(new Grid(), new OverlayOptions { CloseOnOutsideClick = true });
+        var higher = stack.Push(new Grid(), new OverlayOptions { CloseOnOutsideClick = false });
+        var higherPopupRoot = new Grid();
+
+        higher.RegisterInputRoot(higherPopupRoot);
+        // Press lands inside the higher (non-closable) overlay's registered input root; per the
+        // existing "at or above" policy this counts as inside for the lower candidate too.
+        higherPopupRoot.RaiseEvent(MakePreviewMouseDown());
+
+        Assert.False(lower.IsClosed);
+        Assert.False(higher.IsClosed);
+    }
+
+    [StaFact]
+    public void RegisterInputRoot_WindowLevelOutsidePress_StillClosesUnrelatedRegisteredRootSession()
+    {
+        var window = new Window();
+        var stack = OverlayStack.GetFor(window);
+        var session = stack.Push(new Grid(), new OverlayOptions { CloseOnOutsideClick = true });
+        session.RegisterInputRoot(new Grid());
+
+        var args = MakePreviewMouseDown();
+        window.RaiseEvent(args);
+
+        Assert.True(session.IsClosed);
+    }
+
+    [StaFact]
+    public void RegisterInputRoot_IsIdempotentForTheSameElement()
+    {
+        var stack = NewStack();
+        var session = stack.Push(new Grid(), new OverlayOptions());
+        var popupRoot = new Grid();
+
+        session.RegisterInputRoot(popupRoot);
+        session.RegisterInputRoot(popupRoot);
+
+        Assert.Single(session.InputRoots);
+    }
+
+    [StaFact]
+    public void RegisterInputRoot_NoOpsOnceSessionIsClosed()
+    {
+        var stack = NewStack();
+        var session = stack.Push(new Grid(), new OverlayOptions());
+        session.RequestClose(OverlayCloseReason.Programmatic);
+
+        session.RegisterInputRoot(new Grid());
+
+        Assert.Empty(session.InputRoots);
+    }
+
+    [StaFact]
+    public void RequestClose_UnregistersInputRoots_SoLaterEscapeOnThatRootDoesNothing()
+    {
+        var stack = NewStack();
+        var session = stack.Push(new Grid(), new OverlayOptions { CloseOnEscape = true });
+        var popupRoot = new Grid();
+        session.RegisterInputRoot(popupRoot);
+
+        session.RequestClose(OverlayCloseReason.Programmatic);
+        Assert.Empty(session.InputRoots);
+
+        // Detached: raising Escape on the now-unregistered root must not throw or resurrect anything.
+        var exception = Record.Exception(() => popupRoot.RaiseEvent(MakeEscapeKeyDown()));
+        Assert.Null(exception);
     }
 }

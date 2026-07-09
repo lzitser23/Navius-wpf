@@ -1,0 +1,140 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Navius.Wpf.Primitives.Controls"
+    xmlns:toast="clr-namespace:Navius.Wpf.Primitives.Controls.Toast">
+
+    <!--
+        Not merged into Generic.xaml (out of scope for this change: another family owns that
+        file, same as Themes/OverlayBackdrop.xaml). Consumers that use NaviusToast/
+        NaviusToastViewport must merge this dictionary themselves, e.g. in the hosting window's
+        own Resources:
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Toast.xaml" />
+
+        NaviusButton is used for PART_Action/PART_Close below; its own style already lives in the
+        assembly-wide Generic.xaml (auto-loaded per Properties/AssemblyInfo.cs's ThemeInfo
+        attribute), so it resolves without any extra merging here.
+    -->
+
+    <Style TargetType="{x:Type toast:NaviusToastViewport}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type toast:NaviusToastViewport}">
+                    <!-- No Background: an unset fill keeps empty regions of this (typically
+                         window-spanning) canvas from swallowing pointer input; only the toast
+                         children themselves (opaque Border) are hit-testable. -->
+                    <Canvas x:Name="PART_Panel" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type toast:NaviusToast}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type toast:NaviusToast}">
+                    <Border
+                        x:Name="Root"
+                        MinWidth="280"
+                        MaxWidth="360"
+                        Padding="16,14"
+                        Background="{DynamicResource Navius.Card}"
+                        BorderBrush="{DynamicResource Navius.Border}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource Navius.Radius.Card}"
+                        SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock
+                                x:Name="TitleText"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                Foreground="{DynamicResource Navius.CardForeground}"
+                                Text="{TemplateBinding Title}"
+                                TextWrapping="Wrap" />
+
+                            <TextBlock
+                                x:Name="DescriptionText"
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="0,4,0,0"
+                                FontSize="12"
+                                Foreground="{DynamicResource Navius.MutedForeground}"
+                                Text="{TemplateBinding Description}"
+                                TextWrapping="Wrap" />
+
+                            <controls:NaviusButton
+                                x:Name="PART_Action"
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Margin="0,8,0,0"
+                                Padding="10,4"
+                                HorizontalAlignment="Left"
+                                FontSize="12"
+                                Background="{DynamicResource Navius.Card}"
+                                BorderBrush="{DynamicResource Navius.Border}"
+                                Content="{TemplateBinding ActionLabel}"
+                                Foreground="{DynamicResource Navius.CardForeground}"
+                                AutomationProperties.HelpText="{TemplateBinding ActionAltText}"
+                                Visibility="Collapsed" />
+
+                            <controls:NaviusButton
+                                x:Name="PART_Close"
+                                Grid.Row="0"
+                                Grid.RowSpan="3"
+                                Grid.Column="1"
+                                Margin="8,0,0,0"
+                                Padding="4"
+                                VerticalAlignment="Top"
+                                FontSize="10"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Content="&#x2715;"
+                                Foreground="{DynamicResource Navius.MutedForeground}"
+                                AutomationProperties.Name="Close" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Title" Value="{x:Null}">
+                            <Setter TargetName="TitleText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Title" Value="">
+                            <Setter TargetName="TitleText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Description" Value="{x:Null}">
+                            <Setter TargetName="DescriptionText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Description" Value="">
+                            <Setter TargetName="DescriptionText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="ActionLabel" Value="{x:Null}">
+                            <Setter TargetName="PART_Action" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="ActionLabel" Value="">
+                            <Setter TargetName="PART_Action" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="ShowCloseButton" Value="False">
+                            <Setter TargetName="PART_Close" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <!-- data-type="error" -->
+                        <Trigger Property="Type" Value="Error">
+                            <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Navius.Destructive}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

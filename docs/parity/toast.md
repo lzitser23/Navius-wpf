@@ -164,3 +164,109 @@ Tier B: custom lookless control(s) coordinated by a C# manager. `ToastManager`/`
 - The F6-viewport-focus hotkey and window-blur timer pause are DOM/browser-specific; need WPF equivalents (global `KeyBinding` on the main window, `Window.Deactivated`/`Activated`).
 - Should the WPF toast host be one shared always-on-top window (simpler z-order/DPI handling) or an adorner layer within the main window (simpler focus/lifetime tie-in)? This is a real platform decision, not just a mapping exercise.
 - UIA `RaiseNotificationEvent` requires Windows 10 version 1709+; confirm minimum supported OS before relying on it over the announcer-div-duplication fallback.
+
+## WPF implementation notes
+
+Implemented under `src/Navius.Wpf.Primitives/Controls/Toast/` + `Themes/Toast.xaml` (not merged
+into `Generic.xaml`, same as `Themes/OverlayBackdrop.xaml`: consumers merge it themselves).
+
+**Manager** (`ToastManager`, `ToastObject`, `ToastOptions`, `ToastActionSpec`, `ToastHandle`,
+`ToastType`, `ToastPriority`): plain C# class per the strategy above, no DI framework, no
+`ObservableCollection` (a `Changed` event plus `Toasts`/`VisibleToasts` read-only lists is
+sufficient for a single-consumer viewport). `ToastManager.Toasts` is insertion order (oldest
+first); `VisibleToasts` is the same set filtered to non-`Limited` and reversed (newest first),
+which is the stacking order `NaviusToastViewport` renders.
+
+*Queueing model (a contract delta worth flagging):* the contract's parts table only says
+`Limited` means "queued beyond Limit" without specifying whether a new arrival can bump an
+already-visible toast out. This port reads that literally: the first `Limit` toasts by insertion
+order stay visible; anything added beyond that queues until an earlier toast is dismissed and a
+slot promotes the next-oldest queued toast. Newest-first is purely the *rendering* order of the
+visible subset, not an eviction policy. `Limit` is also now live-mutable at runtime (raises
+`Changed`, promotes/demotes immediately), which the web contract's `Provider.Limit` parameter
+doesn't call out either way.
+
+**Timer abstraction:** `IToastTimer` (`Start`/`Pause`/`Resume`/`Stop`), production impl
+`DispatcherToastTimer` (wraps `DispatcherTimer`, tracks remaining time via `Stopwatch` since
+`DispatcherTimer` has no native pause). `ToastManager` takes an injectable `Func<IToastTimer>`
+factory so its queueing/priority/pause logic is fully unit-testable without a live Dispatcher; the
+test double (`ManualToastTimer`) lives in `ToastTests.cs`. Pause/Resume use a ref-count per toast
+(not a bool) so hover + focus-within + window-blur can all pause the same toast without one
+source's resume prematurely restarting the countdown while another source still wants it paused.
+
+**Viewport** (`NaviusToastViewport`): a lookless `Control` whose template is a bare `Canvas`
+(`PART_Panel`, no `Background`, so empty regions pass pointer input through). It is *not* the
+always-on-top-borderless-`Window`-per-corner design the strategy section above floated; that was
+judged unnecessary complexity for M1 and deferred. Instead the consumer stretches the Viewport
+across a window-spanning `Grid` cell (same pattern the Overlay family already uses for its
+backdrop+panel layer, see `apps/Navius.Wpf.Gallery/Pages/ToastPage.xaml`), and the `Alignment`
+DP (`NaviusToastAlignment`: the 4 corners + top/bottom-center, default `BottomRight`) anchors the
+stack to a `Canvas.Top`/`Bottom`/`Left`/`Right` corner within it. Offsets are C#-computed in
+`Reflow()`: a synchronous `UpdateLayout()` pass followed by an `ActualHeight` + `Gap` (default 16,
+matches `ToastProviderContext.Gap`) accumulation per visible toast, newest-first. Both the
+authoritative Canvas position *and* two read-only attached properties (`NaviusToastViewport.Index`
+/ `OffsetY`) are published per toast, mirroring the web's Content-publishes-CSS-vars/
+never-computes-a-transform split -- the attached properties exist for a custom template to key
+off, even though the default template doesn't consume them itself.
+
+**Enter/exit animation:** plain `Storyboard`-free `DoubleAnimation`s (a `TranslateTransform.Y`
+slide + `Opacity` fade, 150ms, `QuadraticEase`) driven directly in code, no
+`Navius.Wpf.Motion` reference. Exit removal is gated on the fade animation's `Completed` callback
+(`_panel.Children.Remove` happens there), so "exit completes before removal" holds. An `UpdateKey`
+bump on `ToastManager.Update` replays the enter animation on an already-visible toast (e.g. a
+loading toast flipping to success), matching the contract's `UpdateKey` row in the state table.
+Repositioning of surviving stack members when one exits is a plain (non-animated) `Reflow()`
+call; only enter/exit have a Storyboard, matching the spec's ask.
+
+**Swipe-to-dismiss / drag-to-dismiss:** not implemented. The strategy section above suggested
+`MouseMove`/`ManipulationDelta` drag-to-dismiss as the WPF analogue; this was scoped out of M1 as
+a distinct, separately-testable interaction (hover-pause and Escape/close-button dismiss cover the
+contract's actual interaction surface; swipe was itself framed as a nice-to-have in the web
+source). `SwipeDirection`/`SwipeThreshold` are not ported.
+
+**`NaviusToastPositioner`/`NaviusToastArrow`:** retired, as the open question above anticipated.
+Confirmed unwired stubs upstream (contract: "not used by the primary viewport-stacked toast");
+no anchored-toast variant exists in this port.
+
+**Parts collapse:** the contract's five-part tree (Root/Content/Title/Description/Action/Close)
+is one lookless `NaviusToast` control with `PART_Close`/`PART_Action` template parts (see
+`Themes/Toast.xaml`) rather than five separate classes -- none of the collapsed parts have
+independent behavior in WPF terms (Content's stacking-var-publishing role is now
+`NaviusToastViewport.Reflow`, not a nested part). `NaviusToastProvider`/`NaviusToastPortal` are
+not ported either: there is no cascading-context/DI-injection surface to root, and no portal
+concept in WPF (the Viewport's own template already teleports nothing -- it *is* the render
+target the consumer places).
+
+**Accessibility:** `NaviusToast` calls `AutomationPeer.RaiseNotificationEvent` (via
+`UIElementAutomationPeer`) whenever `Title`/`Description` changes while loaded, per the strategy
+section's "do NOT reproduce the duplicate-announcer-region pattern" guidance.
+`NaviusToastAutomationPeer.GetLiveSettingCore()` returns `Polite`/`Assertive` from `Priority` as
+the fallback for OS/AT combinations where the notification event isn't supported (Windows 10
+1709+ requirement noted in Open Questions; both `net8.0-windows`/`net10.0-windows` TFMs support
+the API at compile time regardless of the runtime OS build, so there is no TFM-conditional code --
+the fallback is purely a runtime capability question, handled by `GetLiveSettingCore` always being
+correct regardless of whether the notification event actually reached an AT).
+
+**Keyboard:** Escape on a focused toast raises `CloseRequested` (wired through to
+`ToastHandle.Dismiss()` by the Viewport), matching the contract. F6 focuses the Viewport when at
+least one toast is visible, attached/detached off the ancestor `Window`'s `PreviewKeyDown`
+(mirrors `OverlayStack`'s window-hook lifecycle). The contract's configurable `Hotkey: string[]`
+parameter and its `LabelTemplate` are **not** ported -- F6 is hardcoded. The parity task
+specifically called out that the web's documented hotkey claim was found to be false in its a11y
+audit; this port only commits to the one real, tested hotkey rather than a configurable surface
+with no second consumer yet to validate it against.
+
+**Testing:** `tests/Navius.Wpf.Tests/ToastTests.cs`, 31 tests. `ToastManager` logic (23 tests) runs
+as plain `[Fact]`s against the manual-advance `ManualToastTimer` double, no dispatcher needed.
+`NaviusToast`/`NaviusToastViewport`/`NaviusToastAutomationPeer` (8 tests) run as `[StaFact]`s with
+`Themes/Toast.xaml` + a light token scope merged in, following the `CheckboxTests`/
+`ProgressTests`/`SliderTests` precedent. Two are explicit regression tests for the historical web
+bugs called out in the parity task: `Dismiss_AtLimitOne_PromotesQueuedToast_RegressionForHistoricalDropBug`
+(a queued toast at `Limit=1` must be promoted, not silently dropped, once the visible slot frees)
+and `Update_LoadingToSuccess_RearmsAutoDismissTimer_RegressionForHistoricalStuckBug` (a promise's
+terminal success/error toast must actually auto-dismiss, not inherit a sticky Loading timer
+state forever).
+
+Gallery demo: `apps/Navius.Wpf.Gallery/Pages/ToastPage.xaml(.cs)`, self-contained (own
+page-local `ToastManager`, `Limit=2` to make the queue visible), not wired into `MainWindow`'s
+nav list per the task's scope constraints.

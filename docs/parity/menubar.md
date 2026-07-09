@@ -303,3 +303,58 @@ This family is the closest 1:1 match to a native WPF control among the three: WP
 - `NaviusMenubarCheckboxItem`'s uncontrolled branch does not invoke `CheckedChanged` (`_internalChecked = next;` only), whereas `NaviusMenubarSub`'s uncontrolled branch explicitly does invoke `OpenChanged`, and the Menu family's `NaviusMenuCheckboxItem` invokes `CheckedChanged` even when uncontrolled. Confirm which behavior is intentional before deciding the WPF two-way-binding contract.
 - `NaviusMenubarSubContent.AvoidCollisions` is folded into the positioner call as `Flip: AvoidCollisions` (no separate `Flip` parameter, unlike `NaviusMenuSubContent`/the shared `OverlayPositionerBase`), confirm whether this coupling is intentional or should be split into independent `Flip`/`AvoidCollisions` parameters for the port.
 - Full key set for the JS `RovingFocus` engine (typeahead debounce/casing, PageUp/PageDown if any) is not visible in this folder; only ArrowLeft/Right/Down/Up and the explicit C# key handlers documented above are confirmed.
+
+## WPF implementation notes
+
+Implemented in `src/Navius.Wpf.Primitives/Controls/Menubar/` (+ `Themes/Menubar.xaml`, gallery `Pages/MenubarPage.xaml(.cs)`, tests `tests/Navius.Wpf.Tests/MenubarTests.cs`, 15 tests).
+
+### Type collapse (native Menu/MenuItem absorbs most parts)
+
+Only 9 public control types are implemented; the rest of the 18-part web contract collapses into native `Menu`/`MenuItem` behavior for free, matching the "WPF strategy" section above:
+
+| Web part(s) | WPF type | Notes |
+|---|---|---|
+| `NaviusMenubar` | `NaviusMenubar : Menu` | Value/DefaultValue/ValueChanged, Orientation (swaps ItemsPanel), Dir, Loop (best-effort, see below), Modal (API-parity only, no extra behavior) |
+| `NaviusMenubarMenu` + `Trigger` + `Portal` + `Positioner` + `Popup` + `Arrow` | `NaviusMenubarMenu : MenuItem` | A top-level `MenuItem`'s Header *is* the trigger; its Items *are* the positioned, dismissable, portal-free popup. `Value` required, validated in `OnInitialized` (throws `InvalidOperationException`, mirrors the web contract) |
+| `NaviusMenubarItem` | `NaviusMenubarItem : MenuItem` | `Disabled` maps directly to native `IsEnabled` (no separate DP) |
+| `NaviusMenubarCheckboxItem` + `ItemIndicator` | `NaviusMenubarCheckboxItem : MenuItem` | Own nullable `Checked` DP (tri-state) mirrored one-way into native `IsChecked` (indeterminate -> false, `MenuItemAutomationPeer`'s `IToggleProvider` reports a binary approximation); glyph is template markup (Themes/Menubar.xaml), no separate `ItemIndicator` type |
+| `NaviusMenubarRadioItem` + `NaviusMenubarRadioGroup` | `NaviusMenubarRadioItem : MenuItem`, `NaviusMenubarRadioGroup : DependencyObject` | **Structural delta**: RadioGroup is a non-visual coordinator, not a nesting wrapper; see "RadioGroup does not nest" below |
+| `NaviusMenubarGroup` + `NaviusMenubarLabel` | `NaviusMenubarLabel : MenuItem` only | No `NaviusMenubarGroup` type; grouping is a Label + items + `NaviusMenubarSeparator` run with no wrapping element (see "Group has no wrapper" below) |
+| `NaviusMenubarSeparator` | `NaviusMenubarSeparator : Separator` | Thin subclass only, for a consistent namespace/DefaultStyleKey; native `Separator` already works inside `Menu`/`MenuItem.Items` |
+| `NaviusMenubarSub` + `NaviusMenubarSubTrigger` + `NaviusMenubarSubContent` | `NaviusMenubarSubTrigger : MenuItem` | Nest the submenu's items directly in a SubTrigger's own `Items`, exactly like plain native WPF submenu nesting; `OpenChanged` wraps `SubmenuOpened`/`SubmenuClosed` |
+
+`Attributes` (captured-unmatched-attributes) is not ported anywhere in this family: there is no WPF equivalent to a Blazor unmatched-parameter bag.
+
+### RadioGroup does not nest
+
+The web contract nests `NaviusMenubarRadioItem`s inside a `NaviusMenubarRadioGroup` element. Native `Menu`/`MenuItem` only treat `MenuItem`/`Separator` as "their own container" (`IsItemItsOwnContainerOverride`); wrapping items in an arbitrary `ItemsControl` would make WPF auto-generate a blank `MenuItem` container around it (`Header` = the wrapper), and there is no way to verify without an interactive runtime whether the *nested* items would still get correct `Role`/keyboard-navigation treatment from that generated container. Instead, `NaviusMenubarRadioGroup` is a plain, non-visual `DependencyObject` coordinator: declare one (e.g. as a resource) and point each `NaviusMenubarRadioItem.Group` at it:
+
+```xml
+<menubar:NaviusMenubarRadioGroup x:Key="ThemeGroup" Value="light" />
+...
+<menubar:NaviusMenubarRadioItem Value="light" Group="{StaticResource ThemeGroup}" Header="Light" />
+```
+
+### Group has no wrapper
+
+Same reasoning as RadioGroup. No `NaviusMenubarGroup` type is implemented; express a labeled group the idiomatic native way, a `NaviusMenubarLabel` followed by its items followed by a `NaviusMenubarSeparator`, all as flat siblings (see `Pages/MenubarPage.xaml`'s Edit menu for a working example).
+
+### CheckboxItem/RadioItem never call `base.OnClick()`
+
+Discovered via the test suite: native `MenuItem.OnClick()`, when `IsCheckable=true`, *unconditionally* toggles `IsChecked` as part of its own click handling, regardless of what a subclass already set. Since both `NaviusMenubarCheckboxItem` and `NaviusMenubarRadioItem` set `IsChecked` themselves (from their own tri-state/Group-driven logic) before the click finishes, calling `base.OnClick()` afterward double-toggles it back to the wrong value. Both types now raise the `Click` routed event manually instead of calling `base.OnClick()`. Net effect: a bound `Command`/`CommandParameter` on either type will not execute (this family's interaction model is OnSelect-driven, not Command-driven, so this is an accepted delta, not a regression from anything working before). `NaviusMenubarItem` (non-checkable) is unaffected and still calls `base.OnClick()` conditionally on `PreventDefault()`.
+
+### Controlled/uncontrolled: one canonical strategy picked (per Open Questions)
+
+Per the parity doc's own open question, this port does not preserve the web contract's split `HasDelegate` vs. explicit-`SetParametersAsync`-tracking strategies. Every stateful DP here (`NaviusMenubar.Value`, `NaviusMenubarCheckboxItem.Checked`, `NaviusMenubarRadioGroup.Value`) is a plain two-way-bindable `DependencyProperty` (`BindsTwoWayByDefault` where relevant) whose paired event always raises on change, controlled or not. This is the same canonical choice made for the Checkbox/RadioGroup families elsewhere in this repo.
+
+### Loop=false is best-effort
+
+Native WPF top-level menu keyboard navigation always wraps; there is no built-in "don't wrap" switch. `NaviusMenubar.Loop=false` is implemented as a `PreviewKeyDown` interceptor that swallows the ArrowLeft/ArrowRight keypress that *would* wrap past the first/last top-level trigger (based on `IsKeyboardFocusWithin`), rather than a first-class navigation-engine setting.
+
+### Headless-testing limitation: `IsSubmenuOpen` needs a real window
+
+Confirmed via direct experimentation while writing `MenubarTests.cs`: setting `MenuItem.IsSubmenuOpen = true` in code is silently coerced back to `false` unless the element is part of a real, shown `Window` (native submenu-open state appears to require live keyboard/HWND focus infrastructure that a headless STA test never has, even after `Measure`/`Arrange`/`UpdateLayout`). This is a WPF platform constraint, not specific to this port. Tests that need to exercise "a submenu just opened/closed" instead raise `MenuItem.SubmenuOpenedEvent`/`SubmenuClosedEvent` directly via `RaiseEvent`, which correctly exercises `NaviusMenubar`'s own reactive code without depending on the native coercion gate. `Bar_SettingValue_UpdatesValueAndAttemptsToOpenMatchingMenu` only asserts the `Value` bookkeeping side for the same reason.
+
+### Overlap with the Menu family
+
+Per the task brief, this agent built its own types under `Controls/Menubar/` rather than depending on or editing the sibling Menu family's in-flight files, even though several of them are conceptually identical native-`MenuItem`-derived types (`NaviusMenubarItem`/`NaviusMenuItem`, `NaviusMenubarSeparator`/`NaviusMenuSeparator`, `NaviusMenubarLabel`/`NaviusMenuLabel`, the checkbox/radio-item tri-state-glyph-and-double-toggle-workaround pattern, etc., assuming the Menu agent reached similar native-substrate conclusions independently). The orchestrator should audit both `Controls/Menu/` and `Controls/Menubar/` once both land and consider extracting a shared base (e.g. a common `MenuItemPart : MenuItem` for the Disabled-is-IsEnabled/TextValue/OnClick-Select-event pattern) if the duplication is as large as expected, rather than keeping two independent copies long-term.

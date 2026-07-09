@@ -283,3 +283,53 @@ WPF's `Menu`/`MenuItem`/`ContextMenu` system already implements roving/typeahead
 - Escape-closes-root-menu is wired through a JS `DismissableLayer` callback (`OnDismiss("escape")`) rather than a `@onkeydown` handler in `NaviusMenuPopup.razor`; the precise trigger conditions (bubble phase, focus-within checks) live in JS and aren't visible here.
 - The default `Align="center"` for the root Positioner (vs. WPF's conventional left/start-aligned dropdown menus) is a product decision: keep spec-parity centering or switch to a WPF-idiomatic default.
 - `TextValue` (typeahead override) is threaded through Item/CheckboxItem/RadioItem/SubTrigger as `data-navius-text-value`, but the typeahead matching algorithm (debounce window, case sensitivity, reset timing) is implemented in the JS roving-focus engine and not specified in this folder.
+
+## WPF implementation notes
+
+Implemented in `src/Navius.Wpf.Primitives/Controls/Menu/` (namespace `Navius.Wpf.Primitives.Controls.Menus` - see "namespace" note below) and `src/Navius.Wpf.Primitives/Themes/Menu.xaml`. Tier A throughout: every part derives from a native WPF menu control (`ToggleButton`, `ContextMenu`, `MenuItem`), so roving focus, typeahead, mnemonics, `MenuItemAutomationPeer`, and submenu opening/closing (hover-intent, arrow keys, Escape) are inherited for free and are not reimplemented.
+
+**Part collapse.** The contract's 17 parts map onto 8 new classes:
+
+| Contract part(s) | WPF class | Notes |
+|---|---|---|
+| NaviusMenu | *(none)* | No root class: NaviusMenuTrigger owns the association with a popup directly via its `Menu` property instead of a cascaded context object. |
+| NaviusMenuTrigger | `NaviusMenuTrigger : ToggleButton` | `Menu` DP holds the associated `NaviusMenuPopup`; toggling opens/closes it with itself as `PlacementTarget`. `IsChecked` doubles as `data-popup-open`. |
+| NaviusMenuPortal | *(none, no-op)* | WPF popups already float in their own window layer; nothing to teleport. |
+| NaviusMenuPositioner | folded into `NaviusMenuPopup` | Side/Align/SideOffset/AlignOffset/Loop are properties directly on the popup instead of a separate positioning element. |
+| NaviusMenuPopup, NaviusMenuArrow | `NaviusMenuPopup : ContextMenu` | Arrow is not implemented (deferred; native context menus rarely carry one). |
+| NaviusMenuItem | `NaviusMenuItem : NaviusMenuItemBase : MenuItem` | |
+| NaviusMenuCheckboxItem | `NaviusMenuCheckboxItem : NaviusMenuItemBase` | |
+| NaviusMenuItemIndicator | *(none)* | Check/dash/dot glyphs are drawn inline (Path/Rectangle/Ellipse) in each item's own `ControlTemplate` rather than a separate public indicator control, unlike Checkbox/RadioGroup's dedicated Indicator classes. |
+| NaviusMenuGroup | *(none)* | A transparent `role="group"` wrapper around a subset of items would break native `MenuItem` arrow-key roving (it only navigates `MenuItem`-typed containers); grouping is visual-only (GroupLabel + ordering), not a distinct accessible group. |
+| NaviusMenuGroupLabel | `NaviusMenuGroupLabel : ContentControl` | Non-focusable; safely skipped by native roving nav like `Separator` is. |
+| NaviusMenuRadioGroup | *(none)* | Collapses into `NaviusMenuRadioItem.GroupName` (see below), for the same "would break roving nav" reason as NaviusMenuGroup. |
+| NaviusMenuRadioItem | `NaviusMenuRadioItem : NaviusMenuItemBase` | |
+| NaviusMenuSeparator | *(reuses `Navius.Wpf.Primitives.Controls.NaviusSeparator`)* | Already ships `role="separator"`-equivalent (`AutomationControlType.Separator`) and is safely skipped by roving nav since it isn't a `MenuItem`. |
+| NaviusMenuSub, NaviusMenuSubTrigger, NaviusMenuSubContent | *(none - "submenu via native MenuItem nesting")* | A `NaviusMenuItem` with child `NaviusMenuItem`s automatically becomes a submenu header; WPF's `MenuItem.Role == SubmenuHeader` handles hover-intent open, arrow-key open/close, positioning, and its own `PART_Popup` natively. |
+
+**Namespace note.** The folder is `Controls/Menu/` per spec, but the C# namespace is `Navius.Wpf.Primitives.Controls.Menus` (plural), not `...Controls.Menu`. A concurrent agent's `Controls/Menubar/NaviusMenubar.cs` derives from bare `Menu` (intending `System.Windows.Controls.Menu`); a sibling namespace literally named `Menu` under `Controls` shadows that bare reference project-wide (C# namespace-member lookup for an unqualified name checks sibling namespace members before `using`-imported types), breaking their build. Renaming only the namespace (folder path unchanged) avoids the collision without touching their file.
+
+**Side/Align -> PlacementMode mapping.** WPF's `PlacementMode` enum only expresses 4 single-edge placements (`Top`/`Bottom`/`Left`/`Right`) with no independent alignment axis, so it cannot represent the contract's 4-side x 3-align = 12 combinations. `NaviusMenuPopup` always sets `Placement = PlacementMode.Custom` and supplies a `CustomPopupPlacementCallback` that computes the exact offset per `(Side, Align)` pair by reusing `Positioning.PlacementMath.Place` (the same pure math `NaviusAnchoredPopup`/Popover-family Tier B controls use) with `Flip`/`Shift` disabled - native WPF popup placement replaces the JS collision/flip engine per this doc's own WPF strategy note, so placement stays a single fixed choice rather than collision-aware. Reference table (closest native single-edge equivalent, for readers used to plain `PlacementMode`):
+
+| Side | Align=Start | Align=Center | Align=End |
+|---|---|---|---|
+| Bottom | ~`PlacementMode.Bottom` | `PlacementMode.Bottom`, centered | `PlacementMode.Bottom`, right-aligned |
+| Top | ~`PlacementMode.Top` | `PlacementMode.Top`, centered | `PlacementMode.Top`, right-aligned |
+| Left | ~`PlacementMode.Left` | `PlacementMode.Left`, centered | `PlacementMode.Left`, bottom-aligned |
+| Right | ~`PlacementMode.Right` | `PlacementMode.Right`, centered | `PlacementMode.Right`, bottom-aligned |
+
+Default is Side=Bottom/Align=Center, matching the contract's root Positioner defaults exactly (the doc's own open question about switching to a WPF-idiomatic left-aligned default was resolved in favor of spec parity).
+
+**OnSelect / close-on-activate.** Native `MenuItem.OnClick()` bakes "raise Click, run Command, close the open menu chain" into one non-overridable block with no seam to make the close conditional on a cancelable event. `NaviusMenuItemBase` and its three subclasses therefore bypass `base.OnClick()` entirely for leaf activation (submenu headers still delegate to `base.OnClick()` so native hover/arrow-key submenu opening is untouched) and replicate it explicitly: raise the cancelable `Select` routed event (`NaviusSelectEventArgs`, mirrors the contract's `OnSelect`/`PreventDefault()`), run the command (RoutedCommand targeted at `CommandTarget ?? this`, matching native `ICommandSource` execution), then walk up via `ItemsControl.ItemsControlFromItemContainer` to the owning root `ContextMenu` and set `IsOpen = false` only if `PreventDefault()` was not called. One side effect: native `MenuItem.Click` no longer fires from these controls; `Select` replaces it.
+
+**CheckboxItem tri-state.** Native `MenuItem.IsChecked` is a plain `bool` (`MenuItem` has no `IsThreeState`), so `Checked` (`bool?`) is a new DP layered on top, with a separate `IsIndeterminate` flag driving the dash-glyph visual while native `IsChecked` stays `false`. A click always resolves indeterminate/false to `true`, `true` to `false` - matching `NaviusCheckbox`'s own click-resolution rule. Per this doc's own open question #2, indeterminate has no UI gesture in the source either, so this gap is low-impact. UIA note: `MenuItemAutomationPeer` already implements `IToggleProvider` when `IsCheckable` is true (`ControlType.MenuItem`, not a separate `CheckBox` type - actually the correct native mapping for real Windows apps); its `ToggleState` has no Indeterminate case since native `IsChecked` is a plain bool, so `Checked == null` reports as `Off` at the automation layer. No custom peer was added for this.
+
+**RadioItem group semantics.** `NaviusMenuRadioItem.GroupName` (a new DP, not WPF's attached `RadioButton.GroupName`) plus a click-time walk of `ItemsControl.ItemsControlFromItemContainer(this).Items` unchecking same-`GroupName` siblings, scoped to the immediate owning menu/submenu - exactly the scope `NaviusMenuRadioGroup` would otherwise wrap. Re-clicking the already-checked item is a no-op toggle (still raises `Select`/closes), matching "Space selects, there is no deselect."
+
+**TextValue -> TextSearch.Text.** Resolves this doc's own open question in favor of the native mechanism: `NaviusMenuItemBase.TextValue` writes straight onto WPF's `TextSearch.Text` attached property, which native first-letter typeahead already reads.
+
+**Loop.** Kept as a DP on `NaviusMenuPopup` for parameter-surface parity, but native `MenuItem`/`ContextMenu` arrow-key navigation has no public switch to disable wrap-around, so it currently has no behavioral effect.
+
+**Not implemented / deferred:** `NaviusMenuArrow` (no visual arrow glyph); the cancelable `OnOpenAutoFocus`/`OnCloseAutoFocus`/`OnEscapeKeyDown`/`OnPointerDownOutside`/`OnFocusOutside`/`OnInteractOutside` hooks (native `ContextMenu`/`Popup` already provide dismiss-on-outside-click and Escape-to-close; intercepting them would require deep custom `Popup` work disproportionate to the value, and none of these are part of the architecture this port was scoped against); `Modal` (scroll-lock has no obvious native equivalent worth forcing).
+
+**Tests:** `tests/Navius.Wpf.Tests/MenuTests.cs` (23 facts, shared with ContextMenuTests's 6 = 29 total, all `[StaFact]`). Covers template application, trigger open/close/resync-on-external-close, Select raise + PreventDefault + close/keep-open, submenu-header click deferring to base (does not close), Command execution, `TextValue` -> `TextSearch.Text`, checkbox toggle/indeterminate/CheckedChanged, radio single-selection (same group, cross-group independence, re-click no-op), `IsEnabled` cascade, and the `MenuItemAutomationPeer` `IToggleProvider`/`ToggleState` mapping.

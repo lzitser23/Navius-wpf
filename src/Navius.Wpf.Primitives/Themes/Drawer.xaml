@@ -1,0 +1,95 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:drawer="clr-namespace:Navius.Wpf.Primitives.Controls.Drawer"
+    xmlns:overlays="clr-namespace:Navius.Wpf.Primitives.Overlays">
+
+    <!--
+        Not merged into Generic.xaml (out of scope for this change: another family owns that
+        file). Consumers merge this dictionary themselves; see Dialog.xaml's header comment.
+    -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/OverlayBackdrop.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style TargetType="{x:Type drawer:NaviusDrawer}">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type drawer:NaviusDrawer}">
+                    <Grid>
+                        <overlays:OverlayBackdrop x:Name="Backdrop" />
+                        <!--
+                            Default (base) layout represents Side="Bottom", the DP's default;
+                            the Side triggers below override alignment/extent for the other three
+                            edges. NaviusDrawer.OnApplyTemplate looks this part up by name (must
+                            stay "PART_Panel") to drive the slide-in/out TranslateTransform.
+                        -->
+                        <Border x:Name="PART_Panel"
+                                Width="Auto"
+                                Height="280"
+                                Padding="24"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Bottom"
+                                Background="{DynamicResource Navius.Popover}"
+                                BorderBrush="{DynamicResource Navius.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource Navius.Radius.Card}">
+                            <Border.RenderTransform>
+                                <TranslateTransform />
+                            </Border.RenderTransform>
+                            <StackPanel>
+                                <TextBlock x:Name="TitleText"
+                                           Text="{TemplateBinding Title}"
+                                           FontSize="16" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Navius.PopoverForeground}" />
+                                <TextBlock x:Name="DescriptionText"
+                                           Margin="0,4,0,16"
+                                           Text="{TemplateBinding Description}"
+                                           Foreground="{DynamicResource Navius.MutedForeground}"
+                                           TextWrapping="Wrap" />
+                                <ContentPresenter />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Modal" Value="False">
+                            <Setter TargetName="Backdrop" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Title" Value="{x:Null}">
+                            <Setter TargetName="TitleText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Description" Value="{x:Null}">
+                            <Setter TargetName="DescriptionText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Side" Value="Left">
+                            <Setter TargetName="PART_Panel" Property="Width" Value="360" />
+                            <Setter TargetName="PART_Panel" Property="Height" Value="Auto" />
+                            <Setter TargetName="PART_Panel" Property="HorizontalAlignment" Value="Left" />
+                            <Setter TargetName="PART_Panel" Property="VerticalAlignment" Value="Stretch" />
+                        </Trigger>
+                        <Trigger Property="Side" Value="Right">
+                            <Setter TargetName="PART_Panel" Property="Width" Value="360" />
+                            <Setter TargetName="PART_Panel" Property="Height" Value="Auto" />
+                            <Setter TargetName="PART_Panel" Property="HorizontalAlignment" Value="Right" />
+                            <Setter TargetName="PART_Panel" Property="VerticalAlignment" Value="Stretch" />
+                        </Trigger>
+                        <Trigger Property="Side" Value="Top">
+                            <Setter TargetName="PART_Panel" Property="Width" Value="Auto" />
+                            <Setter TargetName="PART_Panel" Property="Height" Value="280" />
+                            <Setter TargetName="PART_Panel" Property="HorizontalAlignment" Value="Stretch" />
+                            <Setter TargetName="PART_Panel" Property="VerticalAlignment" Value="Top" />
+                        </Trigger>
+                        <Trigger Property="Side" Value="Bottom">
+                            <Setter TargetName="PART_Panel" Property="Width" Value="Auto" />
+                            <Setter TargetName="PART_Panel" Property="Height" Value="280" />
+                            <Setter TargetName="PART_Panel" Property="HorizontalAlignment" Value="Stretch" />
+                            <Setter TargetName="PART_Panel" Property="VerticalAlignment" Value="Bottom" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

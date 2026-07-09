@@ -1,0 +1,61 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Navius.Wpf.Primitives.Controls">
+
+    <!--
+        Not merged into Generic.xaml (out of scope: another family owns that file, see
+        Themes/OverlayBackdrop.xaml for the same precedent). Consumers must merge this
+        dictionary themselves, e.g. in the hosting page's own Resources:
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/PreviewCard.xaml" />
+    -->
+    <Style TargetType="{x:Type controls:NaviusPreviewCard}">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:NaviusPreviewCard}">
+                    <Grid>
+                        <Border
+                            x:Name="PART_Trigger"
+                            Background="Transparent"
+                            Focusable="True"
+                            FocusVisualStyle="{x:Null}">
+                            <ContentPresenter TextElement.Foreground="{DynamicResource Navius.Primary}" TextElement.FontWeight="SemiBold" />
+                        </Border>
+
+                        <controls:NaviusAnchoredPopup
+                            x:Name="PART_Popup"
+                            Anchor="{Binding ElementName=PART_Trigger}"
+                            Side="{TemplateBinding Side}"
+                            Align="{TemplateBinding Align}"
+                            SideOffset="{TemplateBinding SideOffset}"
+                            AlignOffset="{TemplateBinding AlignOffset}"
+                            IsOpen="{TemplateBinding IsOpen}">
+                            <Border
+                                x:Name="PART_PopupContent"
+                                MinWidth="240"
+                                Padding="16"
+                                AutomationProperties.AutomationId="PreviewCardPopup"
+                                Background="{DynamicResource Navius.Card}"
+                                BorderBrush="{DynamicResource Navius.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource Navius.Radius.Card}"
+                                Focusable="False">
+                                <Border.Effect>
+                                    <DropShadowEffect
+                                        BlurRadius="18"
+                                        Direction="270"
+                                        Opacity="0.3"
+                                        ShadowDepth="4" />
+                                </Border.Effect>
+                                <ContentPresenter Content="{TemplateBinding PreviewContent}" TextElement.Foreground="{DynamicResource Navius.CardForeground}" />
+                            </Border>
+                        </controls:NaviusAnchoredPopup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

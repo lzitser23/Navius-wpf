@@ -13,6 +13,17 @@
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Progress.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Separator.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/OverlayBackdrop.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Tooltip.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Popover.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/PreviewCard.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Dialog.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/AlertDialog.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Drawer.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Menu.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/ContextMenu.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Menubar.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/NavigationMenu.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Toast.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

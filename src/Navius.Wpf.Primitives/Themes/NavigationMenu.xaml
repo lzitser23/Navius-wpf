@@ -1,0 +1,220 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:nav="clr-namespace:Navius.Wpf.Primitives.Controls.NavigationMenu"
+    xmlns:popup="clr-namespace:Navius.Wpf.Primitives.Controls">
+
+    <!-- NaviusNavigationMenuBackdrop: same look as OverlayBackdrop (see its class remarks for
+         why it needs its own DefaultStyleKey/Style rather than only inheriting OverlayBackdrop's). -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuBackdrop}">
+        <Setter Property="Background" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenuBackdrop}">
+                    <Border Background="{TemplateBinding Background}" Opacity="0.4" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusNavigationMenu: the root "nav" row. -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenu}">
+        <Setter Property="Background" Value="{DynamicResource Navius.Popover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenu}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        Padding="{TemplateBinding Padding}"
+                        CornerRadius="{DynamicResource Navius.Radius.Control}">
+                        <ContentPresenter />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusNavigationMenuSub: nested submenu-in-a-panel root; plain, no nav-bar chrome. -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuSub}">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.PopoverForeground}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenuSub}">
+                    <ContentPresenter />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusNavigationMenuList: the trigger/link row. -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuList}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenuList}">
+                    <ItemsPresenter />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusNavigationMenuItem: one "li". -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuItem}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenuItem}">
+                    <ContentPresenter />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusNavigationMenuTrigger: the disclosure button. -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuTrigger}">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenuTrigger}">
+                    <Border x:Name="Row"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{DynamicResource Navius.Radius.Small}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- data-pressed -->
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                        </Trigger>
+                        <!-- data-disabled -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusNavigationMenuIcon: presentational chevron, rotates open via IsOpen. -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuIcon}">
+        <Setter Property="Margin" Value="4,0,0,0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenuIcon}">
+                    <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <RotateTransform Angle="0" />
+                        </Grid.RenderTransform>
+                        <ContentPresenter />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsOpen" Value="True">
+                            <Setter TargetName="Root" Property="RenderTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="180" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusNavigationMenuLink: native-anchor-equivalent, usable at top level or inside a panel. -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuLink}">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenuLink}">
+                    <Border x:Name="Row"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{DynamicResource Navius.Radius.Small}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                        </Trigger>
+                        <!-- data-active -->
+                        <Trigger Property="Active" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Navius.AccentForeground}" />
+                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusNavigationMenuArrow -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuArrow}">
+        <Setter Property="Fill" Value="{DynamicResource Navius.Popover}" />
+        <Setter Property="Stroke" Value="{DynamicResource Navius.Border}" />
+        <Setter Property="StrokeThickness" Value="1" />
+    </Style>
+
+    <!-- NaviusNavigationMenuViewport: stub, see class remarks. -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuViewport}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenuViewport}">
+                    <ContentPresenter />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusNavigationMenuContent: the disclosed panel, composes NaviusAnchoredPopup directly. -->
+    <Style TargetType="{x:Type nav:NaviusNavigationMenuContent}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type nav:NaviusNavigationMenuContent}">
+                    <popup:NaviusAnchoredPopup
+                        Anchor="{TemplateBinding Anchor}"
+                        IsOpen="{TemplateBinding IsOpen}"
+                        Side="{TemplateBinding Side}"
+                        Align="{TemplateBinding Align}"
+                        SideOffset="{TemplateBinding SideOffset}"
+                        AlignOffset="{TemplateBinding AlignOffset}">
+                        <Border
+                            Background="{DynamicResource Navius.Popover}"
+                            BorderBrush="{DynamicResource Navius.Border}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource Navius.Radius.Control}"
+                            Padding="12"
+                            MinWidth="220"
+                            SnapsToDevicePixels="True"
+                            TextElement.Foreground="{DynamicResource Navius.PopoverForeground}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="16" ShadowDepth="3" Opacity="0.2" />
+                            </Border.Effect>
+                            <ContentPresenter />
+                        </Border>
+                    </popup:NaviusAnchoredPopup>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

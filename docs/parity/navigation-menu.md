@@ -245,3 +245,46 @@ Tier B (custom lookless control). There is no native WPF control that models a n
 - The Popup carries no ARIA role by design (site-nav pattern): confirm the intended UIA `AutomationControlType` for the ported Popup panel (Custom vs Group vs Pane) so parity docs across families stay consistent.
 - `NaviusNavigationMenuSub` reuses the exact same context/parts recursively (nested submenu-in-a-panel): confirm whether nested submenus are in scope for the WPF port's first pass or deferred.
 - The Base UI discrete `data-*` state contract (`data-open`/`data-closed`/`data-starting-style`/`data-ending-style`/`data-popup-open`/`data-pressed`/`data-disabled`) needs a WPF equivalent: dependency properties + `VisualStateManager` states, or attached properties mirroring the `data-*` names for template triggers?
+
+## WPF implementation notes
+
+Implemented in `src/Navius.Wpf.Primitives/Controls/NavigationMenu/` (+ `Themes/NavigationMenu.xaml`, gallery `Pages/NavigationMenuPage.xaml(.cs)`, tests `tests/Navius.Wpf.Tests/NavigationMenuTests.cs`, 13 tests). Tier B custom lookless controls, per the strategy above; no native control derivation beyond `Button`-for-Trigger/Link.
+
+### Scope: per-item popup mode only; shared viewport is a stub
+
+This M2 port implements only the per-item popup mode: each open `NaviusNavigationMenuContent` owns its own standalone `NaviusAnchoredPopup` (Positioning/ + Controls/NaviusAnchoredPopup.cs, composed as-is, never edited), anchored to its own Trigger. `NaviusNavigationMenu.UseSharedViewport` (default `false`) throws `NotSupportedException` immediately if set `true`, with a message pointing back to this section, rather than silently falling back or faking the morph animation. The shared/morphing viewport (one popup that resizes and re-anchors as the active item changes) is real, non-trivial WPF work (`Popup.CustomPopupPlacementCallback` + swap-the-content-of-one-fixed-panel + a directional transition) and is left as an explicit M3+ follow-up; see the gallery page's "Try UseSharedViewport (throws)" button for a live demo of the failure.
+
+### Type collapse: Popup + Positioner + Portal fold into Content
+
+Unlike Menubar (which leans on native `Menu`/`MenuItem`), NavigationMenu has no native substrate to lean on, but the contract's `NaviusNavigationMenuPopup`/`Positioner`/`Portal` still collapse into one type: `NaviusNavigationMenuContent`'s default `ControlTemplate` (Themes/NavigationMenu.xaml) hosts a `NaviusAnchoredPopup` directly, and `Side`/`Align`/`SideOffset`/`AlignOffset` are folded onto `Content` itself as the only positioning knobs the substrate actually exposes (default `Side=Bottom`, `Align=Center`, matching the contract's Positioner defaults for this family specifically, which differ from Menubar's `Align=Start`). **Not implemented** (the substrate has no equivalent): `Flip`/`AvoidCollisions` as independent toggles (the substrate always flips+shifts), `CollisionPadding`, `Sticky`, `HideWhenDetached`, `ArrowPadding`, `Container` (moot: WPF's `Popup` already renders outside the normal visual flow, no DOM-teleport concept needed). `NaviusNavigationMenuViewport` is a present-but-inert stub (only meaningful in shared-viewport mode).
+
+### Full part list mapped
+
+| Web part | WPF type | Notes |
+|---|---|---|
+| `NaviusNavigationMenu` | `NaviusNavigationMenu : NavigationMenuHostBase` | Root; `UseSharedViewport` stub (see above) |
+| `NaviusNavigationMenuSub` | `NaviusNavigationMenuSub : NavigationMenuHostBase` | Shares all host logic with the root via a common abstract base; establishes its own ambient scope for its subtree (DP-inheritance shadowing) |
+| `NaviusNavigationMenuList` | `NaviusNavigationMenuList : ItemsControl` | Roving-focus controller (own `PreviewKeyDown` handler, same pattern as `NaviusRadioGroup` elsewhere in this repo, since WPF has no aria-orientation-aware composite-widget primitive to reuse); swaps its own `ItemsPanel` horizontal/vertical to match the ambient host's `Orientation` |
+| `NaviusNavigationMenuItem` | `NaviusNavigationMenuItem : ContentControl` | Cascades itself via an inherited attached `Owner` property (WPF's analog to Blazor `CascadingValue`) |
+| `NaviusNavigationMenuTrigger` | `NaviusNavigationMenuTrigger : Button` | Hover-intent Delay/CloseDelay via `DispatcherTimer`; APG "enter content" keyboard pattern; `AutomationPeer` implements `IExpandCollapseProvider` (per the strategy note above) |
+| `NaviusNavigationMenuIcon` | `NaviusNavigationMenuIcon : ContentControl` | Read-only `IsOpen` DP mirrors the owning item's open state for a template trigger (rotate chevron) |
+| `NaviusNavigationMenuLink` | `NaviusNavigationMenuLink : Button` | `Href` informational only (no navigation side effect authored here); `Active` sets `AutomationProperties.ItemStatus="page"` |
+| `NaviusNavigationMenuPortal` + `Positioner` + `Popup` | folded into `NaviusNavigationMenuContent` | See "Type collapse" above |
+| `NaviusNavigationMenuArrow` | `NaviusNavigationMenuArrow : Shape` | Reuses `FrameworkElement.Width`/`Height` (metadata-overridden to 10x5) rather than redundant new DPs |
+| `NaviusNavigationMenuViewport` | `NaviusNavigationMenuViewport : ContentControl` | Inert stub, see above |
+| `NaviusNavigationMenuContent` | `NaviusNavigationMenuContent : ContentControl` | See "Type collapse" above; `ForceMount` accepted but has no exit-animation phase to preserve in this port |
+| `NaviusNavigationMenuBackdrop` | `NaviusNavigationMenuBackdrop : OverlayBackdrop` | Reuses `Overlays/OverlayBackdrop.cs` (composed via inheritance, never edited) but re-registers its own `DefaultStyleKey`/`Style` (see below) |
+
+`Attributes` is not ported anywhere in this family, same rationale as Menubar.
+
+### Dismissal (outside-press / Escape) is window-hook-based, with a known nested-popup gap
+
+`NavigationMenuHostBase` hooks `Window.PreviewMouseDown`/`PreviewKeyDown` (mirrors `Overlays/OverlayStack.cs`'s pattern, but is not that shared service) to close on an outside press or Escape. Because `NaviusAnchoredPopup`-backed Content panels render through a separate, transparent child HWND (`AllowsTransparency=true`), Win32 input for a press *inside* an open Content panel never reaches the main Window's routed-event tree at all, so the window-level hook only ever needs to ask "was this press inside my own trigger List" to correctly identify a genuine outside press. The known gap: a click landing inside *another* host's popup (e.g. clicking inside a root Content panel while a nested `NaviusNavigationMenuSub` inside a *different* item's panel is open) is invisible to both hooks and won't auto-close either one. Escape has the mirror-image gap: key-tunneling from the Window does not cross into a popup's own `PresentationSource`, so `NaviusNavigationMenuContent` additionally attaches its own local `PreviewKeyDown` handler so Escape still closes correctly while focus is inside that specific popup.
+
+### `NaviusNavigationMenuBackdrop` needs its own `DefaultStyleKey`
+
+Discovered via the test suite: a subclass that does not call its own `DefaultStyleKeyProperty.OverrideMetadata` does **not** reliably resolve the base type's implicit style through a plain `element.Resources` scope (confirmed experimentally: an un-parented `OverlayBackdrop` resolves its style from a themed scope; an un-parented `NaviusNavigationMenuBackdrop` with the identical scope does not, despite nominally inheriting the same `DefaultStyleKey` metadata). `NaviusNavigationMenuBackdrop` now registers its own `DefaultStyleKeyProperty` override and Themes/NavigationMenu.xaml carries a matching `Style` (visually identical to `OverlayBackdrop`'s). Worth flagging for the orchestrator: any other family reusing an existing control purely via inheritance (without adding new visual state) should expect the same gotcha.
+
+### Deferred per the Open Questions above
+
+`data-activation-direction` (directional enter animation) is not implemented; `OnOpenChangeComplete` fires synchronously right after `Value` changes (no separate presence-transition phase exists in this port to wait for). The Popup's `AutomationControlType` is left as the default `FrameworkElementAutomationPeer` inference rather than an explicit Custom/Group/Pane choice, pending the cross-family consistency decision the Open Questions call for.

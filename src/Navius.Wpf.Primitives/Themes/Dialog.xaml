@@ -1,0 +1,64 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dialog="clr-namespace:Navius.Wpf.Primitives.Controls.Dialog"
+    xmlns:overlays="clr-namespace:Navius.Wpf.Primitives.Overlays">
+
+    <!--
+        Not merged into Generic.xaml (out of scope for this change: another family owns that
+        file). Consumers merge this dictionary themselves, e.g. in the hosting window/page's own
+        Resources:
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Dialog.xaml" />
+        This also pulls in OverlayBackdrop.xaml (merged below) for the scrim.
+    -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/OverlayBackdrop.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style TargetType="{x:Type dialog:NaviusDialog}">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type dialog:NaviusDialog}">
+                    <Grid>
+                        <overlays:OverlayBackdrop x:Name="Backdrop" />
+                        <Border x:Name="Panel"
+                                Width="420"
+                                Padding="24"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource Navius.Popover}"
+                                BorderBrush="{DynamicResource Navius.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource Navius.Radius.Card}">
+                            <StackPanel>
+                                <TextBlock x:Name="TitleText"
+                                           Text="{TemplateBinding Title}"
+                                           FontSize="16" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Navius.PopoverForeground}" />
+                                <TextBlock x:Name="DescriptionText"
+                                           Margin="0,4,0,16"
+                                           Text="{TemplateBinding Description}"
+                                           Foreground="{DynamicResource Navius.MutedForeground}"
+                                           TextWrapping="Wrap" />
+                                <ContentPresenter />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Modal" Value="False">
+                            <Setter TargetName="Backdrop" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Title" Value="{x:Null}">
+                            <Setter TargetName="TitleText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="Description" Value="{x:Null}">
+                            <Setter TargetName="DescriptionText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

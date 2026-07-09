@@ -89,6 +89,24 @@ public sealed class OverlayStack
         }
     }
 
+    /// <summary>
+    /// Hooks PreviewKeyDown/PreviewMouseDown directly on a popup-tree root so Escape and
+    /// outside-press routing keep working inside its own HwndSource. Called by
+    /// <see cref="OverlaySession.RegisterInputRoot"/>; not meant to be called directly.
+    /// </summary>
+    internal void AttachInputRootHooks(FrameworkElement root)
+    {
+        root.PreviewKeyDown += OnInputRootPreviewKeyDown;
+        root.PreviewMouseDown += OnInputRootPreviewMouseDown;
+    }
+
+    /// <summary>Reverses <see cref="AttachInputRootHooks"/>; called when a session closes.</summary>
+    internal void DetachInputRootHooks(FrameworkElement root)
+    {
+        root.PreviewKeyDown -= OnInputRootPreviewKeyDown;
+        root.PreviewMouseDown -= OnInputRootPreviewMouseDown;
+    }
+
     private void AttachHooksIfNeeded()
     {
         if (_hooksAttached)
@@ -113,7 +131,18 @@ public sealed class OverlayStack
         _hooksAttached = false;
     }
 
-    private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e)
+    private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e) => HandleEscapeKey(e);
+
+    private void OnWindowPreviewMouseDown(object sender, MouseButtonEventArgs e) => HandleOutsidePress(e);
+
+    // Registered directly on each session's input roots (see AttachInputRootHooks) so Escape and
+    // outside-press routing also run inside a Popup's own HwndSource, which the Window-level hooks
+    // above never see key/mouse events from.
+    private void OnInputRootPreviewKeyDown(object sender, KeyEventArgs e) => HandleEscapeKey(e);
+
+    private void OnInputRootPreviewMouseDown(object sender, MouseButtonEventArgs e) => HandleOutsidePress(e);
+
+    private void HandleEscapeKey(KeyEventArgs e)
     {
         if (e.Key != Key.Escape)
         {
@@ -132,7 +161,7 @@ public sealed class OverlayStack
         }
     }
 
-    private void OnWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
+    private void HandleOutsidePress(MouseButtonEventArgs e)
     {
         if (e.OriginalSource is not DependencyObject pressTarget)
         {
@@ -141,9 +170,29 @@ public sealed class OverlayStack
 
         var target = OverlayDismissPolicy.FindOutsidePressTarget(
             _sessions,
-            session => IsDescendant(pressTarget, session.Root));
+            session => IsPressInsideSession(pressTarget, session));
 
         target?.RequestClose(OverlayCloseReason.OutsidePress);
+    }
+
+    // A session's "root" for inside/outside purposes is its main Root plus any input roots
+    // registered via RegisterInputRoot (e.g. a Tooltip/Popover popup living in its own HwndSource).
+    private static bool IsPressInsideSession(DependencyObject pressTarget, OverlaySession session)
+    {
+        if (IsDescendant(pressTarget, session.Root))
+        {
+            return true;
+        }
+
+        foreach (var inputRoot in session.InputRoots)
+        {
+            if (IsDescendant(pressTarget, inputRoot))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void EngageFocusTrap(FrameworkElement root)

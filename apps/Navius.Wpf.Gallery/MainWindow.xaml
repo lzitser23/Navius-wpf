@@ -42,6 +42,17 @@
                         <ListBoxItem Content="Separator" />
                         <ListBoxItem Content="Positioning" />
                         <ListBoxItem Content="Overlay" />
+                        <ListBoxItem Content="Tooltip" />
+                        <ListBoxItem Content="Popover" />
+                        <ListBoxItem Content="PreviewCard" />
+                        <ListBoxItem Content="Dialog" />
+                        <ListBoxItem Content="AlertDialog" />
+                        <ListBoxItem Content="Drawer" />
+                        <ListBoxItem Content="Menu" />
+                        <ListBoxItem Content="ContextMenu" />
+                        <ListBoxItem Content="Menubar" />
+                        <ListBoxItem Content="NavigationMenu" />
+                        <ListBoxItem Content="Toast" />
                     </ListBox>
                 </StackPanel>
             </DockPanel>
