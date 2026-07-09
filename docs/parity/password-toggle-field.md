@@ -103,3 +103,23 @@ Other deltas:
 - The pointer-vs-keyboard focus-return distinction (`MouseEventArgs.Detail`) is not ported; WPF button activation keeps focus on the toggle in both cases, which matches the web's keyboard path and avoids a browser-specific heuristic.
 - Icon and Slot became `ContentControl`s swapping `VisibleContent`/`HiddenContent` (the open question's DataTemplateSelector alternative was unnecessary; Content swap is the native analog of the fragment swap). Slot adds `ContentFactory` (`Func<bool, object>`) mirroring the `Render` render-prop, taking precedence over the two content properties.
 - No cascading-parameter analog exists, so the root pushes state down (from `OnContentChanged` and every `Visible` change) instead of parts pulling a context; this also keeps everything working headlessly, where `FrameworkElement.Loaded` never fires.
+- The contract's `DefaultVisible` (uncontrolled initial revealed state) is not ported as a separate parameter: WPF's `Visible` dependency property already serves both the controlled and uncontrolled roles (a consumer sets it once for an initial value, or two-way binds it for controlled use), so a distinct `DefaultVisible` would be redundant. `Visible` defaults to `false`, matching the contract's `DefaultVisible` default.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification against the C#/XAML at file:line, with the security check as the priority.
+
+Security result (HELD UP, no leak): the masked password never reaches a bindable/gettable dependency property and never reaches the UI Automation surface in the hidden state.
+- Storage: the value lives only inside the native `PART_PasswordBox` (`SecureString`-backed) while hidden and, while revealed, inside `PART_TextBox` (the intended plaintext state). Neither the `Input` nor the `Root` exposes a bindable plaintext DP; `GetPassword()` is an explicit opt-in method (same trust boundary as touching `PasswordBox.Password` directly) and `PasswordChanged` is a routed event carrying no plaintext (NaviusPasswordToggleFieldInput.cs:108-129).
+- On hide, the plaintext is copied back into the `PasswordBox` and the `TextBox` is immediately cleared and collapsed (`ApplyVisibility`, lines 88-100), so nothing lingers in a loaded-but-invisible control.
+- Automation: `NaviusPasswordToggleFieldInput` has no custom peer; the authoritative `PasswordBox` reports `IsPassword() == true` (UIA masks it) and does not surface the plaintext through the Value pattern. Two new regression tests lock this in: `HiddenState_DoesNotLeakPlaintextThroughTheAutomationSurface` and `RevealThenHide_LeavesNoPlaintextInTheAutomationSurface` assert on the actual peer/Value-pattern surface, not merely on DP types.
+
+CONFIRMED (fixed):
+- Doc completeness: the WPF notes did not record that the contract's `DefaultVisible` parameter was dropped. Added a delta line explaining that WPF's `Visible` DP covers both the controlled and uncontrolled roles, so `DefaultVisible` is redundant (default `false` preserved).
+
+Verified true (spot checks):
+- The toggle is a real `Button` (NaviusPasswordToggleFieldToggle.cs:26) and is therefore keyboard-operable via Enter/Space through native `ButtonBase` semantics; its `Click` handler flips `Visible` (line 44-45), covered by `ToggleClick_FlipsVisible_AndRaisesVisibleChanged`. `AutomationProperties.Name` flips "Show password"/"Hide password" (line 41-42), covered by `ToggleAccessibleName_FlipsBetweenShowAndHidePassword`. No `aria-pressed`/toggle-state analog is exposed, matching the deliberate web omission.
+- `aria-controls` is genuinely dropped (no `GetControllerForCore` override anywhere), the form submit/reset auto-hide is genuinely absent (no such code), and the pointer-vs-keyboard focus heuristic is genuinely absent, all as documented.
+- `Themes/PasswordToggleField.xaml` uses only `DynamicResource` for tokens (`Navius.Background`, `Navius.Foreground`, `Navius.Input`, `Navius.MutedForeground`, `Navius.Radius.Control`), all present in both token dictionaries. `Background="Transparent"` on the inner boxes/toggle is a theme-neutral literal, not a token.
+
+PLAUSIBLE (residual, unfixed): none.
