@@ -1,6 +1,11 @@
+using System.Reflection;
 using System.Windows;
 using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
+using System.Windows.Controls;
+using System.Windows.Input;
 using Navius.Wpf.Primitives.Controls;
+using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
@@ -326,5 +331,102 @@ public class NumberFieldTests
         var peer = new NaviusNumberFieldAutomationPeer(field);
 
         Assert.Throws<System.Windows.Automation.ElementNotEnabledException>(() => peer.SetValue(7));
+    }
+
+    // M6 regression: the peer implements IRangeValueProvider, but a UIA client only reaches it
+    // through GetPattern(PatternInterface.RangeValue). Before the fix GetPattern was not overridden,
+    // so FrameworkElementAutomationPeer returned null and the RangeValue pattern (aria-valuenow/
+    // min/max) was invisible to assistive tech despite the peer implementing the interface.
+    [StaFact]
+    public void AutomationPeer_ExposesRangeValuePattern_ViaGetPattern()
+    {
+        var field = new NaviusNumberField { Minimum = 0, Maximum = 10, Value = 4 };
+        var peer = new NaviusNumberFieldAutomationPeer(field);
+
+        var provider = peer.GetPattern(PatternInterface.RangeValue);
+
+        Assert.NotNull(provider);
+        Assert.Same(peer, provider);
+        Assert.Equal(4, ((IRangeValueProvider)provider!).Value);
+    }
+
+    // --- M6 regression: keyboard stepping through the REAL hosted-TextBox key routing ---
+    // These raise genuine tunneling key events on the inner input. With the original
+    // `_input.KeyDown += ...` wiring the TextBox's own class handlers marked Home/End/PageUp/PageDown/
+    // Arrow as Handled during the bubbling phase, so the stepping handler never ran and Value never
+    // moved. Handling PreviewKeyDown (tunnel) fixes it; these tests fail against the old wiring.
+
+    private static readonly System.Windows.Interop.HwndSource KeyTestSource =
+        new(0, 0, 0, 0, 0, "NaviusNumberFieldKeyTests", IntPtr.Zero);
+
+    private static readonly ConstructorInfo KeyEventArgsCtor = typeof(KeyEventArgs).GetConstructor(
+        new[] { typeof(KeyboardDevice), typeof(PresentationSource), typeof(int), typeof(Key) })!;
+
+    private static NaviusNumberField CreateAppliedField(double? min, double? max, double? value)
+    {
+        var scope = new ResourceDictionary();
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        scope.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/NumberField.xaml"),
+        });
+
+        var field = new NaviusNumberField { Minimum = min, Maximum = max, Value = value, Resources = scope };
+        _ = new Window { Content = field };
+        Assert.True(field.ApplyTemplate());
+        return field;
+    }
+
+    private static TextBox InnerInput(NaviusNumberField field) =>
+        (TextBox)typeof(NaviusNumberField)
+            .GetField("_input", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(field)!;
+
+    private static void PressKey(TextBox input, Key key)
+    {
+        var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(
+            new object?[] { Keyboard.PrimaryDevice, KeyTestSource, 0, key });
+        args.RoutedEvent = Keyboard.PreviewKeyDownEvent;
+        input.RaiseEvent(args);
+    }
+
+    [StaFact]
+    public void Keyboard_Home_JumpsToMinimum_ThroughRealRouting()
+    {
+        var field = CreateAppliedField(0, 100, 50);
+
+        PressKey(InnerInput(field), Key.Home);
+
+        Assert.Equal(0, field.Value);
+    }
+
+    [StaFact]
+    public void Keyboard_End_JumpsToMaximum_ThroughRealRouting()
+    {
+        var field = CreateAppliedField(0, 100, 50);
+
+        PressKey(InnerInput(field), Key.End);
+
+        Assert.Equal(100, field.Value);
+    }
+
+    [StaFact]
+    public void Keyboard_ArrowUp_StepsByStep_ThroughRealRouting()
+    {
+        var field = CreateAppliedField(0, 100, 50);
+
+        PressKey(InnerInput(field), Key.Up);
+
+        Assert.Equal(51, field.Value);
+    }
+
+    [StaFact]
+    public void Keyboard_PageDown_StepsByLargeStep_ThroughRealRouting()
+    {
+        var field = CreateAppliedField(0, 100, 50);
+
+        PressKey(InnerInput(field), Key.PageDown);
+
+        Assert.Equal(40, field.Value);
     }
 }

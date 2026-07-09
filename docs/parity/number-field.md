@@ -152,3 +152,46 @@ disabled, matching UIA's read-only-provider convention.
 under Alt; `PageUp`/`PageDown` always step by `LargeStep` unconditionally; `Home`/`End` jump to
 `Minimum`/`Maximum` (no-op when unset). All routed through `StepBy(double)`/`SetToBound(double?)`,
 public methods so they are directly unit-testable without constructing real `KeyEventArgs`.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification against the actual C#/XAML. This family had the two most serious code
+bugs of the four input families; both are fixed.
+
+CONFIRMED bug, FIXED (code + regression tests): **the entire keyboard table was dead.** The step
+handler `OnInputKeyDown` was wired via `_input.KeyDown += ...`, a bubbling event. The hosted
+`TextBox`'s own class handlers mark `Home`/`End`/`PageUp`/`PageDown`/`Arrow` as `Handled` during
+the bubbling KeyDown phase (caret navigation), so the field's handler never ran and `Value` never
+moved. Proven empirically by raising real routed key events on the inner input: pre-fix, all of
+Home/End/ArrowUp/PageUp arrived already `Handled=true` with `Value` frozen at 50. Fixed by
+switching to `_input.PreviewKeyDown += ...` (the tunneling phase fires before the TextBox consumes
+the key, the same reason `NaviusOneTimePasswordField` uses `PreviewKeyDown`); post-fix the same
+real-routing keys step correctly (Home->Min, End->Max, ArrowUp->+Step, PageDown->-LargeStep). New
+`NumberFieldTests` (`Keyboard_*_ThroughRealRouting`) raise genuine `PreviewKeyDown` events on the
+inner input and fail against the old wiring.
+
+CONFIRMED bug, FIXED (code + regression test): **the `IRangeValueProvider` (aria-valuenow/min/max)
+was invisible to assistive tech.** `NaviusNumberFieldAutomationPeer` implements the interface but
+did not override `GetPattern`, so `FrameworkElementAutomationPeer.GetPattern(RangeValue)` returned
+null and no UIA client could reach the range pattern, despite the WPF implementation notes claiming
+it "exposes `Value`/`Minimum`/`Maximum`/`SmallChange`/`LargeChange`". The pre-existing peer tests
+called the provider members directly, never through `GetPattern`, so they missed it. Fixed by
+adding the `GetPattern` override (mirroring the FileUpload peer); new
+`AutomationPeer_ExposesRangeValuePattern_ViaGetPattern` pins it.
+
+CONFIRMED disparity (doc fixed here):
+- The parameter table lists `DefaultValue` (uncontrolled initial value), but no `DefaultValue` DP
+  exists on `NaviusNumberField` (grep-confirmed). It was dropped silently, undocumented, unlike
+  `NaviusMaskedInput` which kept `DefaultValue`. Recorded now: `DefaultValue` is NOT ported for
+  NumberField; a consumer sets `Value` for an initial value.
+- `Min`/`Max` in the web table are the DPs `Minimum`/`Maximum` in WPF (standard WPF naming; no old
+  `Min`/`Max` alias exists). Recorded for clarity.
+
+CONFIRMED correct (no fix needed):
+- No step-mismatch snapping is claimed and none is implemented (`NaviusNumberFieldMath` has no
+  snap-to-step), so there is no disparity there; clamp-to-min/max on set and on bound-shrink is
+  real (`CoerceValue`, `OnBoundChanged`) and pinned. Out-of-range typed text is allowed while
+  typing and clamped on commit (`CommitText` on LostFocus/Enter), matching the "snap back / clamp
+  on commit" contract, not live rejection.
+- Theme: all `DynamicResource`; keys `Navius.Background/Foreground/Input/Ring` and
+  `Navius.Radius.Control` exist in both token dictionaries.

@@ -116,3 +116,39 @@ Contract deltas, recorded per the open questions above:
 - IME/composition input is not specially handled, matching the web source, which also has none.
 - Accessibility: root automation peer reports `Group`; each cell carries `AutomationProperties.Name = "Character N of M"`. `Type="password"` masks the cell glyph with a bullet while the logical character stays in the buffer.
 - The space-sentinel `Densify` encoding is preserved exactly (interior gaps round-trip as spaces through `Value`), keeping slot indices stable.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification against the actual C#/XAML. The buffer mechanics and key routing held
+up (this control correctly uses `PreviewKeyDown`, unlike NumberField); one undocumented parameter
+drop and two minor theme gaps found.
+
+CONFIRMED correct (no fix needed):
+- Keyboard routing: cell handlers are wired on `PreviewKeyDown`/`PreviewTextInput`
+  (`RebuildCells`, lines 266-268), the tunneling phase that fires before the hosted `TextBox`
+  consumes navigation keys. Every keyboard-table row traces to `OnCellPreviewKeyDown`
+  (lines 285-354): Ctrl+Back before plain Back, Delete, Up/Down gated on vertical, Left/Right gated
+  on horizontal, Home->0, End->Length-1, Enter->`SubmitRequested`.
+- Paste distribution: `OneTimePasswordBuffer.Paste` fills from slot 0 regardless of the focused
+  cell and lands focus on `Math.Max(count-1, 0)` (last filled), no off-by-one; pinned by
+  `Paste_ReplacesFromSlotZero_*` and `Paste_TruncatesToLength_*`.
+- Aggregate value: `Value` is the concatenated `ToValue(buffer)` string (space-padded for interior
+  gaps), not per-slot only; `ApplyBufferChange` syncs it via `SetCurrentValue` and edge-triggers
+  `Complete`/`AutoSubmitted` (`!wasComplete && isComplete`), matching the contract.
+- Theme: all `DynamicResource`; keys `Navius.Background/Foreground/Input/Ring` and
+  `Navius.Radius.Control` exist in both token dictionaries.
+
+CONFIRMED disparity (doc fixed here):
+- The parameter table lists `DefaultValue` (uncontrolled initial aggregate value), but no
+  `DefaultValue` DP exists on `NaviusOneTimePasswordField` (grep-confirmed). Dropped silently and
+  undocumented. Recorded now: `DefaultValue` is NOT ported for OTP; a consumer sets `Value`.
+
+PLAUSIBLE (unfixed, low severity, cosmetic parity gaps in `Themes/OneTimePasswordField.xaml`):
+- `PART_Cells` is a hardcoded `Orientation="Horizontal"` StackPanel with no trigger keyed off the
+  control's `Orientation` property, so `Orientation="vertical"` (the default) still renders cells in
+  a horizontal row while Up/Down are the navigation keys. This is parity-faithful to the web
+  contract's `data-orientation` (which drives keys, not necessarily the visual axis) but is a UX
+  oddity worth a product decision.
+- The `data-filled` trigger (line 33) keys on `Text=""` and sets the border to `Navius.Input`, the
+  same brush as the default, so there is no visible filled-vs-empty distinction; the `data-filled`
+  affordance is effectively absent visually.
