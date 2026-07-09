@@ -82,6 +82,9 @@ public partial class MainWindow : Window
             "Charts" => new ChartsPage(),
             "UiDisplay" => new UiDisplayPage(),
             "UiComposite" => new UiCompositePage(),
+            "Toolbar" => new ToolbarPage(),
+            "Rtl" => new RtlPage(),
+            "HighContrast" => new HighContrastPage(),
             _ => null,
         };
     }

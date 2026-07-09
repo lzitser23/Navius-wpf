@@ -15,7 +15,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class TimeInputTests
+public class TimeInputTests : IDisposable
 {
     static TimeInputTests()
     {
@@ -37,13 +37,17 @@ public class TimeInputTests
 
     // Lazily created, not a static field initializer: HwndSource construction requires an STA
     // thread, and this class also has plain [Fact] engine tests that can run on a non-STA thread
-    // (see DateInputTests.TestSource for the full rationale).
-    private static PresentationSource? _testSource;
+    // (see DateInputTests.TestSource for the full rationale). Instance-level (not static) and
+    // disposed via IDisposable.Dispose() so it never outlives the STA thread of the test that
+    // created it.
+    private HwndSource? _testSource;
 
-    private static PresentationSource TestSource =>
+    private PresentationSource TestSource =>
         _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusTimeInputTests", IntPtr.Zero);
 
-    private static void SendKey(UIElement element, Key key)
+    public void Dispose() => _testSource?.Dispose();
+
+    private void SendKey(UIElement element, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;
@@ -269,7 +273,7 @@ public class TimeInputTests
     {
         var input = CreateApplied(i => i.HourCycle = 24);
         // Host in a real HwndSource so NaviusFieldSegment.Focus() actually moves keyboard focus.
-        _ = new HwndSource(new HwndSourceParameters("NaviusTimeInputKeyTests", 100, 100)) { RootVisual = input };
+        using var keySource = new HwndSource(new HwndSourceParameters("NaviusTimeInputKeyTests", 100, 100)) { RootVisual = input };
         var cells = GetCells(input);
         cells[0].Focus();
 

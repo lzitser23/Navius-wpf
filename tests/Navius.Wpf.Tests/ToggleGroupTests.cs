@@ -10,7 +10,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class ToggleGroupTests
+public class ToggleGroupTests : IDisposable
 {
     static ToggleGroupTests()
     {
@@ -33,22 +33,28 @@ public class ToggleGroupTests
     private static readonly ConstructorInfo KeyEventArgsCtor = typeof(KeyEventArgs).GetConstructor(
         new[] { typeof(KeyboardDevice), typeof(PresentationSource), typeof(int), typeof(Key) })!;
 
-    private static readonly PresentationSource TestSource =
-        new HwndSource(0, 0, 0, 0, 0, "NaviusToggleGroupTests", IntPtr.Zero);
+    // Lazily created (not a static field initializer) and disposed per test instance -- this
+    // dummy 0x0 native window must not outlive the STA thread it was created on.
+    private HwndSource? _testSource;
+
+    private PresentationSource TestSource =>
+        _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusToggleGroupTests", IntPtr.Zero);
+
+    public void Dispose() => _testSource?.Dispose();
 
     private static void SimulateClick(ButtonBase button) => OnClickMethod.Invoke(button, null);
 
-    private static KeyEventArgs MakeKeyArgs(Key key)
+    private KeyEventArgs MakeKeyArgs(Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;
         return args;
     }
 
-    private static void SimulateItemKeyDown(NaviusToggleGroupItem item, Key key) =>
+    private void SimulateItemKeyDown(NaviusToggleGroupItem item, Key key) =>
         OnKeyDownMethod.Invoke(item, new object[] { MakeKeyArgs(key) });
 
-    private static void SimulateGroupKeyDown(NaviusToggleGroup group, Key key) =>
+    private void SimulateGroupKeyDown(NaviusToggleGroup group, Key key) =>
         OnPreviewKeyDownMethod.Invoke(group, new object[] { group, MakeKeyArgs(key) });
 
     private static ResourceDictionary CreateThemedScope()

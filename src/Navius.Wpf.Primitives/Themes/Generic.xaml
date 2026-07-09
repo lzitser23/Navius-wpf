@@ -59,6 +59,7 @@
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/AccessibleIcon.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Avatar.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/ColorPicker.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Toolbar.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

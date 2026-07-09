@@ -159,7 +159,7 @@ public class TagInputEngineTests
 }
 
 /// <summary>Control-level wiring: commit paths, chip navigation state, events, and the UIA peer.</summary>
-public class TagInputTests
+public class TagInputTests : IDisposable
 {
     static TagInputTests()
     {
@@ -462,10 +462,16 @@ public class TagInputTests
         Assert.Throws<InvalidOperationException>(() => provider.SetValue("x"));
     }
 
-    private static readonly PresentationSource TestSource =
-        new HwndSource(0, 0, 0, 0, 0, "NaviusTagInputTests", IntPtr.Zero);
+    // Lazily created (not a static field initializer) and disposed per test instance -- this
+    // dummy 0x0 native window must not outlive the STA thread it was created on.
+    private HwndSource? _testSource;
 
-    private static void RaiseKey(UIElement target, Key key) =>
+    private PresentationSource TestSource =>
+        _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusTagInputTests", IntPtr.Zero);
+
+    public void Dispose() => _testSource?.Dispose();
+
+    private void RaiseKey(UIElement target, Key key) =>
         target.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, TestSource, 0, key)
         {
             RoutedEvent = Keyboard.PreviewKeyDownEvent,

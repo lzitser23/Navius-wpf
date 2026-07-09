@@ -5,7 +5,7 @@
   <!--
     Per-Monitor-V2 DPI awareness: without this, WPF falls back to system/per-monitor(v1) DPI
     handling, and moving the window across monitors with different scale factors (or a live DPI
-    change) does not repaint crisply -- NaviusAnchoredPopup's multi-monitor placement fix (see
+    change) does not repaint crisply. NaviusAnchoredPopup's multi-monitor placement fix (see
     Positioning/MonitorWorkArea.cs and docs/adr/0006-rtl-dpi-hardening.md) assumes accurate
     per-monitor DPI at the point it queries VisualTreeHelper.GetDpi.
   -->

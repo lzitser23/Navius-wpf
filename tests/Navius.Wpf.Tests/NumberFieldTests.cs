@@ -9,7 +9,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class NumberFieldTests
+public class NumberFieldTests : IDisposable
 {
     static NumberFieldTests()
     {
@@ -356,8 +356,18 @@ public class NumberFieldTests
     // Arrow as Handled during the bubbling phase, so the stepping handler never ran and Value never
     // moved. Handling PreviewKeyDown (tunnel) fixes it; these tests fail against the old wiring.
 
-    private static readonly System.Windows.Interop.HwndSource KeyTestSource =
-        new(0, 0, 0, 0, 0, "NaviusNumberFieldKeyTests", IntPtr.Zero);
+    // Lazily created (not a static field initializer) and disposed per test instance -- this
+    // dummy 0x0 native window must not outlive the STA thread it was created on.
+    private System.Windows.Interop.HwndSource? _keyTestSource;
+
+    private PresentationSource KeyTestSource =>
+        _keyTestSource ??= new System.Windows.Interop.HwndSource(0, 0, 0, 0, 0, "NaviusNumberFieldKeyTests", IntPtr.Zero);
+
+    public void Dispose()
+    {
+        _keyTestSource?.Dispose();
+        TestCleanup.PumpDispatcher();
+    }
 
     private static readonly ConstructorInfo KeyEventArgsCtor = typeof(KeyEventArgs).GetConstructor(
         new[] { typeof(KeyboardDevice), typeof(PresentationSource), typeof(int), typeof(Key) })!;
@@ -382,7 +392,7 @@ public class NumberFieldTests
             .GetField("_input", BindingFlags.NonPublic | BindingFlags.Instance)!
             .GetValue(field)!;
 
-    private static void PressKey(TextBox input, Key key)
+    private void PressKey(TextBox input, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(
             new object?[] { Keyboard.PrimaryDevice, KeyTestSource, 0, key });

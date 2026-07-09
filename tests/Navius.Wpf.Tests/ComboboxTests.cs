@@ -101,7 +101,7 @@ public class ComboboxEngineTests
     }
 }
 
-public class ComboboxTests
+public class ComboboxTests : IDisposable
 {
     static ComboboxTests()
     {
@@ -132,11 +132,21 @@ public class ComboboxTests
     private static readonly ConstructorInfo KeyEventArgsCtor = typeof(KeyEventArgs).GetConstructor(
         new[] { typeof(KeyboardDevice), typeof(PresentationSource), typeof(int), typeof(Key) })!;
 
-    private static readonly PresentationSource TestSource =
-        new HwndSource(0, 0, 0, 0, 0, "NaviusComboboxTests", IntPtr.Zero);
+    // Lazily created (not a static field initializer) and disposed per test instance -- this
+    // dummy 0x0 native window must not outlive the STA thread it was created on.
+    private HwndSource? _testSource;
+
+    private PresentationSource TestSource =>
+        _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusComboboxTests", IntPtr.Zero);
+
+    public void Dispose()
+    {
+        _testSource?.Dispose();
+        TestCleanup.PumpDispatcher();
+    }
 
     /// <summary>Drives the combobox's single private key handler directly with a real KeyEventArgs.</summary>
-    private static void SimulateKey(NaviusComboboxBase combobox, Key key)
+    private void SimulateKey(NaviusComboboxBase combobox, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;
@@ -205,11 +215,18 @@ public class ComboboxTests
     {
         var (combobox, _) = CreateApplied();
 
-        combobox.Query = "ap";
+        try
+        {
+            combobox.Query = "ap";
 
-        Assert.True(combobox.IsOpen);
-        Assert.Equal(new[] { "Apple", "Apricot", "Pineapple" }, combobox.FilteredRows!.Select(r => r.Text));
-        Assert.Equal(0, combobox.HighlightedIndex); // typing auto-highlights the first match
+            Assert.True(combobox.IsOpen);
+            Assert.Equal(new[] { "Apple", "Apricot", "Pineapple" }, combobox.FilteredRows!.Select(r => r.Text));
+            Assert.Equal(0, combobox.HighlightedIndex); // typing auto-highlights the first match
+        }
+        finally
+        {
+            combobox.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -218,17 +235,24 @@ public class ComboboxTests
         var (combobox, _) = CreateApplied();
         combobox.IsOpen = true; // all rows shown
 
-        SimulateKey(combobox, Key.Down); // -1 -> 0
-        Assert.Equal(0, combobox.HighlightedIndex);
+        try
+        {
+            SimulateKey(combobox, Key.Down); // -1 -> 0
+            Assert.Equal(0, combobox.HighlightedIndex);
 
-        SimulateKey(combobox, Key.Up); // 0 -> clamps at 0
-        Assert.Equal(0, combobox.HighlightedIndex);
+            SimulateKey(combobox, Key.Up); // 0 -> clamps at 0
+            Assert.Equal(0, combobox.HighlightedIndex);
 
-        SimulateKey(combobox, Key.End); // -> last
-        Assert.Equal(Fruits.Length - 1, combobox.HighlightedIndex);
+            SimulateKey(combobox, Key.End); // -> last
+            Assert.Equal(Fruits.Length - 1, combobox.HighlightedIndex);
 
-        SimulateKey(combobox, Key.Down); // clamps at last
-        Assert.Equal(Fruits.Length - 1, combobox.HighlightedIndex);
+            SimulateKey(combobox, Key.Down); // clamps at last
+            Assert.Equal(Fruits.Length - 1, combobox.HighlightedIndex);
+        }
+        finally
+        {
+            combobox.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -269,13 +293,20 @@ public class ComboboxTests
         var raised = 0;
         combobox.ValuesChanged += (_, _) => raised++;
 
-        combobox.Query = "ba"; // Banana
-        SimulateKey(combobox, Key.Enter);
+        try
+        {
+            combobox.Query = "ba"; // Banana
+            SimulateKey(combobox, Key.Enter);
 
-        Assert.Contains("Banana", combobox.Values);
-        Assert.Equal(string.Empty, combobox.Query); // query cleared after a multi commit
-        Assert.True(combobox.IsOpen);               // popup stays open so chips can accumulate
-        Assert.Equal(1, raised);
+            Assert.Contains("Banana", combobox.Values);
+            Assert.Equal(string.Empty, combobox.Query); // query cleared after a multi commit
+            Assert.True(combobox.IsOpen);               // popup stays open so chips can accumulate
+            Assert.Equal(1, raised);
+        }
+        finally
+        {
+            combobox.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -294,11 +325,19 @@ public class ComboboxTests
     {
         var (combobox, _) = CreateApplied(multiple: true);
         combobox.Values = new[] { "Apple", "Cherry" };
-        combobox.Query = "z"; // non-empty filter: Backspace should edit text, not chips
 
-        SimulateKey(combobox, Key.Back);
+        try
+        {
+            combobox.Query = "z"; // non-empty filter: Backspace should edit text, not chips
 
-        Assert.Equal(new[] { "Apple", "Cherry" }, combobox.Values);
+            SimulateKey(combobox, Key.Back);
+
+            Assert.Equal(new[] { "Apple", "Cherry" }, combobox.Values);
+        }
+        finally
+        {
+            combobox.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -307,12 +346,19 @@ public class ComboboxTests
         var (combobox, _) = CreateApplied(multiple: true);
         combobox.Values = new[] { "Cherry", "Apple", "Mango" };
 
-        // Narrow the displayed rows so the visible ordering does not match the Values ordering.
-        combobox.Query = "a";
+        try
+        {
+            // Narrow the displayed rows so the visible ordering does not match the Values ordering.
+            combobox.Query = "a";
 
-        NaviusComboboxBase.RemoveChipCommand.Execute("Apple", combobox);
+            NaviusComboboxBase.RemoveChipCommand.Execute("Apple", combobox);
 
-        Assert.Equal(new[] { "Cherry", "Mango" }, combobox.Values);
+            Assert.Equal(new[] { "Cherry", "Mango" }, combobox.Values);
+        }
+        finally
+        {
+            combobox.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -338,7 +384,14 @@ public class ComboboxTests
         Assert.Equal(AutomationControlType.ComboBox, peer!.GetAutomationControlType());
 
         var expandCollapse = Assert.IsAssignableFrom<IExpandCollapseProvider>(peer);
-        combobox.IsOpen = true;
-        Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
+        try
+        {
+            combobox.IsOpen = true;
+            Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
+        }
+        finally
+        {
+            combobox.IsOpen = false;
+        }
     }
 }

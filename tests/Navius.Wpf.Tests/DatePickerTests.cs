@@ -12,7 +12,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class DatePickerTests
+public class DatePickerTests : IDisposable
 {
     static DatePickerTests()
     {
@@ -42,11 +42,21 @@ public class DatePickerTests
         new[] { typeof(KeyboardDevice), typeof(PresentationSource), typeof(int), typeof(Key) })!;
 
     // KeyEventArgs requires a non-null PresentationSource; a hidden native window (never shown,
-    // style 0 = no WS_VISIBLE bit) is the lightest real one available headlessly.
-    private static readonly PresentationSource TestSource =
-        new HwndSource(0, 0, 0, 0, 0, "NaviusDatePickerTests", IntPtr.Zero);
+    // style 0 = no WS_VISIBLE bit) is the lightest real one available headlessly. Lazily created
+    // (not a static field initializer) and disposed per test instance -- it must not outlive the
+    // STA thread it was created on.
+    private HwndSource? _testSource;
 
-    private static void SimulateKey(NaviusDatePickerBase picker, Key key)
+    private PresentationSource TestSource =>
+        _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusDatePickerTests", IntPtr.Zero);
+
+    public void Dispose()
+    {
+        _testSource?.Dispose();
+        TestCleanup.PumpDispatcher();
+    }
+
+    private void SimulateKey(NaviusDatePickerBase picker, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;
@@ -89,9 +99,16 @@ public class DatePickerTests
     {
         var picker = new NaviusDatePicker();
 
-        SimulateKey(picker, key);
+        try
+        {
+            SimulateKey(picker, key);
 
-        Assert.True(picker.IsOpen);
+            Assert.True(picker.IsOpen);
+        }
+        finally
+        {
+            picker.IsOpen = false;
+        }
     }
 
     [StaFact]

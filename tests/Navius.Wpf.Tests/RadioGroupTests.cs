@@ -11,7 +11,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class RadioGroupTests
+public class RadioGroupTests : IDisposable
 {
     static RadioGroupTests()
     {
@@ -33,8 +33,14 @@ public class RadioGroupTests
 
     // KeyEventArgs requires a non-null PresentationSource; a hidden native window (never
     // shown, style = 0 means no WS_VISIBLE bit) is the lightest real one available headlessly.
-    private static readonly PresentationSource TestSource =
-        new HwndSource(0, 0, 0, 0, 0, "NaviusRadioGroupTests", IntPtr.Zero);
+    // Lazily created (not a static field initializer) and disposed per test instance -- it must
+    // not outlive the STA thread it was created on.
+    private HwndSource? _testSource;
+
+    private PresentationSource TestSource =>
+        _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusRadioGroupTests", IntPtr.Zero);
+
+    public void Dispose() => _testSource?.Dispose();
 
     /// <summary>
     /// Invokes the protected, most-derived OnClick() (virtual dispatch reaches
@@ -43,7 +49,7 @@ public class RadioGroupTests
     private static void SimulateClick(ButtonBase button) => OnClickMethod.Invoke(button, null);
 
     /// <summary>Drives the group's private PreviewKeyDown handler directly with a real KeyEventArgs.</summary>
-    private static void SimulateKey(NaviusRadioGroup group, Key key)
+    private void SimulateKey(NaviusRadioGroup group, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;

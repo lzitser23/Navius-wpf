@@ -4,7 +4,7 @@
              AutomationProperties.AutomationId="HighContrastDemo"
              Background="{DynamicResource Navius.Background}">
     <!--
-        Self-contained, no navigation wiring (MainWindow is orchestrator-owned this wave -- see the
+        Self-contained, no navigation wiring (MainWindow is orchestrator-owned this wave; see the
         task brief). Demonstrates NaviusTheme.HighContrast: a button applies it (and syncs live to
         SystemParameters.HighContrast for the rest of this run), a second button restores Light, and
         a small set of controls below shows the mapped tokens in use. See ADR-0007.
@@ -13,7 +13,7 @@
         <StackPanel MaxWidth="640">
             <TextBlock Text="High contrast" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Navius.Foreground}" />
             <TextBlock Margin="0,4,0,24" MaxWidth="560"
-                       Text="Every Navius.* brush remapped to a SystemColors *ColorKey via DynamicResource, so it tracks the OS palette live. A native-Windows obligation the web port never had -- see docs/adr/0007-high-contrast.md."
+                       Text="Every Navius.* brush remapped to a SystemColors *ColorKey via DynamicResource, so it tracks the OS palette live. A native-Windows obligation the web port never had; see docs/adr/0007-high-contrast.md."
                        Foreground="{DynamicResource Navius.MutedForeground}"
                        TextWrapping="Wrap" />
 

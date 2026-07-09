@@ -89,6 +89,9 @@
                         <ListBoxItem Content="Charts" />
                         <ListBoxItem Content="UiDisplay" />
                         <ListBoxItem Content="UiComposite" />
+                        <ListBoxItem Content="Toolbar" />
+                        <ListBoxItem Content="Rtl" />
+                        <ListBoxItem Content="HighContrast" />
                     </ListBox>
                 </StackPanel>
             </DockPanel>

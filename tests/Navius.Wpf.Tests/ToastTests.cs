@@ -498,7 +498,7 @@ public class ToastTests
         var raised = false;
         toast.CloseRequested += (_, _) => raised = true;
 
-        var source = new HwndSource(new HwndSourceParameters("NaviusToastKeyTests", 100, 100)) { RootVisual = toast };
+        using var source = new HwndSource(new HwndSourceParameters("NaviusToastKeyTests", 100, 100)) { RootVisual = toast };
         toast.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, Key.Escape)
         {
             RoutedEvent = Keyboard.KeyDownEvent,

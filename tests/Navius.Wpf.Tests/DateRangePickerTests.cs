@@ -13,7 +13,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class DateRangePickerTests
+public class DateRangePickerTests : IDisposable
 {
     static DateRangePickerTests()
     {
@@ -43,15 +43,26 @@ public class DateRangePickerTests
         new[] { typeof(KeyboardDevice), typeof(PresentationSource), typeof(int), typeof(Key) })!;
 
     // KeyEventArgs requires a non-null PresentationSource; a hidden native window (never shown,
-    // style 0 = no WS_VISIBLE bit) is the lightest real one available headlessly.
-    private static readonly PresentationSource TestSource =
-        new HwndSource(0, 0, 0, 0, 0, "NaviusDateRangePickerTests", IntPtr.Zero);
+    // style 0 = no WS_VISIBLE bit) is the lightest real one available headlessly. Lazily created
+    // (not a static field initializer) and disposed per test instance -- it must not outlive the
+    // STA thread it was created on, and this class also has plain [Fact] engine tests that can
+    // run on a non-STA thread.
+    private HwndSource? _testSource;
+
+    private PresentationSource TestSource =>
+        _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusDateRangePickerTests", IntPtr.Zero);
+
+    public void Dispose()
+    {
+        _testSource?.Dispose();
+        TestCleanup.PumpDispatcher();
+    }
 
     private static readonly DateTime Jan5 = new(2026, 1, 5);
     private static readonly DateTime Jan9 = new(2026, 1, 9);
     private static readonly DateTime Jan20 = new(2026, 1, 20);
 
-    private static void SimulateKey(NaviusDateRangePicker picker, Key key)
+    private void SimulateKey(NaviusDateRangePicker picker, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;
@@ -140,11 +151,18 @@ public class DateRangePickerTests
         picker.ValueChanged += (_, _) => raised++;
         picker.IsOpen = true;
 
-        CommitPick(picker, Jan5);
+        try
+        {
+            CommitPick(picker, Jan5);
 
-        Assert.Equal(new NaviusDateRange(Jan5, null), picker.Value);
-        Assert.True(picker.IsOpen); // waiting for the second pick
-        Assert.Equal(1, raised);
+            Assert.Equal(new NaviusDateRange(Jan5, null), picker.Value);
+            Assert.True(picker.IsOpen); // waiting for the second pick
+            Assert.Equal(1, raised);
+        }
+        finally
+        {
+            picker.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -186,9 +204,16 @@ public class DateRangePickerTests
     {
         var picker = new NaviusDateRangePicker();
 
-        SimulateKey(picker, key);
+        try
+        {
+            SimulateKey(picker, key);
 
-        Assert.True(picker.IsOpen);
+            Assert.True(picker.IsOpen);
+        }
+        finally
+        {
+            picker.IsOpen = false;
+        }
     }
 
     [StaFact]

@@ -83,7 +83,12 @@ public static class ThemeManager
     /// Applies/restores through the normal <see cref="Apply(NaviusTheme)"/> path, so
     /// <see cref="ThemeChanged"/> still fires for these transitions.
     /// </summary>
-    public static void SyncSystemHighContrastState(bool systemHighContrastEnabled)
+    public static void SyncSystemHighContrastState(bool systemHighContrastEnabled) =>
+        SyncSystemHighContrastState(systemHighContrastEnabled, null);
+
+    /// <summary>Scope overload: tests pass an isolated dictionary so the sync logic can be
+    /// exercised without mutating Application.Current.Resources (global test-state hygiene).</summary>
+    public static void SyncSystemHighContrastState(bool systemHighContrastEnabled, ResourceDictionary? scope)
     {
         if (systemHighContrastEnabled)
         {
@@ -95,13 +100,25 @@ public static class ThemeManager
             _systemHighContrastActive = true;
             if (Current != NaviusTheme.HighContrast)
             {
-                Apply(NaviusTheme.HighContrast);
+                ApplyToScopeOrApp(NaviusTheme.HighContrast, scope);
             }
         }
         else if (_systemHighContrastActive)
         {
             _systemHighContrastActive = false;
-            Apply(_themeBeforeSystemHighContrast);
+            ApplyToScopeOrApp(_themeBeforeSystemHighContrast, scope);
+        }
+    }
+
+    private static void ApplyToScopeOrApp(NaviusTheme theme, ResourceDictionary? scope)
+    {
+        if (scope is null)
+        {
+            Apply(theme);
+        }
+        else
+        {
+            Apply(theme, scope);
         }
     }
 }

@@ -14,7 +14,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class DateInputTests
+public class DateInputTests : IDisposable
 {
     static DateInputTests()
     {
@@ -42,13 +42,16 @@ public class DateInputTests
     // SelectTests.TestSource). Lazily created (not a static field initializer) because HwndSource
     // construction requires an STA thread: this class also has plain [Fact] engine tests that
     // xunit can run on a non-STA thread pool thread, and a static field initializer would run on
-    // whichever thread first touches the type.
-    private static PresentationSource? _testSource;
+    // whichever thread first touches the type. Instance-level (not static) and disposed via
+    // IDisposable.Dispose() so it never outlives the STA thread of the test that created it.
+    private HwndSource? _testSource;
 
-    private static PresentationSource TestSource =>
+    private PresentationSource TestSource =>
         _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusDateInputTests", IntPtr.Zero);
 
-    private static void SendKey(UIElement element, Key key)
+    public void Dispose() => _testSource?.Dispose();
+
+    private void SendKey(UIElement element, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;

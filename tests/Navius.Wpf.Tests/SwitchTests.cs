@@ -7,6 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Navius.Wpf.Primitives.Controls;
 
 namespace Navius.Wpf.Tests;
@@ -53,8 +54,23 @@ public class SwitchTests
     {
         var toggle = new NaviusSwitch();
         source = new HwndSource(new HwndSourceParameters("NaviusSwitchKeyTests", 100, 100)) { RootVisual = toggle };
-        toggle.Focus();
+        FocusAndPump(toggle);
         return toggle;
+    }
+
+    /// <summary>
+    /// Focuses <paramref name="element"/> and pumps the dispatcher at Background priority before
+    /// asserting the focus actually landed. Focus() on a freshly-created HwndSource does not
+    /// always take effect synchronously; without pumping and verifying here, a synthetic
+    /// RaiseKey call immediately afterward can race the real focus change and be silently
+    /// dropped, producing an intermittent failure a small percentage of runs (same pattern as
+    /// ToolbarTests).
+    /// </summary>
+    private static void FocusAndPump(UIElement element)
+    {
+        element.Focus();
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
+        Assert.Same(element, Keyboard.FocusedElement);
     }
 
     private static void RaiseKey(UIElement target, Key key, RoutedEvent routedEvent, PresentationSource source) =>
@@ -87,6 +103,7 @@ public class SwitchTests
     public void SpaceKey_TogglesCheckedState()
     {
         var toggle = CreateHostedSwitch(out var source);
+        using var _ = source;
 
         // ButtonBase (ClickMode.Release) presses on KeyDown and clicks on KeyUp.
         RaiseKey(toggle, Key.Space, Keyboard.KeyDownEvent, source);
@@ -99,6 +116,7 @@ public class SwitchTests
     public void EnterKey_TogglesCheckedState()
     {
         var toggle = CreateHostedSwitch(out var source);
+        using var _ = source;
 
         RaiseKey(toggle, Key.Enter, Keyboard.KeyDownEvent, source);
         Assert.True(toggle.IsChecked);
@@ -111,6 +129,7 @@ public class SwitchTests
     public void EnterKey_BlockedWhenReadOnly()
     {
         var toggle = CreateHostedSwitch(out var source);
+        using var _ = source;
         toggle.ReadOnly = true;
 
         RaiseKey(toggle, Key.Enter, Keyboard.KeyDownEvent, source);

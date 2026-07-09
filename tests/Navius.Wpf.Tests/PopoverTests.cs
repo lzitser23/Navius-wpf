@@ -10,8 +10,12 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class PopoverTests
+public class PopoverTests : IDisposable
 {
+    // Flushes any Dispatcher-deferred native-window teardown left by a popup this test closed
+    // (see TestCleanup.PumpDispatcher) before this test's dedicated STA thread exits.
+    public void Dispose() => TestCleanup.PumpDispatcher();
+
     static PopoverTests()
     {
         // pack://application URIs only resolve once an Application exists in the process.
@@ -103,13 +107,20 @@ public class PopoverTests
     {
         var (popover, window) = CreateAppliedPopover();
 
-        popover.IsOpen = true;
+        try
+        {
+            popover.IsOpen = true;
 
-        var session = OverlayStack.GetFor(window).Topmost;
-        Assert.NotNull(session);
-        Assert.True(session!.Options.CloseOnEscape);
-        Assert.True(session.Options.CloseOnOutsideClick);
-        Assert.True(session.Options.TrapFocus);
+            var session = OverlayStack.GetFor(window).Topmost;
+            Assert.NotNull(session);
+            Assert.True(session!.Options.CloseOnEscape);
+            Assert.True(session.Options.CloseOnOutsideClick);
+            Assert.True(session.Options.TrapFocus);
+        }
+        finally
+        {
+            popover.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -117,11 +128,18 @@ public class PopoverTests
     {
         var (popover, window) = CreateAppliedPopover();
 
-        popover.IsOpen = true;
+        try
+        {
+            popover.IsOpen = true;
 
-        var session = OverlayStack.GetFor(window).Topmost!;
-        var popupContent = GetPopupContentPart(popover);
-        Assert.Contains(popupContent, session.InputRoots);
+            var session = OverlayStack.GetFor(window).Topmost!;
+            var popupContent = GetPopupContentPart(popover);
+            Assert.Contains(popupContent, session.InputRoots);
+        }
+        finally
+        {
+            popover.IsOpen = false;
+        }
     }
 
     [StaFact]

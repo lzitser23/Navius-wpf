@@ -108,6 +108,7 @@ public class ToggleTests
     public void SpaceKey_ActivatesToggle()
     {
         var toggle = CreateFocusedToggle(out var source);
+        using var _ = source;
 
         // ButtonBase (ClickMode.Release) presses on KeyDown and clicks on KeyUp.
         RaiseKey(toggle, Key.Space, Keyboard.KeyDownEvent, source);
@@ -120,6 +121,7 @@ public class ToggleTests
     public void EnterKey_ActivatesToggle()
     {
         var toggle = CreateFocusedToggle(out var source);
+        using var _ = source;
 
         RaiseKey(toggle, Key.Enter, Keyboard.KeyDownEvent, source);
 
@@ -130,6 +132,7 @@ public class ToggleTests
     public void NonActivationKey_DoesNotToggle()
     {
         var toggle = CreateFocusedToggle(out var source);
+        using var _ = source;
 
         RaiseKey(toggle, Key.A, Keyboard.KeyDownEvent, source);
         RaiseKey(toggle, Key.A, Keyboard.KeyUpEvent, source);

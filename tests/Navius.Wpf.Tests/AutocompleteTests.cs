@@ -14,7 +14,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class AutocompleteTests
+public class AutocompleteTests : IDisposable
 {
     // Deliberately NOT the precedent static-ctor pattern: this class mixes pure-engine [Fact]
     // tests, which xunit may run on an MTA worker thread, with [StaFact] WPF tests. A static ctor
@@ -51,14 +51,22 @@ public class AutocompleteTests
 
     // KeyEventArgs requires a non-null PresentationSource; a hidden native window (never shown) is
     // the lightest real one available headlessly (same trick as RadioGroupTests). Lazy so it is
-    // only created on an STA thread (see EnsureApplication's comment).
-    private static PresentationSource? _testSource;
+    // only created on an STA thread (see EnsureApplication's comment). Instance-level (not
+    // static) and disposed via IDisposable.Dispose() so it never outlives the STA thread of the
+    // test that created it.
+    private HwndSource? _testSource;
 
-    private static PresentationSource TestSource =>
+    private PresentationSource TestSource =>
         _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusAutocompleteTests", IntPtr.Zero);
 
+    public void Dispose()
+    {
+        _testSource?.Dispose();
+        TestCleanup.PumpDispatcher();
+    }
+
     /// <summary>Drives the input's private PreviewKeyDown handler directly with a real KeyEventArgs.</summary>
-    private static KeyEventArgs SendKey(NaviusAutocompleteBase control, Key key)
+    private KeyEventArgs SendKey(NaviusAutocompleteBase control, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;
@@ -237,11 +245,18 @@ public class AutocompleteTests
     {
         var control = CreateWithItems();
 
-        var args = SendKey(control, Key.Down);
+        try
+        {
+            var args = SendKey(control, Key.Down);
 
-        Assert.True(control.IsOpen);
-        Assert.Equal(-1, control.HighlightedIndex);
-        Assert.True(args.Handled);
+            Assert.True(control.IsOpen);
+            Assert.Equal(-1, control.HighlightedIndex);
+            Assert.True(args.Handled);
+        }
+        finally
+        {
+            control.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -250,11 +265,18 @@ public class AutocompleteTests
         var control = CreateWithItems();
         control.IsOpen = true;
 
-        SendKey(control, Key.Down);
-        Assert.Equal(0, control.HighlightedIndex);
+        try
+        {
+            SendKey(control, Key.Down);
+            Assert.Equal(0, control.HighlightedIndex);
 
-        SendKey(control, Key.Down);
-        Assert.Equal(1, control.HighlightedIndex);
+            SendKey(control, Key.Down);
+            Assert.Equal(1, control.HighlightedIndex);
+        }
+        finally
+        {
+            control.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -262,10 +284,17 @@ public class AutocompleteTests
     {
         var control = CreateWithItems();
 
-        SendKey(control, Key.Up);
+        try
+        {
+            SendKey(control, Key.Up);
 
-        Assert.True(control.IsOpen);
-        Assert.Equal(Fruits.Length - 1, control.HighlightedIndex);
+            Assert.True(control.IsOpen);
+            Assert.Equal(Fruits.Length - 1, control.HighlightedIndex);
+        }
+        finally
+        {
+            control.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -275,9 +304,16 @@ public class AutocompleteTests
         control.IsOpen = true;
         control.HighlightedIndex = Fruits.Length - 1;
 
-        SendKey(control, Key.Down);
+        try
+        {
+            SendKey(control, Key.Down);
 
-        Assert.Equal(Fruits.Length - 1, control.HighlightedIndex);
+            Assert.Equal(Fruits.Length - 1, control.HighlightedIndex);
+        }
+        finally
+        {
+            control.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -329,11 +365,18 @@ public class AutocompleteTests
         var control = CreateWithItems();
         control.IsOpen = true;
 
-        SendKey(control, Key.End);
-        Assert.Equal(Fruits.Length - 1, control.HighlightedIndex);
+        try
+        {
+            SendKey(control, Key.End);
+            Assert.Equal(Fruits.Length - 1, control.HighlightedIndex);
 
-        SendKey(control, Key.Home);
-        Assert.Equal(0, control.HighlightedIndex);
+            SendKey(control, Key.Home);
+            Assert.Equal(0, control.HighlightedIndex);
+        }
+        finally
+        {
+            control.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -342,11 +385,18 @@ public class AutocompleteTests
         var control = CreateWithItems();
         control.IsOpen = true;
 
-        SendKey(control, Key.PageDown);
-        Assert.Equal(Fruits.Length - 1, control.HighlightedIndex);
+        try
+        {
+            SendKey(control, Key.PageDown);
+            Assert.Equal(Fruits.Length - 1, control.HighlightedIndex);
 
-        SendKey(control, Key.PageUp);
-        Assert.Equal(0, control.HighlightedIndex);
+            SendKey(control, Key.PageUp);
+            Assert.Equal(0, control.HighlightedIndex);
+        }
+        finally
+        {
+            control.IsOpen = false;
+        }
     }
 
     // ----- Virtual focus (structural guarantee) + template + overlay wiring -----
@@ -383,15 +433,22 @@ public class AutocompleteTests
         var window = new Window { Content = control };
         control.ApplyTemplate();
 
-        control.IsOpen = true;
+        try
+        {
+            control.IsOpen = true;
 
-        var session = OverlayStack.GetFor(window).Topmost;
-        Assert.NotNull(session);
-        Assert.True(session!.Options.CloseOnEscape);
-        Assert.True(session.Options.CloseOnOutsideClick);
-        // Virtual focus: the overlay must NOT trap/move focus into the popup.
-        Assert.False(session.Options.TrapFocus);
-        Assert.False(session.Options.RestoreFocus);
+            var session = OverlayStack.GetFor(window).Topmost;
+            Assert.NotNull(session);
+            Assert.True(session!.Options.CloseOnEscape);
+            Assert.True(session.Options.CloseOnOutsideClick);
+            // Virtual focus: the overlay must NOT trap/move focus into the popup.
+            Assert.False(session.Options.TrapFocus);
+            Assert.False(session.Options.RestoreFocus);
+        }
+        finally
+        {
+            control.IsOpen = false;
+        }
     }
 
     [StaFact]

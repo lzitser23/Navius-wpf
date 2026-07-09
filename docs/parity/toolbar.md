@@ -131,3 +131,100 @@ Verified with a repo-wide search for every "toolbar" file naming variant (`find 
 This is not a partial/plausible gap, it is total: the family described above (root + button + link + separator + toggle-group + toggle-item, 5 parts) does not exist in Navius.Wpf in any form. Per audit instructions this gap is reported only, not built, in this pass.
 
 Residual/follow-up: when this family is eventually built, the shared-roving-domain design with `ToggleGroup` (open question 2 above) and the `Loop`-wrap `PreviewKeyDown` pattern already implemented for `NaviusToggleGroup` (see `docs/parity/toggle-group.md`, "WPF implementation notes") should be reused rather than re-derived, since `ToggleGroup`'s WPF port already answered the open questions this doc raises about roving focus and deselect-to-empty behavior.
+
+Resolution: built 2026-07-09, closing this gap. See "WPF implementation notes" below.
+
+## WPF implementation notes
+
+Built as `src/Navius.Wpf.Primitives/Controls/Toolbar/` (six files: `NaviusToolbar.cs`,
+`NaviusToolbarAutomationPeer.cs`, `NaviusToolbarButton.cs`, `NaviusToolbarLink.cs`,
+`NaviusToolbarToggleGroup.cs`, `NaviusToolbarToggleItem.cs`, plus the `IToolbarItem` marker
+interface) with `src/Navius.Wpf.Primitives/Themes/Toolbar.xaml`, tests in
+`tests/Navius.Wpf.Tests/ToolbarTests.cs` (28 `[StaFact]` tests), and a self-contained gallery page
+at `apps/Navius.Wpf.Gallery/Pages/ToolbarPage.xaml(.cs)`.
+
+**Open question 3 (AutomationPeer) resolved**: a custom `NaviusToolbarAutomationPeer :
+FrameworkElementAutomationPeer` is used, not the native `ToolBarAutomationPeer`. The native peer
+belongs to a control with overflow-menu semantics this component does not have; borrowing it
+would misreport capabilities the control doesn't provide. The custom peer reports
+`AutomationControlType.ToolBar` and an orientation-aware `GetOrientationCore()`.
+
+**Open question 1 (avoid native `ToolBar`) resolved**: confirmed, `NaviusToolbar` is a plain
+lookless `ContentControl` (same shape as `NaviusRadioGroup`/`NaviusToggleGroup`), not a `ToolBar`
+subclass, so no `ToolBarTray`/overflow behavior leaks in.
+
+**Open question 2 (shared roving domain with `ToggleGroup`) resolved, with a deviation from the
+doc's own suggestion**: the doc invited reusing "whatever base the standalone
+`ToggleGroup`/`ToggleGroupItem` WPF port produces" for `NaviusToolbarToggleGroup`. It does NOT
+subclass `NaviusToggleGroup`: that class's private `UpdateRovingTabStops` unconditionally owns
+`IsTabStop` assignment for its own items (even with `RovingFocus=false`, every enabled item
+becomes its own independent Tab stop), which would fight `NaviusToolbar` owning the single shared
+roving domain across mixed control types. Instead:
+
+- The single shared Tab stop across heterogeneous item types (button, link, toggle item) is
+  implemented via a marker interface, `IToolbarItem`, implemented by `NaviusToolbarButton`,
+  `NaviusToolbarLink`, and `NaviusToolbarToggleItem` (not by `NaviusToolbarToggleGroup` itself,
+  which is never focusable and never a Tab stop -- `Focusable = false` in its constructor).
+  `NaviusToolbar`'s roving scan walks the logical tree for any `Control` implementing
+  `IToolbarItem`, via `LogicalTreeWalker.Descendants<Control>(this).OfType<IToolbarItem>()`. That
+  walk recurses through a nested `NaviusToolbarToggleGroup` for free, which is exactly what gives
+  toggle items inside the group the toolbar's single shared Tab stop and arrow-key domain, with
+  zero special-casing for the nesting.
+- `NaviusToolbarToggleGroup`'s pressed-set semantics (`Type` "single"/"multiple", the
+  clear-on-reclick / replace-on-different-item / toggle-membership `ComputeNext` logic, driven off
+  `ToggleButton.Checked`/`Unchecked` routed-event bubbling) are **ported, not inherited**, from
+  `NaviusToggleGroup`. This is the "compose the existing controls" instruction interpreted as
+  semantic reuse rather than literal subclassing, given the tab-stop-ownership conflict above.
+- `NaviusToolbarToggleItem`'s Space/Enter `OnKeyDown` override -- including the `IsRepeat` guard
+  that skips a repeated Space key-down but allows repeated Enter -- is copied verbatim from
+  `NaviusToggleGroupItem` (`Controls/ToggleGroup/NaviusToggleGroupItem.cs`), per this doc's own
+  residual/follow-up instruction to reuse the M6 Space-dead fix rather than re-derive it.
+
+**`NaviusToolbarSeparator`: resolved as reuse, no new type**, following the Menu precedent
+(`docs/parity/menu.md`: "reuses `Navius.Wpf.Primitives.Controls.NaviusSeparator`... safely skipped
+by roving nav since it isn't a `MenuItem`"). `NaviusSeparator` already ships
+`AutomationControlType.Separator` and, since it does not implement `IToolbarItem`, is
+automatically excluded from `NaviusToolbar`'s roving scan with no extra wiring -- the same
+"safely skipped, not resubclassed" reasoning Menu used. Contract delta: the web contract's
+`NaviusToolbarSeparator` auto-computes `aria-orientation` perpendicular to the toolbar's own
+orientation; this WPF port does not reproduce that auto-flip (matching the plain, unaware
+`NaviusSeparator` reuse), so the consumer sets `Orientation` on the separator explicitly, same as
+every other `NaviusSeparator` usage in this codebase (see `ToolbarPage.xaml`, which sets
+`Orientation="Vertical"` on separators inside a horizontal toolbar).
+
+**`NaviusToolbarButton`**: a two-line subclass of `NaviusButton` (only `IToolbarItem` and its own
+`DefaultStyleKeyProperty` override added), inheriting soft-disabled mode, the `OnClick` funnel, and
+`NaviusButtonAutomationPeer` for free -- the contract's parameter table for this part lists nothing
+beyond what `NaviusButton` already provides.
+
+**`NaviusToolbarLink`**: derives from the native `Button` (not `NaviusButton`), adding only a
+`Uri` dependency property. `Command`/`CommandParameter`/`CommandTarget` come from `Button` for
+free, satisfying the "Uri/Command surface" instruction. It deliberately has no `Disabled`
+property, matching the contract's "no intrinsic disabled state... always participates in roving."
+
+**`NaviusToolbarToggleItem.Disabled`**: the contract's per-item table lists `Disabled: bool,
+Effective disabled is Disabled || GroupContext.Disabled`. Implemented as a `Disabled` dependency
+property on the item plus a `Disabled` dependency property on `NaviusToolbarToggleGroup`;
+`UpdateEffectiveDisabled()` (called on either property changing) sets native `IsEnabled = !(Disabled
+|| ancestor group's Disabled)`, found via `LogicalTreeWalker.Ancestor<NaviusToolbarToggleGroup>`.
+
+**Known simplification**: `NaviusToolbar`'s Tab stop is recomputed fresh on `OnContentChanged` and
+on every roving keypress, not via per-item `IsEnabledChanged` subscriptions, so the contract's "an
+item's disabled state flips at runtime, peers re-render so the seated Tab stop can move" is only
+reproduced at the next roving interaction rather than instantly. `NaviusRadioGroup`/
+`NaviusToggleGroup` make the same simplification for their own same-type item disable cascades, so
+this is consistent with existing precedent rather than a new gap.
+
+**`DefaultValue` (contract's uncontrolled-initial-value parameter) dropped**: not modeled, matching
+`NaviusToggleGroup`'s own WPF port, which already drops this Blazor-specific
+controlled/uncontrolled distinction in favor of a single plain `Value` dependency property.
+
+**Verification**: `dotnet build src/Navius.Wpf.Primitives` and `dotnet test
+tests/Navius.Wpf.Tests --filter "FullyQualifiedName~Toolbar"` both green (28/28 tests), including
+real routed-key-event Space/Enter activation tests on both `NaviusToolbarButton` and
+`NaviusToolbarToggleItem` (via the `HwndSource`-hosted pattern `SwitchTests.cs` uses post-M6, not
+fabricated `KeyEventArgs` fed directly to `OnKeyDown`), a `Space` `IsRepeat` no-flap test, an
+`Enter` auto-repeat-is-allowed test, roving/wrap/clamp/Home/End/RTL-mirroring tests, a test proving
+toggle items nested inside `NaviusToolbarToggleGroup` share the parent toolbar's single roving
+domain, and `AutomationPeer` tests for both the root's `ToolBar`+orientation and the toggle group's
+`Group` control type.

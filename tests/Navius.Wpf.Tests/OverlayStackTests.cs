@@ -5,7 +5,7 @@ using Navius.Wpf.Primitives.Overlays;
 
 namespace Navius.Wpf.Tests;
 
-public class OverlayStackTests
+public class OverlayStackTests : IDisposable
 {
     static OverlayStackTests()
     {
@@ -266,11 +266,25 @@ public class OverlayStackTests
     // --- OverlaySession.RegisterInputRoot: Escape/outside-press routing inside a Popup's own HwndSource ---
 
     // KeyEventArgs requires a non-null PresentationSource; a hidden native window (never shown,
-    // style = 0 means no WS_VISIBLE bit) is the lightest real one available headlessly.
-    private static readonly PresentationSource TestSource =
-        new System.Windows.Interop.HwndSource(0, 0, 0, 0, 0, "NaviusOverlayStackTests", System.IntPtr.Zero);
+    // style = 0 means no WS_VISIBLE bit) is the lightest real one available headlessly. Lazily
+    // created (not a static field initializer) and disposed per test instance -- this dummy 0x0
+    // native window must not outlive the STA thread it was created on (same pattern as
+    // AutocompleteTests/ComboboxTests/etc.; a static field here would be created once on
+    // whichever test's thread runs first and then reused -- and never disposed -- across every
+    // other test's own distinct STA thread, exactly the cross-thread teardown this suite guards
+    // against).
+    private System.Windows.Interop.HwndSource? _testSource;
 
-    private static KeyEventArgs MakeEscapeKeyDown() =>
+    private PresentationSource TestSource =>
+        _testSource ??= new System.Windows.Interop.HwndSource(0, 0, 0, 0, 0, "NaviusOverlayStackTests", System.IntPtr.Zero);
+
+    public void Dispose()
+    {
+        _testSource?.Dispose();
+        TestCleanup.PumpDispatcher();
+    }
+
+    private KeyEventArgs MakeEscapeKeyDown() =>
         new(Keyboard.PrimaryDevice, TestSource, 0, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
 
     private static MouseButtonEventArgs MakePreviewMouseDown() =>

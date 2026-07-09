@@ -11,8 +11,12 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class MenuTests
+public class MenuTests : IDisposable
 {
+    // Flushes any Dispatcher-deferred native-window teardown left by a popup this test closed
+    // (see TestCleanup.PumpDispatcher) before this test's dedicated STA thread exits.
+    public void Dispose() => TestCleanup.PumpDispatcher();
+
     static MenuTests()
     {
         // pack://application URIs only resolve once an Application exists in the process.
@@ -79,11 +83,18 @@ public class MenuTests
         var menu = new NaviusMenuPopup();
         trigger.Menu = menu;
 
-        SimulateToggle(trigger);
+        try
+        {
+            SimulateToggle(trigger);
 
-        Assert.True(trigger.IsChecked);
-        Assert.True(menu.IsOpen);
-        Assert.Same(trigger, menu.PlacementTarget);
+            Assert.True(trigger.IsChecked);
+            Assert.True(menu.IsOpen);
+            Assert.Same(trigger, menu.PlacementTarget);
+        }
+        finally
+        {
+            menu.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -108,12 +119,21 @@ public class MenuTests
         trigger.Menu = menu;
         SimulateToggle(trigger);
 
-        // Simulate a dismissal that didn't go through the trigger (Escape/outside click):
-        // ContextMenu.Closed fires for every close path, so the trigger's own listener
-        // should resync IsChecked without us calling SimulateToggle again.
-        menu.RaiseEvent(new RoutedEventArgs(ContextMenu.ClosedEvent, menu));
+        try
+        {
+            // Simulate a dismissal that didn't go through the trigger (Escape/outside click):
+            // ContextMenu.Closed fires for every close path, so the trigger's own listener
+            // should resync IsChecked without us calling SimulateToggle again.
+            menu.RaiseEvent(new RoutedEventArgs(ContextMenu.ClosedEvent, menu));
 
-        Assert.False(trigger.IsChecked);
+            Assert.False(trigger.IsChecked);
+        }
+        finally
+        {
+            // The synthetic RaiseEvent above only simulates the Closed notification; it does not
+            // flip the underlying native Popup's IsOpen, so close it for real here.
+            menu.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -142,9 +162,16 @@ public class MenuTests
         popup.IsOpen = true;
         item.Select += (sender, e) => ((NaviusSelectEventArgs)e).PreventDefault();
 
-        SimulateClick(item);
+        try
+        {
+            SimulateClick(item);
 
-        Assert.True(popup.IsOpen);
+            Assert.True(popup.IsOpen);
+        }
+        finally
+        {
+            popup.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -156,13 +183,20 @@ public class MenuTests
         popup.Items.Add(header);
         popup.IsOpen = true;
 
-        var raised = 0;
-        header.Select += (_, _) => raised++;
+        try
+        {
+            var raised = 0;
+            header.Select += (_, _) => raised++;
 
-        SimulateClick(header);
+            SimulateClick(header);
 
-        Assert.Equal(0, raised);
-        Assert.True(popup.IsOpen);
+            Assert.Equal(0, raised);
+            Assert.True(popup.IsOpen);
+        }
+        finally
+        {
+            popup.IsOpen = false;
+        }
     }
 
     [StaFact]

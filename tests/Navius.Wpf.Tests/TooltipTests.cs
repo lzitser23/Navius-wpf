@@ -9,7 +9,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class TooltipTests
+public class TooltipTests : IDisposable
 {
     static TooltipTests()
     {
@@ -56,6 +56,16 @@ public class TooltipTests
         method.Invoke(target, args);
     }
 
+    // Lazily created (not a static field initializer) and disposed per test instance -- this
+    // dummy 0x0 native window must not outlive the STA thread it was created on.
+    private System.Windows.Interop.HwndSource? _testSource;
+
+    public void Dispose()
+    {
+        _testSource?.Dispose();
+        TestCleanup.PumpDispatcher();
+    }
+
     [StaFact]
     public void Defaults_MatchTheTooltipContract()
     {
@@ -81,10 +91,17 @@ public class TooltipTests
     {
         var tooltip = CreateAppliedTooltip();
 
-        Invoke("OnTriggerGotKeyboardFocus", tooltip, tooltip, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, tooltip));
+        try
+        {
+            Invoke("OnTriggerGotKeyboardFocus", tooltip, tooltip, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, tooltip));
 
-        Assert.True(tooltip.IsOpen);
-        Assert.True(tooltip.IsInstant);
+            Assert.True(tooltip.IsOpen);
+            Assert.True(tooltip.IsInstant);
+        }
+        finally
+        {
+            tooltip.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -118,13 +135,21 @@ public class TooltipTests
     public void MouseLeave_WithHoverableContentEnabled_DoesNotCloseSynchronously()
     {
         var tooltip = CreateAppliedTooltip();
-        Invoke("OnTriggerGotKeyboardFocus", tooltip, tooltip, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, tooltip));
-        Assert.True(tooltip.IsOpen);
 
-        Invoke("OnTriggerMouseLeave", tooltip, tooltip, new MouseEventArgs(Mouse.PrimaryDevice, 0));
+        try
+        {
+            Invoke("OnTriggerGotKeyboardFocus", tooltip, tooltip, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, tooltip));
+            Assert.True(tooltip.IsOpen);
 
-        // The 60ms hover grace timer hasn't ticked yet; still open immediately after leave.
-        Assert.True(tooltip.IsOpen);
+            Invoke("OnTriggerMouseLeave", tooltip, tooltip, new MouseEventArgs(Mouse.PrimaryDevice, 0));
+
+            // The 60ms hover grace timer hasn't ticked yet; still open immediately after leave.
+            Assert.True(tooltip.IsOpen);
+        }
+        finally
+        {
+            tooltip.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -169,6 +194,6 @@ public class TooltipTests
         Assert.False(NaviusTooltipService.ShouldSkipDelay());
     }
 
-    private static PresentationSource PresentationSourceStub() =>
-        new System.Windows.Interop.HwndSource(0, 0, 0, 0, 0, "NaviusTooltipTests", System.IntPtr.Zero);
+    private PresentationSource PresentationSourceStub() =>
+        _testSource ??= new System.Windows.Interop.HwndSource(0, 0, 0, 0, 0, "NaviusTooltipTests", System.IntPtr.Zero);
 }

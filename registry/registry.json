@@ -272,7 +272,9 @@
       "type": "registry:primitive",
       "title": "Button",
       "dependencies": [],
-      "registryDependencies": [],
+      "registryDependencies": [
+        "button-automation-peer"
+      ],
       "files": [
         {
           "path": "src/Navius.Wpf.Primitives/Controls/NaviusButton.cs",
@@ -283,6 +285,22 @@
           "path": "src/Navius.Wpf.Primitives/Themes/Button.xaml",
           "type": "registry:theme",
           "target": "NaviusWpf/Themes/Button.xaml"
+        }
+      ]
+    },
+    {
+      "name": "button-automation-peer",
+      "type": "registry:primitive",
+      "title": "ButtonAutomationPeer",
+      "dependencies": [],
+      "registryDependencies": [
+        "button"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/NaviusButtonAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/NaviusButtonAutomationPeer.cs"
         }
       ]
     },
@@ -678,6 +696,11 @@
           "path": "src/Navius.Wpf.Primitives/Positioning/AnchoredPlacementOptions.cs",
           "type": "registry:code",
           "target": "NaviusWpf/Primitives/Positioning/AnchoredPlacementOptions.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Positioning/MonitorWorkArea.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Positioning/MonitorWorkArea.cs"
         },
         {
           "path": "src/Navius.Wpf.Primitives/Positioning/PlacementAlign.cs",
@@ -1907,7 +1930,9 @@
       "type": "registry:styled",
       "title": "Sidebar",
       "dependencies": [],
-      "registryDependencies": [],
+      "registryDependencies": [
+        "internal"
+      ],
       "files": [
         {
           "path": "src/Navius.Wpf.Ui/Themes/Sidebar.xaml",
@@ -2366,6 +2391,58 @@
       ]
     },
     {
+      "name": "toolbar",
+      "type": "registry:primitive",
+      "title": "Toolbar",
+      "dependencies": [],
+      "registryDependencies": [
+        "button",
+        "core"
+      ],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toolbar/IToolbarItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toolbar/IToolbarItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toolbar/NaviusToolbar.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toolbar/NaviusToolbar.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toolbar/NaviusToolbarAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toolbar/NaviusToolbarAutomationPeer.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toolbar/NaviusToolbarButton.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toolbar/NaviusToolbarButton.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toolbar/NaviusToolbarLink.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toolbar/NaviusToolbarLink.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toolbar/NaviusToolbarToggleGroup.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toolbar/NaviusToolbarToggleGroup.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Toolbar/NaviusToolbarToggleItem.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Toolbar/NaviusToolbarToggleItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Themes/Toolbar.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Toolbar.xaml"
+        }
+      ]
+    },
+    {
       "name": "tooltip",
       "type": "registry:primitive",
       "title": "Tooltip",
@@ -2418,6 +2495,11 @@
           "path": "src/Navius.Wpf.Primitives/Controls/Tree/NaviusTreeItem.cs",
           "type": "registry:code",
           "target": "NaviusWpf/Primitives/Controls/Tree/NaviusTreeItem.cs"
+        },
+        {
+          "path": "src/Navius.Wpf.Primitives/Controls/Tree/NaviusTreeItemAutomationPeer.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Primitives/Controls/Tree/NaviusTreeItemAutomationPeer.cs"
         },
         {
           "path": "src/Navius.Wpf.Primitives/Controls/Tree/NaviusTreeNode.cs",

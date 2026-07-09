@@ -9,7 +9,7 @@
 
   <PropertyGroup>
     <PackageId>Navius.Wpf.Motion</PackageId>
-    <Version>0.1.0-preview.1</Version>
+    <Version>1.0.0-preview.1</Version>
     <Authors>Lior Zitser</Authors>
     <Description>Spring-based motion engine for Navius.Wpf, ported from the Navius.Motion spring solver and preset system.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

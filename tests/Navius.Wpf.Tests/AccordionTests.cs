@@ -12,7 +12,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class AccordionTests
+public class AccordionTests : IDisposable
 {
     static AccordionTests()
     {
@@ -32,12 +32,18 @@ public class AccordionTests
     private static readonly ConstructorInfo KeyEventArgsCtor = typeof(KeyEventArgs).GetConstructor(
         new[] { typeof(KeyboardDevice), typeof(PresentationSource), typeof(int), typeof(Key) })!;
 
-    private static readonly PresentationSource TestSource =
-        new HwndSource(0, 0, 0, 0, 0, "NaviusAccordionTests", IntPtr.Zero);
+    // Lazily created (not a static field initializer) and disposed per test instance -- this
+    // dummy 0x0 native window must not outlive the STA thread it was created on.
+    private HwndSource? _testSource;
+
+    private PresentationSource TestSource =>
+        _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusAccordionTests", IntPtr.Zero);
+
+    public void Dispose() => _testSource?.Dispose();
 
     private static void SimulateClick(ButtonBase button) => OnClickMethod.Invoke(button, null);
 
-    private static void SimulateKey(NaviusAccordion root, Key key)
+    private void SimulateKey(NaviusAccordion root, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;

@@ -9,8 +9,12 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class PreviewCardTests
+public class PreviewCardTests : IDisposable
 {
+    // Flushes any Dispatcher-deferred native-window teardown left by a popup this test closed
+    // (see TestCleanup.PumpDispatcher) before this test's dedicated STA thread exits.
+    public void Dispose() => TestCleanup.PumpDispatcher();
+
     static PreviewCardTests()
     {
         // pack://application URIs only resolve once an Application exists in the process.
@@ -84,36 +88,59 @@ public class PreviewCardTests
     {
         var (card, _) = CreateAppliedCard();
 
-        Invoke("OnTriggerGotKeyboardFocus", card, card, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, card));
+        try
+        {
+            Invoke("OnTriggerGotKeyboardFocus", card, card, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, card));
 
-        Assert.True(card.IsOpen);
+            Assert.True(card.IsOpen);
+        }
+        finally
+        {
+            card.IsOpen = false;
+        }
     }
 
     [StaFact]
     public void LostKeyboardFocus_DoesNotCloseSynchronously_PendingTheCloseDelay()
     {
         var (card, _) = CreateAppliedCard();
-        Invoke("OnTriggerGotKeyboardFocus", card, card, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, card));
-        Assert.True(card.IsOpen);
 
-        Invoke("OnTriggerLostKeyboardFocus", card, card, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, card, null));
+        try
+        {
+            Invoke("OnTriggerGotKeyboardFocus", card, card, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, card));
+            Assert.True(card.IsOpen);
 
-        // The CloseDelay timer hasn't ticked yet; still open immediately after blur.
-        Assert.True(card.IsOpen);
+            Invoke("OnTriggerLostKeyboardFocus", card, card, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, card, null));
+
+            // The CloseDelay timer hasn't ticked yet; still open immediately after blur.
+            Assert.True(card.IsOpen);
+        }
+        finally
+        {
+            card.IsOpen = false;
+        }
     }
 
     [StaFact]
     public void PopupContentMouseEnter_CancelsAPendingClose()
     {
         var (card, _) = CreateAppliedCard();
-        Invoke("OnTriggerGotKeyboardFocus", card, card, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, card));
-        Invoke("OnTriggerMouseLeave", card, card, new MouseEventArgs(Mouse.PrimaryDevice, 0));
 
-        var exception = Record.Exception(() =>
-            Invoke("OnPopupContentMouseEnter", card, card, new MouseEventArgs(Mouse.PrimaryDevice, 0)));
+        try
+        {
+            Invoke("OnTriggerGotKeyboardFocus", card, card, new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, null, card));
+            Invoke("OnTriggerMouseLeave", card, card, new MouseEventArgs(Mouse.PrimaryDevice, 0));
 
-        Assert.Null(exception);
-        Assert.True(card.IsOpen);
+            var exception = Record.Exception(() =>
+                Invoke("OnPopupContentMouseEnter", card, card, new MouseEventArgs(Mouse.PrimaryDevice, 0)));
+
+            Assert.Null(exception);
+            Assert.True(card.IsOpen);
+        }
+        finally
+        {
+            card.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -121,13 +148,20 @@ public class PreviewCardTests
     {
         var (card, window) = CreateAppliedCard();
 
-        card.IsOpen = true;
+        try
+        {
+            card.IsOpen = true;
 
-        var session = OverlayStack.GetFor(window).Topmost;
-        Assert.NotNull(session);
-        Assert.True(session!.Options.CloseOnEscape);
-        Assert.True(session.Options.CloseOnOutsideClick);
-        Assert.False(session.Options.TrapFocus);
+            var session = OverlayStack.GetFor(window).Topmost;
+            Assert.NotNull(session);
+            Assert.True(session!.Options.CloseOnEscape);
+            Assert.True(session.Options.CloseOnOutsideClick);
+            Assert.False(session.Options.TrapFocus);
+        }
+        finally
+        {
+            card.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -135,11 +169,18 @@ public class PreviewCardTests
     {
         var (card, window) = CreateAppliedCard();
 
-        card.IsOpen = true;
+        try
+        {
+            card.IsOpen = true;
 
-        var session = OverlayStack.GetFor(window).Topmost!;
-        var popupContent = GetPopupContentPart(card);
-        Assert.Contains(popupContent, session.InputRoots);
+            var session = OverlayStack.GetFor(window).Topmost!;
+            var popupContent = GetPopupContentPart(card);
+            Assert.Contains(popupContent, session.InputRoots);
+        }
+        finally
+        {
+            card.IsOpen = false;
+        }
     }
 
     [StaFact]

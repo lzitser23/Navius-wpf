@@ -85,21 +85,24 @@ public class ThemeManagerTests
         Assert.Equal(SystemColors.HighlightColor, primary.Color);
     }
 
-    private static void ResetHighContrastSync()
+    private static ResourceDictionary ResetHighContrastSync()
     {
         // Clears any leftover _systemHighContrastActive state from a prior test before establishing
-        // a known starting theme (tests run sequentially -- see AssemblyInfo's
-        // DisableTestParallelization -- but ThemeManager's statics still persist across tests).
-        ThemeManager.SyncSystemHighContrastState(false);
-        ThemeManager.Apply(NaviusTheme.Light);
+        // a known starting theme. Everything runs against an ISOLATED scope dictionary: the earlier
+        // global-Apply version of these tests mutated Application.Current.Resources and poisoned
+        // unrelated test classes depending on run order (179 order-dependent failures in one run).
+        var scope = new ResourceDictionary();
+        ThemeManager.SyncSystemHighContrastState(false, scope);
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        return scope;
     }
 
     [StaFact]
     public void SyncSystemHighContrastState_AppliesHighContrast_WhenEnabled()
     {
-        ResetHighContrastSync();
+        var scope = ResetHighContrastSync();
 
-        ThemeManager.SyncSystemHighContrastState(true);
+        ThemeManager.SyncSystemHighContrastState(true, scope);
 
         Assert.Equal(NaviusTheme.HighContrast, ThemeManager.Current);
     }
@@ -107,11 +110,11 @@ public class ThemeManagerTests
     [StaFact]
     public void SyncSystemHighContrastState_RestoresPreviousTheme_WhenDisabled()
     {
-        ResetHighContrastSync();
-        ThemeManager.Apply(NaviusTheme.Dark);
+        var scope = ResetHighContrastSync();
+        ThemeManager.Apply(NaviusTheme.Dark, scope);
 
-        ThemeManager.SyncSystemHighContrastState(true);
-        ThemeManager.SyncSystemHighContrastState(false);
+        ThemeManager.SyncSystemHighContrastState(true, scope);
+        ThemeManager.SyncSystemHighContrastState(false, scope);
 
         Assert.Equal(NaviusTheme.Dark, ThemeManager.Current);
     }
@@ -119,10 +122,10 @@ public class ThemeManagerTests
     [StaFact]
     public void SyncSystemHighContrastState_NoOp_WhenNotActiveAndDisabled()
     {
-        ResetHighContrastSync();
-        ThemeManager.Apply(NaviusTheme.Dark);
+        var scope = ResetHighContrastSync();
+        ThemeManager.Apply(NaviusTheme.Dark, scope);
 
-        ThemeManager.SyncSystemHighContrastState(false);
+        ThemeManager.SyncSystemHighContrastState(false, scope);
 
         Assert.Equal(NaviusTheme.Dark, ThemeManager.Current);
     }
@@ -130,16 +133,16 @@ public class ThemeManagerTests
     [StaFact]
     public void SyncSystemHighContrastState_FiresThemeChanged_ForEnterAndRestore()
     {
-        ResetHighContrastSync();
-        ThemeManager.Apply(NaviusTheme.Dark);
+        var scope = ResetHighContrastSync();
+        ThemeManager.Apply(NaviusTheme.Dark, scope);
         var observed = new List<NaviusTheme>();
         void Handler(object? _, NaviusTheme t) => observed.Add(t);
         ThemeManager.ThemeChanged += Handler;
 
         try
         {
-            ThemeManager.SyncSystemHighContrastState(true);
-            ThemeManager.SyncSystemHighContrastState(false);
+            ThemeManager.SyncSystemHighContrastState(true, scope);
+            ThemeManager.SyncSystemHighContrastState(false, scope);
         }
         finally
         {

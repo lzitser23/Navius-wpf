@@ -13,7 +13,7 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
-public class SelectTests
+public class SelectTests : IDisposable
 {
     static SelectTests()
     {
@@ -40,11 +40,21 @@ public class SelectTests
         new[] { typeof(KeyboardDevice), typeof(PresentationSource), typeof(int), typeof(Key) })!;
 
     // KeyEventArgs requires a non-null PresentationSource; a hidden native window (never shown,
-    // style 0 = no WS_VISIBLE bit) is the lightest real one available headlessly.
-    private static readonly PresentationSource TestSource =
-        new HwndSource(0, 0, 0, 0, 0, "NaviusSelectTests", IntPtr.Zero);
+    // style 0 = no WS_VISIBLE bit) is the lightest real one available headlessly. Lazily created
+    // (not a static field initializer) and disposed per test instance -- it must not outlive the
+    // STA thread it was created on.
+    private HwndSource? _testSource;
 
-    private static void SimulateKey(NaviusSelectBase select, Key key)
+    private PresentationSource TestSource =>
+        _testSource ??= new HwndSource(0, 0, 0, 0, 0, "NaviusSelectTests", IntPtr.Zero);
+
+    public void Dispose()
+    {
+        _testSource?.Dispose();
+        TestCleanup.PumpDispatcher();
+    }
+
+    private void SimulateKey(NaviusSelectBase select, Key key)
     {
         var args = (KeyEventArgs)KeyEventArgsCtor.Invoke(new object?[] { Keyboard.PrimaryDevice, TestSource, 0, key });
         args.RoutedEvent = Keyboard.PreviewKeyDownEvent;
@@ -188,14 +198,22 @@ public class SelectTests
     {
         var select = CreateSelect();
         select.IsOpen = true;
-        var item = ItemAt(select, 1);
-        item.Select += (_, e) => ((NaviusSelectEventArgs)e).PreventDefault();
 
-        item.RaiseSelectEvent();
+        try
+        {
+            var item = ItemAt(select, 1);
+            item.Select += (_, e) => ((NaviusSelectEventArgs)e).PreventDefault();
 
-        Assert.Null(select.Value);
-        Assert.False(item.IsSelectedValue);
-        Assert.True(select.IsOpen);
+            item.RaiseSelectEvent();
+
+            Assert.Null(select.Value);
+            Assert.False(item.IsSelectedValue);
+            Assert.True(select.IsOpen);
+        }
+        finally
+        {
+            select.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -203,20 +221,28 @@ public class SelectTests
     {
         var select = CreateSelect(multiple: true);
         select.IsOpen = true;
-        var raised = 0;
-        select.ValuesSelected += (_, _) => raised++;
 
-        ItemAt(select, 0).RaiseSelectEvent();
-        ItemAt(select, 2).RaiseSelectEvent();
+        try
+        {
+            var raised = 0;
+            select.ValuesSelected += (_, _) => raised++;
 
-        Assert.Equal(new[] { "apple", "cherry" }, select.SelectedValues);
-        Assert.True(select.IsOpen); // multi stays open
-        Assert.Equal(2, raised);
+            ItemAt(select, 0).RaiseSelectEvent();
+            ItemAt(select, 2).RaiseSelectEvent();
 
-        ItemAt(select, 0).RaiseSelectEvent(); // toggle off
+            Assert.Equal(new[] { "apple", "cherry" }, select.SelectedValues);
+            Assert.True(select.IsOpen); // multi stays open
+            Assert.Equal(2, raised);
 
-        Assert.Equal(new[] { "cherry" }, select.SelectedValues);
-        Assert.True(select.IsOpen);
+            ItemAt(select, 0).RaiseSelectEvent(); // toggle off
+
+            Assert.Equal(new[] { "cherry" }, select.SelectedValues);
+            Assert.True(select.IsOpen);
+        }
+        finally
+        {
+            select.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -224,10 +250,17 @@ public class SelectTests
     {
         var select = CreateSelect();
 
-        SimulateKey(select, Key.Down);
+        try
+        {
+            SimulateKey(select, Key.Down);
 
-        Assert.True(select.IsOpen);
-        Assert.True(ItemAt(select, 0).IsHighlightedValue);
+            Assert.True(select.IsOpen);
+            Assert.True(ItemAt(select, 0).IsHighlightedValue);
+        }
+        finally
+        {
+            select.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -235,10 +268,17 @@ public class SelectTests
     {
         var select = CreateSelect();
 
-        SimulateKey(select, Key.Up);
+        try
+        {
+            SimulateKey(select, Key.Up);
 
-        Assert.True(select.IsOpen);
-        Assert.True(ItemAt(select, 2).IsHighlightedValue);
+            Assert.True(select.IsOpen);
+            Assert.True(ItemAt(select, 2).IsHighlightedValue);
+        }
+        finally
+        {
+            select.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -262,11 +302,18 @@ public class SelectTests
         var select = CreateSelect();
         SimulateKey(select, Key.Down); // open, highlight first
 
-        SimulateKey(select, Key.End);
-        Assert.True(ItemAt(select, 2).IsHighlightedValue);
+        try
+        {
+            SimulateKey(select, Key.End);
+            Assert.True(ItemAt(select, 2).IsHighlightedValue);
 
-        SimulateKey(select, Key.Home);
-        Assert.True(ItemAt(select, 0).IsHighlightedValue);
+            SimulateKey(select, Key.Home);
+            Assert.True(ItemAt(select, 0).IsHighlightedValue);
+        }
+        finally
+        {
+            select.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -275,9 +322,16 @@ public class SelectTests
         var select = CreateSelect();
         SimulateKey(select, Key.Up); // open, highlight last (cherry, index 2)
 
-        SimulateKey(select, Key.Down); // clamp (Loop=false)
+        try
+        {
+            SimulateKey(select, Key.Down); // clamp (Loop=false)
 
-        Assert.True(ItemAt(select, 2).IsHighlightedValue);
+            Assert.True(ItemAt(select, 2).IsHighlightedValue);
+        }
+        finally
+        {
+            select.IsOpen = false;
+        }
     }
 
     [StaFact]
@@ -298,9 +352,16 @@ public class SelectTests
         var select = CreateSelect(false, "apple", "banana", "cherry");
         SimulateKey(select, Key.Down); // open, highlight apple
 
-        SimulateKey(select, Key.C); // jump to Cherry
+        try
+        {
+            SimulateKey(select, Key.C); // jump to Cherry
 
-        Assert.True(ItemAt(select, 2).IsHighlightedValue);
+            Assert.True(ItemAt(select, 2).IsHighlightedValue);
+        }
+        finally
+        {
+            select.IsOpen = false;
+        }
     }
 
     [StaFact]
