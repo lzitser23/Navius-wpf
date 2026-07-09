@@ -163,7 +163,15 @@ public abstract class NaviusOverlaySurfaceBase : ContentControl
         {
             if (surface._session is not null)
             {
-                surface._session.RequestClose(OverlayCloseReason.Programmatic);
+                var closed = surface._session.RequestClose(OverlayCloseReason.Programmatic);
+                if (!closed)
+                {
+                    // A Closing handler set Cancel = true, so the session stayed open and the
+                    // surface is still visible. Revert IsOpen back to true so the DP does not
+                    // report a false "closed" state that is out of sync with the live overlay
+                    // (otherwise a later Open() is silently swallowed because _session != null).
+                    surface.SetCurrentValue(IsOpenProperty, true);
+                }
             }
         }
     }

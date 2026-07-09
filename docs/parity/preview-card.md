@@ -146,3 +146,25 @@ Shipped as `Navius.Wpf.Primitives.Controls.NaviusPreviewCard` (`src/Navius.Wpf.P
 - **Arrow simplified.** Same as Tooltip/Popover: no `PlacementResult.ArrowOffset`-driven arrow, since `NaviusAnchoredPopup` does not currently surface it.
 - **Enter/exit animation.** Same 150ms opacity+translate `DoubleAnimation` approach as Popover, no exit animation (see `docs/parity/tooltip.md` for the tradeoff explanation).
 - **No cancelable dismiss callbacks.** Same as Tooltip/Popover: `OnEscapeKeyDown`/etc. are not exposed as public events.
+
+## M6 audit (2026-07-09)
+
+Adversarial re-verification of the sections above against the shipped C#/XAML.
+
+### CONFIRMED (fixed)
+
+- None. Every behavioral claim in the "WPF implementation notes" was traced to code and held up (see below).
+
+### Verified accurate (no change needed)
+
+- `OpenDelay` default 600, `CloseDelay` default 300 (`NaviusPreviewCard.cs:49,53`); covered by `PreviewCardTests.Defaults_MatchThePreviewCardContract`.
+- `Modal` is genuinely dropped, not a dead always-false property: no `Modal` DP or field exists on `NaviusPreviewCard` (grep-confirmed).
+- Non-modal end to end: `OpenCore` pushes `TrapFocus = false`, `RestoreFocus = false` (`NaviusPreviewCard.cs:286-292`), matching the web's `MoveFocusInside = false`/`Modal` hardcoded `false`. Covered by `PreviewCardTests.Open_PushesANonModalDismissableOverlaySession`.
+- Hover-region bridge: the trigger and `PART_PopupContent` share one `_openTimer`/`_closeTimer` pair on the control instance; `MouseEnter` on the popup cancels the pending close, `MouseLeave` on it restarts it (`NaviusPreviewCard.cs:160-229`). Covered by `PreviewCardTests.PopupContentMouseEnter_CancelsAPendingClose`.
+- `GotKeyboardFocus` opens immediately with no `OpenDelay` (`OnTriggerGotKeyboardFocus` sets `IsOpen = true` directly, `NaviusPreviewCard.cs:207-211`); covered by `PreviewCardTests.GotKeyboardFocus_OpensImmediatelyWithoutTheOpenDelay`.
+- Escape closes immediately: `CloseOnEscape = true`, no close-delay concept in `OverlayOptions`, so Escape routes straight through `OverlayStack` with no `CloseDelay`.
+- `Themes/PreviewCard.xaml` uses only `DynamicResource` (`Navius.Card`, `Navius.CardForeground`, `Navius.Border`, `Navius.Radius.Card`, `Navius.Primary`); all keys exist in both token files.
+
+### PLAUSIBLE / residual (not fixed)
+
+- **`GotKeyboardFocus` does not cancel a pending close timer.** `OnTriggerGotKeyboardFocus` stops `_openTimer` and opens, but does not stop `_closeTimer` (`NaviusPreviewCard.cs:207-211`). If focus arrives while a `CloseDelay` close is already pending (e.g. the pointer just left the trigger), the card opens and then the still-running close timer can fire and close it. The web's `@onfocus="Context.OpenNow"` cancels pending timers as part of "open now". Low severity (the race needs a pending close to coincide with focus-in) and not asserted by any current test, so left as a residual: a one-line `_closeTimer?.Stop()` in `OnTriggerGotKeyboardFocus` would close it, if a future wave decides to.
