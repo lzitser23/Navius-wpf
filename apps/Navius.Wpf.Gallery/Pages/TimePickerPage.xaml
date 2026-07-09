@@ -1,0 +1,50 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.TimePickerPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:timePicker="clr-namespace:Navius.Wpf.Primitives.Controls.TimePicker;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); this page merges it directly.
+                     DateInput.xaml (NaviusFieldSegment) and TimeInput.xaml (the embedded
+                     PART_Input's own style) are both required alongside TimePicker.xaml. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/DateInput.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/TimeInput.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/TimePicker.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock Text="TimePicker" FontSize="18" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" Margin="0,0,0,12" />
+
+        <!-- TimeOnly? has no XAML TypeConverter; pre-filled demo values are set from code-behind. -->
+
+        <TextBlock Text="Default (minute granularity, 12h AM/PM; type in the input or open the popup)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <timePicker:NaviusTimePicker x:Name="DefaultPicker"
+                                      AutomationProperties.AutomationId="TimePickerDemo"
+                                      HorizontalAlignment="Left" Margin="0,0,0,16" />
+
+        <TextBlock Text="Pre-filled, second granularity" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <timePicker:NaviusTimePicker x:Name="SecondsPicker"
+                                      AutomationProperties.AutomationId="SecondsTimePicker"
+                                      Granularity="second" HorizontalAlignment="Left" Margin="0,0,0,16" />
+
+        <TextBlock Text="24-hour cycle" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <timePicker:NaviusTimePicker x:Name="TwentyFourHourPicker"
+                                      AutomationProperties.AutomationId="TwentyFourHourTimePicker"
+                                      HourCycle="24" HorizontalAlignment="Left" Margin="0,0,0,16" />
+
+        <TextBlock Text="Minute step 15" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <timePicker:NaviusTimePicker x:Name="SteppedPicker"
+                                      AutomationProperties.AutomationId="SteppedTimePicker"
+                                      MinuteStep="15" HorizontalAlignment="Left" Margin="0,0,0,16" />
+
+        <TextBlock Text="Disabled" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <timePicker:NaviusTimePicker x:Name="DisabledPicker"
+                                      AutomationProperties.AutomationId="DisabledTimePicker"
+                                      IsEnabled="False" HorizontalAlignment="Left" />
+    </StackPanel>
+</UserControl>

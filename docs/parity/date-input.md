@@ -142,3 +142,67 @@ There is no native WPF control with per-segment spinbutton semantics for a date 
 - `Compose()` silently clamps an out-of-range day (e.g. Feb 30 typed digit-by-digit) down to the month's max via `Math.Min` inside `Compose`, while `RecomputeDayMax` also clamps the segment's own `Value` after every keystroke: worth confirming there's no double-clamp edge case (e.g. typing day "31" then changing month to February) that produces surprising WPF behavior if ported literally.
 - The hidden hand-off between `NaviusDateInput` and `NaviusField` (`Field.FocusControl`, `Field.ApplyControlStateAsync`, `Field.DescribedBy`) depends on a `NaviusField` component not in this family's folder: its full contract needs to be pulled in before the WPF `Field`-equivalent parity can be finalized.
 - No explicit behavior is shown for what happens when `Granularity` changes at runtime while a value is mid-edit beyond "rebuild layout, reseed from `CurrentValue`" (`RebuildIfNeeded`), confirm this is the desired WPF behavior (loses in-progress unconfirmed typing).
+
+## WPF implementation notes
+
+Implemented at `src/Navius.Wpf.Primitives/Controls/DateInput/NaviusDateInput.cs`, sharing
+`src/Navius.Wpf.Primitives/Controls/DateInput/NaviusFieldSegment.cs` and the pure engine at
+`src/Navius.Wpf.Primitives/Controls/Internal/SegmentEngine.cs` (`SegmentUnit`, `DateTimeSegment`,
+`SegmentKey`, `SegmentMath`, `SegmentLayoutBuilder`, `DateSegmentComposer`, `SegmentFormat`) with
+NaviusTimeInput/NaviusTimePicker. Theme: `Themes/DateInput.xaml` (not merged into Generic.xaml;
+pages/consumers merge it directly, same precedent as Select/Menu/Popover). Tests:
+`tests/Navius.Wpf.Tests/DateInputTests.cs`. Gallery: `Pages/DateInputPage.xaml(.cs)`.
+
+Resolved open questions:
+
+- **Never-clamp range semantics kept.** `MinValue`/`MaxValue` only drive `IsOutOfRange`/
+  `IsInvalidState`; the composed value is never snapped, matching the web contract exactly.
+- **Compose()'s day-clamp is the single source of truth.** `DateSegmentComposer.Compose` clamps an
+  out-of-range day down via `Math.Min` against `DateTime.DaysInMonth`; the root additionally calls
+  `DateSegmentComposer.RecomputeDayMax` after every value-changing key so the Day segment's own
+  `Max`/displayed value stay in sync with the current Year/Month before the next keystroke, exactly
+  mirroring the web's `RecomputeDayMax` + `Compose` pairing. No double-clamp surprises were found:
+  typing day "31" then changing month to February clamps the day segment to 28/29 immediately (via
+  `RecomputeDayMax`), and `Compose` is a no-op re-clamp of the same already-clamped value.
+  Verified by `RecomputeDayMax_ClampsDayValueDown_WhenMonthShrinksMax` and
+  `MonthChange_RecomputesDayMax_AndClampsDay`.
+- **`Granularity` runtime changes rebuild and reseed, discarding in-progress typing** (matches the
+  web's `RebuildIfNeeded`): `OnLayoutAffectingChanged` calls `RebuildLayout()`, which rebuilds the
+  segment/cell lists from scratch and reseeds from the current `Value`.
+- **No ambient `NaviusField`.** That family isn't ported in this repo yet. `Field.FocusControl` and
+  `Field.ApplyControlStateAsync` have no analogue here; `FocusFirstSegment()` is exposed directly on
+  the control instead, and `IsFilled`/`IsOutOfRange`/`IsInvalidState` are public read-only
+  dependency properties a future Field port can read directly (no event needed, since WPF property
+  system already notifies bound consumers).
+
+Contract deltas (WPF-native substitutions, not gaps):
+
+- **No `NaviusBubbleInput`.** This repo already established (in `NaviusSelectBase`) that Tier B
+  controls drop the hidden native-form mirror; `Name` stays a marker-only property.
+- **`Dir` is WPF's native `FlowDirection`**, not a custom string parameter; `ArrowLeft`/`ArrowRight`
+  focus-flip honors it exactly as the contract's `MoveFocus` does for `Dir="rtl"`.
+- **Placeholder rendering.** An unfilled segment shows a unit-shorthand token ("yyyy"/"mm"/"dd" via
+  `SegmentFormat.PlaceholderToken`) instead of the literal aria-valuetext string `"Empty"` — WPF's
+  own native masked-input placeholder idiom. The `NaviusFieldSegmentAutomationPeer`'s
+  `IRangeValueProvider.Value` still reports `NaN` for an unfilled segment (screen readers get a
+  distinct empty/NaN signal independent of the visible placeholder token).
+- **Month/day-name `aria-valuetext` not ported.** UIA's `IRangeValueProvider` only exposes a numeric
+  `Value` (no free-text valuetext property analogous to ARIA's `aria-valuetext`), so a screen reader
+  hears the month as a number (e.g. "8"), not "August". Reproducing the localized name would require
+  a second pattern (e.g. `LegacyIAccessible.Value`) layered on top; left as a follow-up rather than
+  implemented speculatively, since no test/consumer currently depends on it.
+- **AutomationPeer additions beyond the contract.** `NaviusDateInputAutomationPeer` adds a read-only
+  `IValueProvider` surfacing the composed ISO date (`yyyy-MM-dd`) on the root, matching the
+  `NaviusSelectAutomationPeer` precedent and the sibling `NaviusTimePicker`'s explicit requirement
+  ("template-only text otherwise exposes nothing over UIA").
+
+Segment-engine coverage: 34 `[Fact]` tests in `DateInputTests.cs` cover `SegmentMath` (wrap/clamp,
+Arrow/PageUp/PageDown/Home/End/Backspace/Delete, RTL-flipped ArrowLeft/Right, digit accumulation
+with early-advance and max-digit-advance, digit-exceeds-max buffer restart, day-period letter/arrow
+handling), `SegmentLayoutBuilder` (culture-driven ordering/separators, granularity filtering,
+hour-cycle sniffing, per-unit bounds), `DateSegmentComposer` (null-when-incomplete, day clamping,
+granularity defaults, day-max recompute), and `SegmentFormat` (placeholder tokens, leading-zero
+padding). 17 `[StaFact]` tests cover the control (template building, seeding, typed-digit
+composition end to end, placeholder-basis Arrow reveal, focus travel, Backspace clearing,
+ReadOnly lockout, month-change day-max clamping, out-of-range invalid state) and both automation
+peers.

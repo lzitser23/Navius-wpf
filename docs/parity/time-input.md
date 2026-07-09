@@ -104,3 +104,48 @@ Tier B: custom lookless control. No native WPF control directly matches an APG-s
 - Depends on an ambient `FieldContext` from `Navius.Primitives.Components.Field` (also outside this batch) for label/description/validation wiring; the WPF strategy here is provisional until that family's port shape is decided.
 - `MinValue`/`MaxValue` are validation-only (no clamping); confirm the WPF port keeps this "don't silently snap" behavior rather than adopting a clamping `RangeBase`-style pattern.
 - Should HourCycle default resolution (culture short-time pattern sniffing for `H` vs `h`) reuse .NET's `DateTimeFormatInfo` the same way, or does WPF/`CultureInfo` on the target platform behave differently.
+
+## WPF implementation notes
+
+Implemented at `src/Navius.Wpf.Primitives/Controls/TimeInput/NaviusTimeInput.cs`. Resolves this
+family's own open question directly: **one shared segment-editor base was NOT built**; instead the
+engine (`Controls/Internal/SegmentEngine.cs`) and the segment/literal cell
+(`Controls/DateInput/NaviusFieldSegment.cs`) are shared verbatim by both `NaviusDateInput` and
+`NaviusTimeInput`, while the two roots stay independent `Control`-derived classes. Rationale
+recorded in `NaviusTimeInput.cs`'s class remarks: the two roots' layout-building
+(`SegmentLayoutBuilder.BuildDateLayout` vs `BuildTimeLayout`) and `Compose()` targets (`DateOnly?`
+vs `TimeOnly?`) differ enough that a shared root base would mostly be pass-through plumbing, whereas
+sharing the engine + cell type already eliminates all the actual duplication (SegmentMath, layout
+tokenizing, focus/keyboard wiring pattern). Theme: `Themes/TimeInput.xaml` (styles the root only;
+merges alongside `Themes/DateInput.xaml` for the shared `NaviusFieldSegment` style, per the theme
+file's own header comment). Tests: `tests/Navius.Wpf.Tests/TimeInputTests.cs`. Gallery:
+`Pages/TimeInputPage.xaml(.cs)`.
+
+Resolved open questions:
+
+- **`HourCycle` resolution reuses `DateTimeFormatInfo` identically**, via
+  `SegmentLayoutBuilder.ResolveHourCycle`: an explicit 12/24 wins, otherwise the culture's
+  `ShortTimePattern` is sniffed for an `'H'` token, exactly as the web contract specifies. WPF/.NET
+  share the same `CultureInfo`/`DateTimeFormatInfo` implementation, so no platform divergence was
+  found (verified by `ResolveHourCycle_SniffsCulturePattern_WhenUnset` in `DateInputTests.cs`, since
+  the helper is engine-shared).
+- **`MinValue`/`MaxValue` stay validation-only**, exactly like `NaviusDateInput`: `IsOutOfRange`/
+  `IsInvalidState` are computed read-only DPs; the composed `TimeOnly?` is never snapped.
+- **Ambient `FieldContext` not ported**, same as `NaviusDateInput`: `FocusFirstSegment()` stands in
+  for `Field.FocusControl`; `IsFilled`/`IsOutOfRange`/`IsInvalidState` are public DPs a future Field
+  port can consume directly.
+
+Contract deltas: identical to `NaviusDateInput`'s (no `NaviusBubbleInput`, `Dir` -> `FlowDirection`,
+unit-shorthand placeholder tokens instead of literal "Empty", month/day-name-style free-text
+valuetext not representable over `IRangeValueProvider`). One TimeInput-specific delta: the
+day-period (AM/PM) segment is modeled over the *same* `IRangeValueProvider` as numeric segments
+(`Minimum=0`/`Maximum=1`) rather than a second peer/pattern type, since ArrowUp/Down already treat
+it as a 2-state range in `SegmentMath.HandleKey`; see `NaviusFieldSegmentAutomationPeer`'s remarks.
+
+Segment-engine coverage (time-specific, beyond what `date-input.md` already covers for the shared
+engine): 8 `[Fact]` tests in `TimeInputTests.cs` for `BuildTimeLayout` (12h includes day-period, 24h
+omits it, second/hour granularity filtering) and `TimeSegmentComposer` (null-when-incomplete, 12h
+midnight/noon/PM round-trip, 24h ignores day-period, absent minute/second default to zero). 9
+`[StaFact]` tests cover the control (template building for both hour cycles, seeding, end-to-end
+digit typing, AM/PM letter-key toggling, ReadOnly lockout, MinuteStep-driven Arrow increment) and
+the automation peer's ValuePattern.

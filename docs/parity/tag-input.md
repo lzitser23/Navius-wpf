@@ -125,3 +125,49 @@ Tier B: custom lookless control. No native WPF control models "type-to-create-ch
 - No ARIA/role wiring exists in the source to translate to `AutomationPeer`s; the WPF port needs a fresh accessibility design for this component rather than a 1:1 mapping.
 - Should `NaviusTagRemove`'s default `aria-label` pattern become a WPF `AutomationProperties.Name` binding, and is English-only text acceptable long-term.
 - Paste-splitting on comma/space (`FindCharDelimiter`) only inspects `@oninput`'s resulting text; confirm the WPF `TextBox` equivalent (`TextChanged` after paste) produces the same split points.
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/TagInput/TagInputEngine.cs` (pure commit/split/
+remove/highlight math + `TagDelimiter` + `TagCommitStatus`), `TagChipVm.cs`, `NaviusTagInput.cs`
+(Tier B lookless control + UIA peer), `Themes/TagInput.xaml`,
+`tests/Navius.Wpf.Tests/TagInputTests.cs`, `apps/Navius.Wpf.Gallery/Pages/TagInputPage.xaml(.cs)`.
+
+**Parts folding**: the web's 5 parts collapse into one Control with two template parts
+(`PART_Input` TextBox, `PART_Chips` ItemsControl of `TagChipVm`), the NumberField folding
+minimalism. `NaviusTagInputList` is layout-only in the contract (a WrapPanel here);
+`NaviusTag`/`NaviusTagRemove` became a chip VM + DataTemplate (the Combobox chip idiom); the chip
+visual language echoes `Themes/Combobox.xaml`'s DefaultChip but is owned by this family's own
+dictionary.
+
+**Commit pipeline**: ported verbatim into pure `TagInputEngine.TryCommit` with the web's exact
+rule order (trim -> transform -> empty-silent -> duplicate -> max -> validate), including the
+duplicate-before-max precedence, which tests pin. Char-delimiter splitting
+(`FindCharDelimiter`/`Split`, comma before space, remainder stays in the field) ports the web's
+`@oninput` detection onto `TextChanged`, so a paste containing delimiters splits at the same
+points (third open question resolved: `TextChanged` fires once with the full pasted text, and
+`Split` walks all completed segments in one pass).
+
+**Keyboard**: field Enter/Tab (per `Delimiters`) commit; Backspace on an empty field is the
+contract's two-step (first press highlights the last chip, second removes it); ArrowLeft on an
+empty field enters chip navigation. Chip keys (ArrowLeft/Right/Home/End, Delete/Backspace) live on
+the chips host and use `HighlightedIndex`. Unlike the Combobox's virtual highlight, the chip
+highlight IS a real focus target: the roving-tabindex model maps to focusing the highlighted
+chip's container, and the one-shot `PendingChipFocus`/`PendingFieldFocus` dance collapsed into
+synchronous `Focus()` calls (no re-render round-trip exists in WPF).
+
+**Accessibility (first + second open questions resolved)**: fresh minimal design per the APG,
+since the source wires no ARIA. The field is a native TextBox (Edit peer for free). The remove
+button's default `aria-label="Remove {value}"` became an `AutomationProperties.Name` binding to
+the VM's `RemoveName` (English-only for now, same as the web). The root's peer additionally
+exposes the committed tags over a read-only ValuePattern (comma-joined), following the
+NaviusSelect peer / M3-gate precedent that value living in template text must be readable over
+UIA.
+
+**Mapping notes**: `Value` is a two-way `IReadOnlyList<string>` DP (immutable snapshots, the
+Combobox `Values` convention) with CLR events `TagAdded`/`TagRemoved`/`TagRejected`/`ValueChanged`
+for OnAdd/OnRemove/OnInvalid/ValueChanged. `DefaultValue` seeds once on `Loaded` when `Value` is
+unset. `Disabled` maps to native `IsEnabled`. `data-empty` maps to the read-only `IsTagListEmpty`
+DP (placeholder + chips-visibility triggers); `data-highlighted` to the VM's `IsHighlighted`.
+The public state machine (`CommitText`/`RemoveTagAt`/`RemoveHighlighted`/`Highlight`) is
+template-independent, so the whole contract is unit-testable headless.

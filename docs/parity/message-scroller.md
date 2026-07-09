@@ -129,3 +129,30 @@ Per its own doc comment this is "a Navius extra... no Base UI counterpart" and t
 - No ARIA role is applied to `NaviusMessageScrollerItem` (no `role="listitem"`/`"article"`); a WPF `ItemsControl` would naturally expose `ListItem` automation peers for its containers, a stronger AT contract than the current markup provides. Confirm whether that stronger contract is a deliberate parity target or should be avoided to match web-side minimalism.
 - `DefaultScrollPosition="last-anchor"`'s exact fallback rule ("falling back to end when the turn fits the viewport or no anchor exists") is engine logic not visible in this folder and needs to be confirmed against the JS source before porting.
 - The lazy "first subscriber starts visibility tracking, last unsubscribe stops it" pattern (`SubscribeVisibilityAsync`/`UnsubscribeVisibilityAsync`) is a reference-counted `Func<Task>` multicast, not a Blazor `EventCallback`: decide the idiomatic WPF equivalent (a plain CLR event vs. a weak-event pattern to avoid leaks from long-lived subscribers).
+
+## WPF implementation notes
+
+Shipped as `Controls/MessageScroller/` (`MessageScrollerEngine` + `NaviusMessageScroller`) with `Themes/MessageScroller.xaml` (not merged into `Generic.xaml`; consumers merge the dictionary themselves, Toast precedent). Tests in `tests/Navius.Wpf.Tests/MessageScrollerTests.cs`; demo page `Pages/MessageScrollerPage.xaml` (AutomationId `MessageScrollerDemo`).
+
+### Shape
+
+- The web family's six parts collapse into one lookless `ItemsControl` (`NaviusMessageScroller`) templated as `PART_ScrollViewer` (the viewport, `CanContentScroll="False"` because the engine's math is pixel-based) + `ItemsPresenter` (the content) + `PART_JumpToLatestButton`. There is no Provider/Context cascade: WPF's DP system covers the option-flow role, and there is no cross-frame scroll-command surface to justify a separate headless root.
+- The behavior engine is a pure, WPF-free class (`MessageScrollerEngine`): a state machine over `(scrollOffset, viewportHeight, extentHeight)` snapshots plus intent events, so every contract rule is testable headlessly with plain `[Fact]`s. The control classifies `INotifyCollectionChanged` events by index (add at end = append/new content; insert at index 0 with items already present = history prepend) and routes real `ScrollChanged` geometry into the engine.
+
+### Behavior parity (vs createMessageScroller)
+
+- Live-edge follow (`AutoScroll`, default false), `ScrollEdgeThreshold` (default 8) edge hysteresis, disengage on reader intent, re-engage when the reader lands back within the threshold, one-time (non-engaging) jump when `AutoScroll` is off, and the queued jump-before-content all match the JS engine's `following`/`atEnd`/`scrollToEnd`/`pendingTarget` semantics.
+- Reader intent is inferred from `ScrollChanged` events with a nonzero `VerticalChange` that the control did not itself initiate (an `_applyingEngineOffset` reentrancy flag marks engine-driven `ScrollToVerticalOffset` calls), rather than from wheel/touch/key/pointerdown listeners: WPF has no need to distinguish input modality, only "was this scroll mine".
+- Prepend preservation shifts the offset by exactly the extent growth (extent-delta model) instead of re-locating a captured reference row (the JS `captureRef`/`restoreRef` element model). Equivalent whenever prepended rows are inserted strictly above the viewport, which is the classified case; mid-list mutations are out of contract and fall back to a plain clamp.
+
+### Deliberate deltas (recorded)
+
+- Not ported: anchored-turn positioning (`ScrollAnchor`/`data-scroll-anchor`, `ScrollPreviousItemPeek`, the trailing spacer), `DefaultScrollPosition` (with `AutoScroll` on, the first layout pass sticks to the end anyway because the engine starts following; with it off the view opens at the natural top, and consumers call `JumpToBottom()` after seeding to open at the end), `ScrollMargin`, `ScrollToMessageAsync`/start-direction button, and IntersectionObserver visibility tracking (`CurrentAnchorId`/`VisibleMessageIds`). These are chat-app affordances with no consumer in this repo yet; the parity doc's open questions on `last-anchor` and the visibility-subscriber pattern stay open.
+- New in WPF, not in the web contract: `NewMessageCount` (read-only DP), the unseen-messages count accumulated while disengaged, driving the JumpToLatest badge; the web scroll button is edge-driven (`data-active` from `ScrollableEnd`) and count-free. Chosen because the WPF part doubles as the new-message notifier (see a11y below).
+- The JumpToLatest button appears only while disengaged with unseen content (`Visibility` toggled by the control); the web button is visible-but-inert (`tabindex="-1"` + `inert`) whenever the edge state disables it. WPF has no `inert` equivalent, and per APG a control that cannot do anything should not be in the accessibility tree at all: `Collapsed` is the honest native mapping.
+
+### A11y (APG/native-WPF tiebreaks over the web contract)
+
+- `role="log"` + `aria-relevant="additions"`: `AutomationProperties.LiveSetting = Polite` set in the constructor, plus `RaiseNotificationEvent` ("N new messages", `CurrentThenMostRecent`) raised only when messages arrive while disengaged (Toast precedent, including the Win10-1709+/no-AT fallback note). A following reader is watching the transcript move; announcing every appended row would be noise the web's own docs warn about (`aria-busy` seam).
+- The web Viewport's `role="region"` + `aria-label="Messages"` + `tabindex="0"`: the inner `ScrollViewer` is natively focusable and keyboard-scrollable; consumers set `AutomationProperties.Name` on the control (the demo page does). No custom keyboard handling was added, matching the web family's zero custom key handlers; WPF `ScrollViewer` increments differ from browser-native scrollable-div increments, accepted per the open question.
+- Items: the web applies no ARIA role to rows; the WPF `ItemsControl`'s default `ContentPresenter` containers likewise surface no interactive control type, so the AT contract stays minimal without extra suppression work.

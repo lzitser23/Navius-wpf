@@ -84,3 +84,45 @@ The Blazor `DataGridContext<TItem>` pipeline (global filter → single-column so
 - `DataGridColumn<TItem>.FilterFn` and `Accessor` are `Func<>` delegates; porting the "stringified, case-insensitive Contains" default filter and the mixed-type `ValueComparer` (nulls first, same-type `IComparable`, else culture-insensitive string compare) needs an explicit WPF equivalent (custom `IComparer`/predicate on the `ICollectionView`).
 - `PageSize <= 0` is treated as "show all rows on one page" (`PageRows` returns all rows unsliced, `PageCount` returns 1): this special case needs an explicit decision in the WPF pager.
 - No indication in this family's code of how column reordering, resizing, or multi-column sort would work (not implemented): needs a product decision for WPF if desired, since WPF `DataGrid` supports these natively and parity direction (match Blazor's absence, or add them) is unclear.
+
+## WPF implementation notes
+
+Tier A, as planned: `NaviusDataGrid : System.Windows.Controls.DataGrid` (`Controls/DataGrid/NaviusDataGrid.cs`) plus a re-template dictionary (`Themes/DataGrid.xaml`). The native grid already supplies the full grid surface (its own `DataGridAutomationPeer` with `AutomationControlType.DataGrid`, `ICollectionView`-backed filter/sort, native row/column virtualization, native `SelectedItems`/`SelectionMode`, native `DataGridColumn.Visibility`), so this pass is a re-template plus a thin state surface, not a state-engine port.
+
+### What was built
+
+- `NaviusDataGrid` derived control with constructor defaults: `EnableRowVirtualization = true`, `EnableColumnVirtualization = true`, `AutoGenerateColumns = false`, `HeadersVisibility = Column`, `GridLinesVisibility = None`, `CanUserAddRows = false`, `CanUserDeleteRows = false`, `SelectionMode = Extended`.
+- `GlobalFilter` dependency property (`string?`), plus a `FilterFn` override hook and a `RowKeySelector` (see below).
+- A read-only `SortDescriptionsSnapshot` convenience wrapper over the native `Items.SortDescriptions` (the web's single-column `DataGridSort`, surfaced as the native multi-descriptor collection WPF actually maintains). Sorting, selection, and column-visibility otherwise ride entirely on the native surface (`DataGrid.Sorting` / `Items.SortDescriptions`, `SelectedItems`, `DataGridColumn.Visibility`), which the brief deemed sufficient, so no custom wrappers were added there.
+- `Themes/DataGrid.xaml`: a re-template via `ColumnHeaderStyle` / `CellStyle` / `RowStyle` / `RowHeaderStyle` (collapsed) and grid-level setters, leaving the native structural `ControlTemplate` intact (the low-risk, idiomatic way to reskin the native grid). One-ink brand: `Navius.Muted` header fill with a `Navius.Border` bottom hairline, `Navius.Card` row surface with a 1px `Navius.Border` bottom separator per row (a `Border` in a minimal `DataGridRow` template, so there are horizontal hairlines only, no vertical column separators), 10,8 cell padding, no shadows (no `Effect` anywhere).
+- Gallery page (`apps/Navius.Wpf.Gallery/Pages/DataGridPage.xaml(.cs)`): a filterable/sortable demo (`DataGridDemo`) with a `TextBox` bound to `GlobalFilter`, plus a real 10,000-row demo (`DataGrid10kDemo`) generated in code-behind with virtualization left on, the milestone's perf gate. Navigation is intentionally NOT wired into `MainWindow` (owned by another workstream).
+
+### Pagination: deliberately NOT reimplemented
+
+The web's derived pipeline is global filter, then single-column sort, then pagination. WPF's native `DataGrid` has no built-in pager widget, and this task is scoped as "re-template plus a thin state surface", not a full state-engine port. Pagination is therefore recorded as an explicit, deliberate delta, not an oversight: filtering and sorting map onto the native `ICollectionView`, but the paging slice is out of scope for this pass. Consequently the open question above about `PageSize <= 0` ("show all rows on one page") is resolved as N/A for this pass: with no pager, all filtered/sorted rows are shown and the virtualized viewport handles scale.
+
+### GlobalFilter default predicate and FilterFn override
+
+When `GlobalFilter` is non-empty, a predicate is attached to `CollectionViewSource.GetDefaultView(ItemsSource).Filter`; empty/null clears it (`view.Filter = null`). The default predicate (`NaviusDataGrid.DefaultFilterMatch`, public/static so it is directly unit-testable) mirrors the web's stringified global filter: case-insensitive `Contains` against the `ToString()` of every public, readable, non-indexer instance property on the row. Reflection is cached per type (`ConcurrentDictionary<Type, PropertyInfo[]>`) so a filter keystroke never re-reflects. `FilterFn` (`Func<object, string, bool>?`) is an optional per-instance override, the web's per-column `FilterFn` collapsed to a single grid-level hook (the realistic amount of state surface worth adding). The filter re-applies whenever `GlobalFilter`, `FilterFn`, or `ItemsSource` changes. Note this simplifies the web's mixed-type `ValueComparer`: sort comparison is left to the native `ICollectionView`, and the filter is pure stringified Contains.
+
+### RowKeySelector
+
+`RowKeySelector` (`Func<object, object>?`) mirrors the web's `RowKey`. `GetRowKey(row)` returns `RowKeySelector?.Invoke(row) ?? row`, i.e. it falls back to the row object as its own key when unset, matching the web's fallback for selection identity.
+
+### SelectionMode default: Extended
+
+The default is the native `DataGridSelectionMode.Extended` (also WPF's own native default), set explicitly in the constructor so it is pinned by a test. Extended is the closest parity to the web's set-based, multi-key row selection; `Single` would not represent a multi-row selection set. No new enum was invented; the native `System.Windows.Controls.DataGridSelectionMode` is exposed as-is.
+
+### Sort-glyph re-template
+
+The default `DataGridColumnHeader` sort arrow is replaced by a small triangle `Path` (`Navius.MutedForeground` fill) inside a modest `DataGridColumnHeader` `ControlTemplate` override, shown only when the column is sorted. It is drawn pointing down for `Descending` and vertically flipped for `Ascending` (`Style.Triggers` on `DataGridColumnHeader.SortDirection`), consistent with the brand's one-ink minimalism. The header keeps its native click-to-sort behavior; only the glyph and chrome are restyled.
+
+### Selection = Accent fill
+
+Selection paints a full-row accent: the `DataGridRow` template's `Border` switches to `Navius.Accent` on `IsSelected`, and the `DataGridCell` background is transparent so the row accent shows through the whole row. Cell foreground flips to `Navius.AccentForeground` via a `DataTrigger` bound to the ancestor `DataGridRow.IsSelected` (cell-level `IsSelected` is separate under Extended selection, so binding to the row is what yields a full-row highlight).
+
+### Virtualization guarantee and how it is tested
+
+Native `EnableRowVirtualization`/`EnableColumnVirtualization` default to true and are also set explicitly in the constructor; the style additionally pins `VirtualizingPanel.IsVirtualizing = true` and `VirtualizingPanel.VirtualizationMode = Recycling` as belt-and-suspenders. The perf-guard test (`StyleApplication_PreservesVirtualization`) constructs a real `new NaviusDataGrid()`, loads `Themes/DataGrid.xaml` via the `pack://application:,,,/Navius.Wpf.Primitives;component/Themes/DataGrid.xaml` mechanism, finds the `Style` keyed to `typeof(NaviusDataGrid)`, assigns it to the instance's `.Style` (which runs the setters without a live visual tree or `.Show()`), then asserts `EnableRowVirtualization`, `EnableColumnVirtualization`, `VirtualizingPanel.IsVirtualizing`, and `VirtualizingPanel.VirtualizationMode == Recycling`. Because it exercises the real shipped control and the real shipped dictionary, it would catch a future regression that disabled virtualization in either the constructor or the style.
+
+DataGrid test count for this family: 23 (`tests/Navius.Wpf.Tests/DataGridTests.cs`), all green.

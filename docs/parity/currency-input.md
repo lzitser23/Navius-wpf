@@ -63,3 +63,47 @@ Derive from `System.Windows.Controls.TextBox`, since the component is fundamenta
 - The code's own doc comment flags two documented deviations from a full ICU/`Intl.NumberFormat` formatter: grouping is fixed at 3 digits (`NumberFormatInfo.CurrencyGroupSizes` is not walked) and negative values render as `NegativeSign + positive` rather than following `CurrencyNegativePattern`'s parenthesized forms. Should the WPF port intentionally preserve these simplifications for behavioral parity with the Blazor version, or use this as an opportunity to implement full `CurrencyGroupSizes`/`CurrencyNegativePattern` support since WPF has no equivalent "keep it JS-interop-simple" constraint?
 - `MaskedSelection` interop assumes single-cursor (collapsed) selection semantics implicitly via `dom.SelectionEnd`; should the WPF port explicitly define behavior for a non-collapsed selection (text highlighted, then a digit typed) or treat that as out of scope/identical to native TextBox replace-selection behavior?
 - Should `Invalid` (currently purely a presentational passthrough to `data-invalid`) map to WPF's `Validation.HasError`/`ErrorTemplate` infrastructure, or stay as a simple bound bool with no built-in validation semantics, matching the Blazor component exactly?
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/CurrencyInput/CurrencyEngine.cs` (pure parse/format
+core), `NaviusCurrencyInput.cs` (Tier A, TextBox-derived), `Themes/CurrencyInput.xaml`,
+`tests/Navius.Wpf.Tests/CurrencyInputTests.cs`,
+`apps/Navius.Wpf.Gallery/Pages/CurrencyInputPage.xaml(.cs)`.
+
+**Engine port**: `CurrencyEngine` ported essentially unchanged (it was already pure
+`System.Globalization` C#), made `public` for direct test access. The caret-stability algorithm
+(`CountDigitsBefore`/`CaretForDigits`, digit-count anchoring) is preserved exactly and covered by
+engine tests plus a control-level regrouping test (insert a digit mid-string, the display regroups
+from `$1,234` to `$12,934`, the caret lands after the typed digit, not on the moved comma).
+
+**ICU simplifications (first open question resolved)**: preserved deliberately for behavioral
+parity with the Blazor version: grouping stays fixed at three digits (`CurrencyGroupSizes` not
+walked) and negatives render as `NegativeSign + positive` (never `CurrencyNegativePattern`'s
+parenthesised forms). Engine tests pin both deviations.
+
+**Selection semantics (second open question resolved)**: defined explicitly: the caret anchor is
+the selection END, collapsed, matching the web bridge's implicit `dom.SelectionEnd` single-cursor
+assumption. Typing over a highlighted range therefore behaves like native TextBox
+replace-selection followed by one reformat.
+
+**Invalid (third open question resolved)**: stays a simple presentational bool consumed by a
+template trigger (Destructive border), matching the Blazor component exactly; no
+`Validation.HasError`/`ErrorTemplate` wiring.
+
+**JS bridge collapse**: as the strategy predicted, the `MaskedSelection` two-phase
+(`OnInputAsync` then `OnAfterRenderAsync`) approach collapsed into one synchronous
+`OnTextChanged` handler (read text + selection, parse, reformat, re-land caret) plus an
+`OnLostFocus` override for the blur commit (`CommitValue`: clamp to `Minimum`/`Maximum`, pad the
+fraction to `MinFractionDigits`).
+
+**Mapping notes**: `Min`/`Max` became `Minimum`/`Maximum` (WPF range-control convention;
+NumberField precedent). `Value` is a two-way `decimal?` DP with a routed `ValueChanged` event that
+fires on live parses and on blur clamps, mirroring the contract's dual firing. `data-negative`
+maps to a read-only `IsNegative` DP (skin hook, deliberately untinted in the one-ink theme);
+`data-empty` is derivable (`Value is null`); `inputmode="decimal"` has no WPF analog (no virtual
+keyboard hint API) and was dropped. `Culture` defaults to `CultureInfo.CurrentCulture`; `Currency`
+overrides the symbol via `CurrencyEngine.SymbolFor`. No custom AutomationPeer:
+`TextBoxAutomationPeer` covers the bare-native-input contract. Tests pin formats with hand-built
+`NumberFormatInfo` instances and `CultureInfo.InvariantCulture` so they are immune to ICU/NLS
+cultural-data drift.

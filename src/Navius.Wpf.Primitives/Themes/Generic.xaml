@@ -41,6 +41,20 @@
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Field.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Fieldset.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Form.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Calendar.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/DatePicker.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/DateRangePicker.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/DateInput.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/TimeInput.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/TimePicker.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/MaskedInput.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/CurrencyInput.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/TagInput.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/FileUpload.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Tree.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Sortable.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/DataGrid.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/MessageScroller.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

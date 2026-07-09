@@ -1,0 +1,43 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.TreePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls.Tree;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); this page merges it directly. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Tree.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <ScrollViewer Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="640">
+            <TextBlock Text="Tree" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Navius.Foreground}" />
+            <TextBlock Margin="0,4,0,24" MaxWidth="560"
+                       Text="The WAI-ARIA APG tree, deriving TreeView for virtualization + native UIA, with the contract's multi-select (Ctrl/Shift ranges, Ctrl+A, Shift+Space span), ltr/rtl expand arrows, the &quot;*&quot; expand-siblings shortcut and typeahead layered on top."
+                       Foreground="{DynamicResource Navius.MutedForeground}"
+                       TextWrapping="Wrap" />
+
+            <TextBlock Text="Single-select, multi-select via Ctrl/Shift, a disabled node (Plantain)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+            <navius:NaviusTree x:Name="Demo"
+                                AutomationProperties.AutomationId="TreeDemo"
+                                SelectionMode="Multiple"
+                                Height="220" HorizontalAlignment="Stretch"
+                                SelectedValuesChanged="OnDemoSelectionChanged" />
+            <TextBlock x:Name="SelectionSummary"
+                       AutomationProperties.AutomationId="TreeDemoSelection"
+                       Text="Selection: (none)"
+                       Foreground="{DynamicResource Navius.MutedForeground}"
+                       Margin="0,4,0,24" />
+
+            <TextBlock Text="10,000-node demo (virtualized: 100 groups x 99 children + 100 parents)"
+                       Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+            <navius:NaviusTree x:Name="Demo10k"
+                                AutomationProperties.AutomationId="Tree10kDemo"
+                                SelectionMode="Single"
+                                Height="320" HorizontalAlignment="Stretch" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

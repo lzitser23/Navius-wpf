@@ -115,3 +115,67 @@ Tier B: custom lookless control, composed from Tier-A pieces. The popup/trigger 
 - Depends on the Popover family's WPF shape (not in this batch) for trigger/popup/positioning; this strategy is provisional until that family is ported.
 - WPF `ListBox` typeahead (`TextSearch.TextPath`) may not reproduce the exact reset-on-no-match buffer behavior in `Typeahead()`; decide whether to keep native `ListBox` search or override with the custom buffer logic.
 - Confirm whether `NaviusTimePickerOption`'s `Highlighted` vs `Selected` distinction (roving-active vs. actually-chosen unit value) needs two separate visual states in the WPF `ItemContainerStyle`, since native `ListBox` conflates focus and selection more tightly than this component does.
+
+## WPF implementation notes
+
+Implemented at `src/Navius.Wpf.Primitives/Controls/TimePicker/NaviusTimePicker.cs`, composed from
+`NaviusTimeInput` (this batch) and `NaviusAnchoredPopup`/`OverlayStack` (the named substrate,
+read-only). Theme: `Themes/TimePicker.xaml`, which also merges `Themes/DateInput.xaml` and
+`Themes/TimeInput.xaml` for the embedded `PART_Input`. Tests:
+`tests/Navius.Wpf.Tests/TimePickerTests.cs`. Gallery: `Pages/TimePickerPage.xaml(.cs)`.
+
+Resolved open questions:
+
+- **Popover family shape.** No separate `NaviusPopover` control exists in this repo; the WPF port
+  uses `NaviusAnchoredPopup` (a bare `Popup` + `PlacementMath`) directly as its own popup substrate
+  plus `OverlayStack`/`OverlaySession` for outside-click/Escape dismissal and input-root
+  registration, the same combination `NaviusSelectBase` already established for its own
+  trigger+popup shell. `NaviusTimePicker.OpenCore`/`CloseCore` mirror
+  `NaviusSelectBase.EngageOverlay`/`CloseOverlay` line for line (push a session, register the popup
+  content + trigger + embedded input as input roots, close on `Closed`).
+- **Native `ListBox` typeahead kept, not overridden.** Each column sets
+  `TextSearch.TextPath="Text"` and relies on native `ListBox` digit-typeahead rather than
+  reimplementing the contract's custom buffer-reset `Typeahead()` logic. Native `TextSearch`'s reset
+  timing (a short pause resets the buffer) differs slightly from the web's per-keystroke buffer, but
+  functionally satisfies "type digits, jump to the matching option" and avoids a second custom
+  keyboard handler duplicating what `ListBox` already provides for free.
+- **`Highlighted` vs `Selected` collapsed to one state.** Native `ListBox`/`ListBoxItem` conflates
+  roving-focus and selection more tightly than the web's two-state model (`IsSelected` in the theme
+  `ItemContainerStyle` in `Themes/TimePicker.xaml` drives both the "this is the current unit value"
+  and "this is where arrow-key navigation currently sits" visuals). This is a deliberate
+  simplification, not an oversight: WPF's native `ListBox` keyboard model already moves selection
+  *and* the roving position together on Arrow keys (unlike the web's separate
+  highlight-then-commit-on-Enter/Space two-step), so a single visual state matches the platform's
+  actual interaction model rather than fighting it.
+
+Contract deltas:
+
+- **No separate `NaviusTimePickerColumn`/`NaviusTimePickerOption` CLR types.** Each column is a
+  themed native `ListBox` (`PART_HourColumn`/`PART_MinuteColumn`/`PART_SecondColumn`/
+  `PART_DayPeriodColumn` in `Themes/TimePicker.xaml`), populated from the pure
+  `TimePickerOptionBuilder` (`Controls/Internal/TimePickerOptions.cs`) rather than a hand-rolled
+  option/column pair; `ListBoxItem` (styled via `Navius.TimePickerColumnItem`) stands in for
+  `NaviusTimePickerOption`. Roving tabindex, `role="listbox"`/`role="option"`-equivalent automation
+  (`ListBoxAutomationPeer`/`ListBoxItemAutomationPeer` -> `SelectionPattern`), and keyboard
+  Up/Down/Home/End all come from `ListBox` natively instead of being reimplemented.
+- **`ValuePattern` on the root**, as directed by this batch's brief: `NaviusTimePickerAutomationPeer`
+  implements `IValueProvider` (formatted `HH:mm:ss`) alongside `IExpandCollapseProvider` over
+  `IsOpen`, reusing the exact `NaviusSelectAutomationPeer` shape (`AutomationControlType.ComboBox` +
+  read-only `IValueProvider` + `IExpandCollapseProvider`) since both controls are
+  trigger+popup+value shells.
+- **No `Disabled` DP; native `IsEnabled` used directly**, matching `NaviusSelectBase`/
+  `NaviusNumberField`'s established precedent in this repo rather than the contract's separate
+  `Disabled bool` parameter.
+- **Root collapses the contract's five-part shell (Root/Input/Trigger/Content/Column) onto one
+  templated `Control`**, the same choice `NaviusSelectBase` made for its own
+  Trigger+Popup+Item parts: `PART_Input` (a real `NaviusTimeInput`, bound two-way to
+  `Value`/`Granularity`/`HourCycle`/`MinuteStep`/`SecondStep`/`Culture` via
+  `RelativeSource TemplatedParent` bindings in the theme XAML) means typed edits and popup
+  selections share one value without any extra C# glue.
+
+Segment-engine coverage: `TimePickerOptionBuilder` (`Controls/Internal/TimePickerOptions.cs`) has 5
+`[Fact]` tests in `TimePickerTests.cs` (12h/24h hour ranges, minute step including the step<=0
+coercion, AM/PM options). 10 `[StaFact]` tests cover the control (column visibility per
+granularity/hour-cycle, Value-to-column sync, column-selection-to-Value composition in both hour
+cycles, minute-step-driven option rebuilding, the embedded `PART_Input` wiring) and the automation
+peer's ComboBox type, ValuePattern, and ExpandCollapse Expand/Collapse round-trip.

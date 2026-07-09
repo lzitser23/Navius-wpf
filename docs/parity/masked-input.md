@@ -67,3 +67,51 @@ Tier B (custom lookless control). Native WPF `TextBox` has no masking concept, s
 - `Preprocessors`/`Postprocessors` are typed as `Func<ElementState, ElementState>` using the Blazor `ElementState` record; unresolved whether the WPF port reuses this exact delegate contract or reworks it around WPF-idiomatic patterns (dependency properties, `INotifyPropertyChanged`, etc.).
 - No explicit paste-handling or IME/composition-event logic appears in the code (only a single `@oninput` handler); it's unclear from the Blazor source whether IME composition characters are expected to funnel through the same single input path, and WPF's `TextCompositionManager`/`PreviewTextInput` model differs enough that this needs an explicit decision.
 - `DefaultValue` vs `Value` precedence is implicit in `OnParametersSet`'s control flow (DefaultValue only used on first init; Value only re-synced when `_valueSet && Value != _display`) rather than documented as an explicit contract; the exact precedence when both change after initial render should be confirmed before porting.
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/MaskedInput/MaskEngine.cs` (the pure masking core:
+`ElementState`, `MaskTokenKind`, `MaskToken`, `MaskEngine`), `NaviusMaskedInput.cs` (Tier B,
+TextBox-derived), `Themes/MaskedInput.xaml`, `tests/Navius.Wpf.Tests/MaskedInputTests.cs`,
+`apps/Navius.Wpf.Gallery/Pages/MaskedInputPage.xaml(.cs)`.
+
+**Engine port**: `MaskEngine.Parse/Format/Walk` ported essentially unchanged from the Blazor
+source (it was already pure C#), made `public` instead of `internal` so the test assembly can
+drive it directly; the tests cover the caret-stability guarantee exhaustively (mid-string
+insertion, Backspace over a fixed literal, mid-string digit deletion, paste with garbage,
+non-collapsed selection ends mapped independently, placeholder skeletons, clamping).
+
+**JS bridge collapse (second open question resolved)**: the entire
+`CreateMaskedSelectionAsync`/`GetStateAsync`/`SetStateAsync` async round-trip and the
+`_hasPending`/`OnAfterRenderAsync` pending-caret-reapply dance disappeared, as predicted. The whole
+pipeline runs synchronously inside one `OnTextChanged` override: read `Text` +
+`SelectionStart`/`SelectionLength`, run preprocessors -> `MaskEngine.Format` -> postprocessors,
+write `Text` + `Select(...)` back under a reentrancy guard. Typing, Backspace/Delete, and paste
+all funnel through this single hook, mirroring the web's single `@oninput` design.
+
+**Selection semantics (paste/IME open question resolved)**: the control collapses the proposed
+selection to its END before masking, matching the web bridge's implicit single-cursor assumption.
+After a keystroke the selection is already collapsed there; a programmatic `SelectedText`
+insertion leaves the inserted text selected with End right after it, so End is the only anchor
+that is correct for both. IME composition arrives through the same `OnTextChanged` path (WPF
+raises it after composition updates), so no separate `TextCompositionManager` handling was added.
+
+**Overwrite (first open question resolved)**: carried forward as the same stub, accepted for
+parity and not wired to insertion, exactly like the web source's own comment. Implementing real
+type-over here would diverge from the Blazor behavior this port mirrors.
+
+**Pre/postprocessors (third open question resolved)**: kept the exact
+`Func<ElementState, ElementState>` delegate contract; `ElementState` was flattened from a tuple
+`Selection` to `SelectionStart`/`SelectionEnd` ints (the tuple bought nothing in WPF).
+
+**DefaultValue precedence (fifth open question resolved)**: `DefaultValue` seeds the control once
+on `Loaded` and only when `Value` is unset; after that only `Value` is honored, mirroring the
+web's "DefaultValue only used on first init" control flow.
+
+**Mapping notes**: `Value` two-way DP kept in sync with `Text` (they are the same masked display
+string); `UnmaskedValue` is a read-only DP plus a CLR `UnmaskedValueChanged` event. `data-empty` is
+derivable (`UnmaskedValue.Length == 0`); `data-invalid` maps to a plain presentational `Invalid`
+bool consumed by a template trigger (Destructive border), NOT to `Validation.HasError`, matching
+the source's "validation is the consumer's concern". `data-disabled` is native `IsEnabled`.
+No custom AutomationPeer: `TextBoxAutomationPeer` (ControlType.Edit + ValuePattern) already covers
+the bare-native-input contract.

@@ -1,0 +1,40 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.FileUploadPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fileupload="clr-namespace:Navius.Wpf.Primitives.Controls.FileUpload;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); this page merges it directly. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/FileUpload.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock Text="FileUpload" FontSize="18" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" Margin="0,0,0,12" />
+
+        <TextBlock Text="Multiple, any type (drop files or browse)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <fileupload:NaviusFileUpload AutomationProperties.AutomationId="FileUploadDemo"
+                                     Width="360" HorizontalAlignment="Left"
+                                     Multiple="True" Margin="0,0,0,16" />
+
+        <TextBlock Text="Images only, max 3 files, 5 MB each" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <fileupload:NaviusFileUpload AutomationProperties.AutomationId="ImageFileUpload"
+                                     Width="360" HorizontalAlignment="Left"
+                                     Accept="image/*" Multiple="True" MaxFiles="3" MaxSize="5242880"
+                                     DropzoneText="Drop up to 3 images here (5 MB each)" Margin="0,0,0,16" />
+
+        <TextBlock Text="Single file" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <fileupload:NaviusFileUpload AutomationProperties.AutomationId="SingleFileUpload"
+                                     Width="360" HorizontalAlignment="Left"
+                                     DropzoneText="Drop one file here" Margin="0,0,0,16" />
+
+        <TextBlock Text="Disabled" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <fileupload:NaviusFileUpload AutomationProperties.AutomationId="DisabledFileUpload"
+                                     Width="360" HorizontalAlignment="Left"
+                                     IsEnabled="False" />
+    </StackPanel>
+</UserControl>

@@ -69,6 +69,20 @@
                         <ListBoxItem Content="PasswordToggleField" />
                         <ListBoxItem Content="Field" />
                         <ListBoxItem Content="Form" />
+                        <ListBoxItem Content="Calendar" />
+                        <ListBoxItem Content="DatePicker" />
+                        <ListBoxItem Content="DateRangePicker" />
+                        <ListBoxItem Content="DateInput" />
+                        <ListBoxItem Content="TimeInput" />
+                        <ListBoxItem Content="TimePicker" />
+                        <ListBoxItem Content="MaskedInput" />
+                        <ListBoxItem Content="CurrencyInput" />
+                        <ListBoxItem Content="TagInput" />
+                        <ListBoxItem Content="FileUpload" />
+                        <ListBoxItem Content="Tree" />
+                        <ListBoxItem Content="Sortable" />
+                        <ListBoxItem Content="DataGrid" />
+                        <ListBoxItem Content="MessageScroller" />
                     </ListBox>
                 </StackPanel>
             </DockPanel>

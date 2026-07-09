@@ -166,3 +166,57 @@ Tier B (custom lookless control). No single native WPF control maps to this fami
 - Duplicate detection (`Same`, matched by `Name` + `Size` only, not content hash) silently drops the duplicate: it's excluded from both `accepted` and `rejected`, so it's not reflected in the status message or either event. Decide whether the WPF port should keep this "silent no-op" behavior or surface a rejection reason for duplicates.
 - `AcceptMatch` supports only extension (`.ext`), MIME wildcard (`type/*`), and exact MIME string match, evaluated in C# against `IBrowserFile.Name`/`ContentType` (browser-supplied). WPF's `OpenFileDialog.Filter` has different syntax and is evaluated by the OS dialog itself; the port needs to decide whether filtering happens once (dialog filter only) or twice (dialog filter + the same post-hoc `AcceptMatch`-style check, to keep `OnRejected`/`WrongType` reporting working for drag-dropped files that bypass the dialog).
 - `MaxSize` is a per-file byte ceiling only; there is no aggregate/total-size limit anywhere in this family's code. Confirm no aggregate cap is expected in the WPF port.
+
+## WPF implementation notes
+
+Delivered: `src/Navius.Wpf.Primitives/Controls/FileUpload/FileUploadEngine.cs` (pure validation
+core + `FileEntry` + `NaviusFileRejection`/`FileRejectionReason` + `FileSelectionResult`),
+`IFilePicker.cs` (the injectable dialog seam + `OpenFileDialogPicker`), `NaviusFileUpload.cs`
+(Tier B lookless control + UIA peer), `Themes/FileUpload.xaml`,
+`tests/Navius.Wpf.Tests/FileUploadTests.cs`,
+`apps/Navius.Wpf.Gallery/Pages/FileUploadPage.xaml(.cs)`.
+
+**Architecture (first open question resolved)**: redesigned from scratch as the strategy
+predicted. The hidden-`<input type=file>` relay is gone: the OS dialog sits behind an injectable
+`IFilePicker` (defaulting to `Microsoft.Win32.OpenFileDialog`), so unit tests stub it and never
+open a real dialog; the JS drag/drop relay became native WPF `AllowDrop` + `DragOver` validation +
+`Drop` extracting `DataFormats.FileDrop` paths on the dropzone. `IBrowserFile` became the
+`FileEntry` record (`Path`, `Name`, `Size`, `ContentType`), exposed as
+`IReadOnlyList<FileEntry> Files`.
+
+**Preserved web quirks (second/third/fourth open questions resolved, all kept for parity, pinned
+by engine tests)**: non-multiple replaces the single file only when something was accepted (an
+all-rejected selection leaves it in place); `MaxFiles` is enforced only when `Multiple` (a
+non-multiple upload is implicitly capped at 1 via the replace rule, no `TooMany` path); duplicates
+(same name + size, no content hash) are silently dropped, appearing in neither the accepted nor
+the rejected lists nor the status line. The check order (accept -> size -> count -> duplicate) is
+also pinned.
+
+**Accept filter (fifth open question resolved)**: filtering happens twice, deliberately. The
+dialog filter is built from the accept string's extension entries (MIME entries widen it to All
+files, since `OpenFileDialog.Filter` cannot express them), and the engine's post-hoc
+`AcceptMatch` (extension / `type/*` wildcard / exact MIME, the web's exact semantics) runs on
+EVERY selection, dialog or drop, so `OnRejected`/`WrongType` reporting works uniformly. Since no
+browser supplies MIME types, `FileEntry.FromPath` infers `ContentType` from a small built-in
+extension map (`ContentTypeFor`); unknown extensions still match extension accept entries.
+
+**MaxSize (sixth open question resolved)**: per-file ceiling only, no aggregate cap, matching the
+web.
+
+**Parts folding + a11y**: 10 parts fold into one Control with four template parts. The dropzone is
+a real restyled Button, so the contract's `role="button"` + tab stop + Enter/Space-open-dialog all
+come free from the native peer (Space and Enter both activate a focused WPF Button); its
+accessible name is the `DropzoneText` DP (the contract's AriaLabel default, same wording).
+Item rows are a DataTemplate over `FileEntry` (name + `SizeText` via the ported `FormatSize` +
+delete button named "Remove {name}"). The hidden `role=status` live region became a visible muted
+status TextBlock with `AutomationProperties.LiveSetting=Polite` (the Combobox status precedent),
+carrying the ported `BuildStatus` wordings ("2 files added. 1 file rejected", "Removed x",
+"Cleared all files"). The root peer exposes the selected file names over a read-only ValuePattern
+(the Select-peer / M3-gate precedent). The `role=list`/`listitem` mapping onto ListBox peers was
+not taken (an ItemsControl carries the rows); noted as the one a11y simplification.
+
+**Dropped parameters**: `Directory` (`webkitdirectory`; `OpenFileDialog` cannot pick folders,
+would need `OpenFolderDialog` and different semantics), `Capture` (mobile camera hint, no desktop
+analog), and `Name` (HTML form field name) have no WPF equivalent and were omitted rather than
+stubbed. `data-dragging`/`data-invalid` map to read-only `IsDragging`/`Invalid` DPs consumed by
+template triggers; `Disabled` is native `IsEnabled`.
