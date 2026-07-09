@@ -1,6 +1,8 @@
 using System.Reflection;
 using System.Windows;
 using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using Navius.Wpf.Primitives.Controls.PasswordToggleField;
@@ -166,6 +168,66 @@ public class PasswordToggleFieldTests
 
         Assert.Equal(1, raised);
         Assert.Equal("x", field.GetPassword());
+    }
+
+    // --- security: masked plaintext must never reach the UI Automation surface ------------------
+
+    [StaFact]
+    public void HiddenState_DoesNotLeakPlaintextThroughTheAutomationSurface()
+    {
+        // The single highest-severity check for this family: while hidden (the default, masked
+        // state) an assistive-technology / UIA client must not be able to read the actual
+        // password characters. The value lives only inside the native PasswordBox (never a
+        // bindable/gettable DP on the Navius controls), and the plaintext TextBox is cleared and
+        // collapsed while hidden.
+        const string secret = "hunter2-super-secret";
+        var (_, _, _, passwordBox, textBox) = CreateField();
+        passwordBox.Password = secret;
+
+        // The plaintext overlay is empty and out of the tree while hidden.
+        Assert.Equal(string.Empty, textBox.Text);
+        Assert.Equal(Visibility.Collapsed, textBox.Visibility);
+
+        // The authoritative PasswordBox marks itself IsPassword (UIA masks it) and does not
+        // surface the plaintext through the Value pattern.
+        var peer = (PasswordBoxAutomationPeer)UIElementAutomationPeer.CreatePeerForElement(passwordBox);
+        Assert.True(peer.IsPassword());
+        if (peer.GetPattern(PatternInterface.Value) is IValueProvider valueProvider)
+        {
+            Assert.NotEqual(secret, valueProvider.Value);
+        }
+
+        // The plaintext TextBox peer (if reachable) also does not carry the secret while hidden.
+        var textPeer = (TextBoxAutomationPeer)UIElementAutomationPeer.CreatePeerForElement(textBox);
+        if (textPeer.GetPattern(PatternInterface.Value) is IValueProvider textValueProvider)
+        {
+            Assert.NotEqual(secret, textValueProvider.Value);
+        }
+    }
+
+    [StaFact]
+    public void RevealThenHide_LeavesNoPlaintextInTheAutomationSurface()
+    {
+        const string secret = "corner-case-secret";
+        var (field, _, _, passwordBox, textBox) = CreateField();
+        passwordBox.Password = secret;
+
+        field.Visible = true;   // reveal: plaintext is intentionally in the TextBox now
+        Assert.Equal(secret, textBox.Text);
+
+        field.Visible = false;  // hide again
+
+        // After hiding, no plaintext lingers in the collapsed TextBox or its automation surface.
+        Assert.Equal(string.Empty, textBox.Text);
+        Assert.Equal(Visibility.Collapsed, textBox.Visibility);
+        var textPeer = (TextBoxAutomationPeer)UIElementAutomationPeer.CreatePeerForElement(textBox);
+        if (textPeer.GetPattern(PatternInterface.Value) is IValueProvider textValueProvider)
+        {
+            Assert.NotEqual(secret, textValueProvider.Value);
+        }
+
+        // And the value survived the round trip inside the secure PasswordBox.
+        Assert.Equal(secret, passwordBox.Password);
     }
 
     [StaFact]
