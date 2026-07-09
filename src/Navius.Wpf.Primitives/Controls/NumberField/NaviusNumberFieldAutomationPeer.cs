@@ -34,6 +34,14 @@ public class NaviusNumberFieldAutomationPeer : FrameworkElementAutomationPeer, I
 
     protected override string GetClassNameCore() => nameof(NaviusNumberField);
 
+    // Without this override the RangeValue pattern is never surfaced to UIA clients:
+    // FrameworkElementAutomationPeer.GetPattern returns null for RangeValue even though this peer
+    // implements IRangeValueProvider, so a screen reader would see Spinner but no
+    // aria-valuenow/min/max. Route the pattern back to this provider (the same GetPattern override
+    // NaviusFileUpload's peer uses for its ValuePattern).
+    public override object? GetPattern(PatternInterface patternInterface) =>
+        patternInterface == PatternInterface.RangeValue ? this : base.GetPattern(patternInterface);
+
     public void SetValue(double value)
     {
         if (IsReadOnly)

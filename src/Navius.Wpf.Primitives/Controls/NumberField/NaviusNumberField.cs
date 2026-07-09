@@ -162,7 +162,7 @@ public class NaviusNumberField : Control
         if (_input is not null)
         {
             _input.LostFocus -= OnInputLostFocus;
-            _input.KeyDown -= OnInputKeyDown;
+            _input.PreviewKeyDown -= OnInputKeyDown;
         }
 
         if (_increment is not null)
@@ -185,7 +185,12 @@ public class NaviusNumberField : Control
         {
             _input.Text = Display;
             _input.LostFocus += OnInputLostFocus;
-            _input.KeyDown += OnInputKeyDown;
+            // PreviewKeyDown (tunnel), NOT KeyDown: the hosted TextBox's own class handlers mark
+            // Home/End/PageUp/PageDown/Arrow as Handled during the bubbling KeyDown phase (caret
+            // navigation), which would swallow every stepping key before a bubbling instance
+            // handler could run. Handling in the tunneling phase fires first, before the TextBox
+            // consumes the key (the same reason NaviusOneTimePasswordField uses PreviewKeyDown).
+            _input.PreviewKeyDown += OnInputKeyDown;
         }
 
         // tabindex="-1": the increment/decrement buttons never receive tab focus, the input is
