@@ -69,3 +69,21 @@ Deltas, per the open questions:
 - The web code comment's claim that the legend is "automatically associated as the fieldset's label" is unverified in the web markup (no wiring exists there). The WPF port does not copy that gap: `NaviusFieldset` actively wires `AutomationProperties.LabeledBy` to its first `NaviusFieldsetLegend` descendant, so the accessible-name association is real, per the APG-over-suspicious-contract-lines tiebreak. Root automation peer reports `Group`.
 - `FieldsetContext` (single `Disabled` property) needs no WPF equivalent at all: IsEnabled inheritance is the context.
 - Disabled visuals: the default templates set Opacity 0.5 on the fieldset and switch the legend to the muted foreground, giving the port the defined disabled look the web left entirely to consumer CSS.
+
+## M6 audit (2026-07-09)
+
+Adversarial parity audit of the WPF port against this doc. Default assumption: every claim FALSE until proven at file:line.
+
+CONFIRMED (fixed): none. Every implemented claim in the port notes was verified true.
+
+Verified accurate (no change):
+
+- `Disabled` drives `IsEnabled` (NaviusFieldset.cs constructor line 43 and `OnDisabledChanged` line 60); the disabled-cascade to descendant `NaviusField`s is WPF's native `IsEnabled` visual-tree coercion (effective enabled is the AND of local and every ancestor, i.e. the OR of disabled flags, matching the web's `Disabled || Fieldset.Disabled`), covered by `FieldTests.FieldsetDisabled_CascadesIntoField_ViaIsEnabledInheritance`.
+- The legend accessible-name association is real, not the web's unverified comment: `WireLegend` (line 69) actively sets `AutomationProperties.SetLabeledBy(this, legend)` to the first `NaviusFieldsetLegend` descendant (line 74).
+- Root automation peer reports `AutomationControlType.Group` (NaviusFieldsetAutomationPeer line 85).
+- `GroupBox` is genuinely not used (plain lookless ContentControl root); Fieldset.xaml disabled visuals (Opacity 0.5 on the fieldset, MutedForeground on the legend) are present (Fieldset.xaml lines 19-21, 38-40) and use only DynamicResource against existing tokens.
+
+PLAUSIBLE (unfixed, not a proven defect):
+
+- The `AutomationProperties.LabeledBy` legend wiring and the `Group` automation peer have no unit-test coverage (fieldset tests, which live in FieldTests.cs, only cover the disabled cascade). The code is correct by inspection but the accessible-name association was not verified with a UIA client or screen reader.
+- `WireLegend` only runs on `OnContentChanged`; a legend added or swapped after initial content assignment (rare in XAML, possible in code) would not re-wire LabeledBy. Not exercised by any current usage.

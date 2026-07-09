@@ -85,3 +85,21 @@ Deltas and resolved open questions:
 - `NaviusFormSubmit` derives from Button (Tier A) and auto-wires its `Command` to the ancestor form's `SubmitCommand` on Loaded, unless the consumer already bound one. Enter-to-submit inside an input is available the native WPF way: set `IsDefault=True` on the `NaviusFormSubmit` in a dialog/window scope (open question resolved: emulate via IsDefault, no implicit behavior added).
 - `FormData` (name-to-value snapshot) is not ported: WPF consumers read values from their own bound view models, which is strictly more capable than a string snapshot; nothing in the ported submit flow needs it.
 - `OnClearErrors` stays argument-less (`ClearErrorsRequested` RoutedEventArgs), no richer signature was needed.
+
+## M6 audit (2026-07-09)
+
+Adversarial parity audit of the WPF port against this doc. Default assumption: every claim FALSE until proven at file:line.
+
+CONFIRMED (fixed): none. Every implemented claim in the port notes was verified true.
+
+Verified accurate (no change):
+
+- Submit flow in `HandleSubmit` (NaviusForm.cs lines 96-123): clears each field's `ExternalErrors`, raises `ClearErrorsRequested`, re-applies the `Errors` dictionary (`ApplyErrors`), `Reveal()`s every descendant field, then raises the bubbling `Submitted` event only when no field is invalid, otherwise focuses the first invalid field via `FocusRegisteredControl`. Covered by FormTests (`Submit_FiresWhenEveryFieldIsValid`, `Submit_DoesNotFire_WhenAFieldIsInvalid`, `Submit_RevealsOnSubmitFields_EvenWhenTheyWereNeverTouched`, `InjectedErrors_MakeTheFieldInvalid_AfterSubmitReveal`, `ClearErrorsRequested_FiresOnSubmitAttempt_AndOnReset`).
+- `Errors` injection keyed by `FieldName`, clearing non-matching fields (`ApplyErrors` lines 125-133); covered by `ErrorsByName_InjectsIntoMatchingField_AndClearsFromNonMatching`.
+- `PreventDefault` genuinely dropped (only referenced in a comment), `FormData` not ported, `focusElementById` JS fallback gone (focus goes through a direct element reference), `OnClearErrors` stays argument-less as the `ClearErrorsRequested` RoutedEvent.
+- Field discovery is a logical-tree walk on each orchestration point (no ported registry). Form.xaml uses only DynamicResource; its tokens (Navius.Primary, Navius.PrimaryForeground, Navius.Radius.Control) exist in both token dictionaries.
+
+PLAUSIBLE (unfixed, not a proven defect):
+
+- `NaviusFormSubmit` auto-wires its `Command` to the ancestor form's `SubmitCommand` inside a `Loaded` handler (NaviusFormSubmit.cs lines 22-37). This is the one place in the batch that relies on `Loaded`, which does not fire for elements outside a live window, so it is untested by the headless suite (FormTests drives `form.SubmitCommand.Execute(null)` directly). It should work in a real window, but the auto-wire path itself is unverified.
+- `SubmitCommand`'s `CanExecuteChanged` is a no-op and `CanExecute` always returns true, so the doc-strategy idea of the submit button tracking `FormContext.IsValid` via `CanExecute`/`IsEnabled` is not implemented (submit is always enabled and validity is enforced inside the command). Consistent with the port notes' explicit-command model, but the strategy-section expectation was not met and was not flagged as a delta.

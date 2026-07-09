@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using Navius.Wpf.Primitives.Controls.Internal;
@@ -249,6 +250,16 @@ public class NaviusField : ContentControl
         if (label is not null)
         {
             label.Target = RegisteredControl as FrameworkElement;
+        }
+
+        // Associate the description with the control the way the web contract's
+        // aria-describedby does: AutomationProperties.HelpText is WPF's UIA analog for
+        // supplementary descriptive text surfaced to a screen reader when the control is
+        // focused (there is no AutomationProperties.DescribedBy in WPF, unlike UWP/WinUI).
+        var description = LogicalTreeWalker.Descendants<NaviusFieldDescription>(this).FirstOrDefault();
+        if (RegisteredControl is not null && description?.Content is string descriptionText)
+        {
+            AutomationProperties.SetHelpText(RegisteredControl, descriptionText);
         }
 
         PushErrorsToDescendants();
