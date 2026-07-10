@@ -18,3 +18,6 @@ jobs:
       - run: dotnet build Navius.Wpf.sln -c Release
       - run: dotnet test tests/Navius.Wpf.Tests -c Release --no-build
       - run: dotnet test tests/Navius.Wpf.E2E -c Release --no-build
+      - run: dotnet test tests/Navius.Wpf.Motion.Tests -c Release --no-build
+      - run: dotnet test tests/Navius.Wpf.Charts.Tests -c Release --no-build
+      - run: dotnet test tests/Navius.Wpf.Cli.Tests -c Release --no-build
