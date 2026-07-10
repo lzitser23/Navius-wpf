@@ -70,10 +70,15 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
     ExpandCollapseState IExpandCollapseProvider.ExpandCollapseState =>
         _owner.IsPanelOpen ? ExpandCollapseState.Expanded : ExpandCollapseState.Collapsed;
 
-    void IInvokeProvider.Invoke() => RaiseClick();
+    void IInvokeProvider.Invoke()
+    {
+        ThrowIfDisabled();
+        RaiseClick();
+    }
 
     void IExpandCollapseProvider.Expand()
     {
+        ThrowIfDisabled();
         if (!_owner.IsPanelOpen)
         {
             RaiseClick();
@@ -82,9 +87,21 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
 
     void IExpandCollapseProvider.Collapse()
     {
+        ThrowIfDisabled();
         if (_owner.IsPanelOpen)
         {
             RaiseClick();
+        }
+    }
+
+    // A disabled trigger must not be operable through UIA, matching NaviusNumberFieldAutomationPeer,
+    // which throws when its owner is not enabled. IsEnabledCore already reports the disabled state
+    // (inherited IsEnabled), but the pattern providers must also refuse to act on it.
+    private void ThrowIfDisabled()
+    {
+        if (!_owner.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
         }
     }
 

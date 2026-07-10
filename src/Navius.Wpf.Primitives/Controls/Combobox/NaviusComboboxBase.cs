@@ -713,10 +713,32 @@ internal sealed class NaviusComboboxAutomationPeer : FrameworkElementAutomationP
 
     protected override string GetClassNameCore() => nameof(NaviusComboboxBase);
 
+    // The Disabled DP is the combobox's semantic disabled state (the keyboard/mouse handlers all
+    // gate on it); it is independent of the inherited IsEnabled that FrameworkElementAutomationPeer
+    // reflects by default. Fold it in so a Disabled combobox reports IsEnabled == false to UIA.
+    protected override bool IsEnabledCore() => base.IsEnabledCore() && !_owner.Disabled;
+
     public override object? GetPattern(PatternInterface patternInterface) =>
         patternInterface == PatternInterface.ExpandCollapse ? this : base.GetPattern(patternInterface);
 
-    public void Expand() => _owner.IsOpen = true;
+    public void Expand()
+    {
+        ThrowIfDisabled();
+        _owner.IsOpen = true;
+    }
 
-    public void Collapse() => _owner.IsOpen = false;
+    public void Collapse()
+    {
+        ThrowIfDisabled();
+        _owner.IsOpen = false;
+    }
+
+    // A disabled combobox must not be operable through UIA, matching NaviusNumberFieldAutomationPeer.
+    private void ThrowIfDisabled()
+    {
+        if (_owner.Disabled || !_owner.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
+        }
+    }
 }

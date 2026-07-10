@@ -300,4 +300,30 @@ public class AccordionTests : IDisposable
         Assert.Equal("a", root.Value);
         Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
     }
+
+    [StaFact]
+    public void DisabledTriggerAutomationPeer_InvokeAndExpand_ThrowAndDoNotToggle()
+    {
+        // Regression (DEFECT 2): a disabled trigger must not be operable through UIA. The
+        // Invoke and ExpandCollapse providers previously raised Click regardless of IsEnabled,
+        // so a screen reader could expand a disabled accordion section.
+        var (root, a, _, _) = CreateAccordion();
+        a.Item.IsEnabled = false;
+        Assert.False(a.Trigger.IsEnabled);
+
+        var peer = (AutomationPeer)a.Trigger.GetType()
+            .GetMethod("OnCreateAutomationPeer", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(a.Trigger, null)!;
+
+        Assert.False(peer.IsEnabled());
+
+        var invoke = (IInvokeProvider)peer.GetPattern(PatternInterface.Invoke)!;
+        var expandCollapse = (IExpandCollapseProvider)peer.GetPattern(PatternInterface.ExpandCollapse)!;
+
+        Assert.Throws<ElementNotEnabledException>(() => invoke.Invoke());
+        Assert.Throws<ElementNotEnabledException>(() => expandCollapse.Expand());
+
+        Assert.Null(root.Value);
+        Assert.False(a.Trigger.IsPanelOpen);
+    }
 }
