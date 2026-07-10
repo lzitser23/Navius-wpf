@@ -50,6 +50,11 @@ public abstract class NaviusOverlaySurfaceBase : ContentControl
     private NaviusOverlayLayer? _layer;
     private OverlaySession? _session;
 
+    // Bumped on every Engage. An exit-completion callback captures the generation live when its
+    // close began and no-ops if a newer Engage has since happened, so a reopen inside the 150ms
+    // exit fade is not torn down by the previous close's stale unmount callback.
+    private int _engageGeneration;
+
     static NaviusOverlaySurfaceBase()
     {
         CommandManager.RegisterClassCommandBinding(
@@ -200,6 +205,7 @@ public abstract class NaviusOverlaySurfaceBase : ContentControl
         }
 
         _layer = layer;
+        _engageGeneration++;
 
         if (!string.IsNullOrEmpty(Title))
         {
@@ -251,9 +257,18 @@ public abstract class NaviusOverlaySurfaceBase : ContentControl
 
         var layer = _layer;
         _layer = null;
+        var closingGeneration = _engageGeneration;
 
         PlayExitAnimation(() =>
         {
+            // If a newer Engage happened while this exit fade was running (the surface was reopened
+            // inside the exit window), a fresh session now owns the UI: this stale callback must not
+            // remove the surface, collapse it, or reset IsOpen, which would tear down the new session.
+            if (_engageGeneration != closingGeneration)
+            {
+                return;
+            }
+
             layer?.RemoveSurface(this);
             Visibility = Visibility.Collapsed;
             Closed?.Invoke(this, EventArgs.Empty);

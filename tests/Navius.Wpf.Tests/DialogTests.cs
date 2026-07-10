@@ -164,6 +164,62 @@ public class DialogTests
         }
     }
 
+    [StaFact]
+    public void Reopen_DuringExitAnimation_KeepsTheNewSessionOpen()
+    {
+        // Regression (DEFECT 1): opening again within the 150ms exit fade must NOT let the OLD
+        // exit-completion callback tear down the freshly engaged session. Previously the stale
+        // callback ran layer.RemoveSurface / Visibility = Collapsed / IsOpen = false
+        // unconditionally once the exit animation elapsed, collapsing the reopened dialog.
+        var dialog = new NaviusDialog { Title = "Rapid reopen" };
+        var layer = new NaviusOverlayLayer();
+        layer.Children.Add(dialog);
+        var window = new Window
+        {
+            Content = layer,
+            Width = 60,
+            Height = 60,
+            ShowActivated = false,
+            WindowStyle = WindowStyle.None,
+            ShowInTaskbar = false,
+        };
+
+        try
+        {
+            window.Show();
+            window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+
+            dialog.Open();
+            Assert.True(dialog.IsOpen);
+
+            // Close then immediately reopen, inside the exit animation window.
+            dialog.Close();
+            dialog.Open();
+
+            Assert.True(dialog.IsOpen);
+
+            // Pump past the exit (and enter) durations so any pending animation callbacks fire.
+            PumpFor(window.Dispatcher, TimeSpan.FromMilliseconds(350));
+
+            Assert.True(dialog.IsOpen);
+            Assert.Equal(Visibility.Visible, dialog.Visibility);
+            Assert.NotNull(OverlayStack.GetFor(window).Topmost);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private static void PumpFor(Dispatcher dispatcher, TimeSpan duration)
+    {
+        var frame = new DispatcherFrame();
+        var timer = new DispatcherTimer(duration, DispatcherPriority.Background, (_, _) => frame.Continue = false, dispatcher);
+        timer.Start();
+        Dispatcher.PushFrame(frame);
+        timer.Stop();
+    }
+
     /// <summary>Exposes the protected *_Effective hooks so tests can assert on them without widening the public API.</summary>
     private sealed class ProbeDialog : NaviusDialog
     {
