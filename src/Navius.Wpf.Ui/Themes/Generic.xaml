@@ -1,0 +1,29 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- One dictionary per styled item; merged here so Generic.xaml stays conflict-free. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Card.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Alert.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Badge.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Skeleton.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Spinner.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Kbd.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Typography.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Empty.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Item.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Table.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Timeline.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Breadcrumb.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Pagination.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/InputGroup.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/ButtonGroup.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/SplitButton.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Sidebar.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Resizable.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Carousel.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/CommandPalette.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

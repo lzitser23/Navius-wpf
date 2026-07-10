@@ -1,0 +1,40 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.TooltipPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); pages that use
+                     NaviusTooltip merge this dictionary themselves. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Tooltip.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top">
+        <TextBlock Text="Tooltip"
+                   FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" />
+        <TextBlock Margin="0,4,0,24"
+                   MaxWidth="420"
+                   Text="Hover or Tab to a trigger to open its tooltip. Escape or pressing the trigger closes it; leaving the trigger closes it after a short grace window."
+                   Foreground="{DynamicResource Navius.MutedForeground}"
+                   TextWrapping="Wrap" />
+
+        <StackPanel Orientation="Horizontal">
+            <navius:NaviusTooltip Margin="0,0,24,0" TooltipContent="Saves the current document" Side="Top">
+                <navius:NaviusButton AutomationProperties.AutomationId="TooltipTriggerTop" Content="Hover: top" />
+            </navius:NaviusTooltip>
+
+            <navius:NaviusTooltip Margin="0,0,24,0" TooltipContent="Opens the settings panel" Side="Bottom">
+                <navius:NaviusButton AutomationProperties.AutomationId="TooltipTriggerBottom" Content="Hover: bottom" />
+            </navius:NaviusTooltip>
+
+            <navius:NaviusTooltip TooltipContent="Focus this button with Tab to open instantly" Side="Right">
+                <navius:NaviusButton AutomationProperties.AutomationId="TooltipTriggerFocus" Content="Tab to focus" />
+            </navius:NaviusTooltip>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

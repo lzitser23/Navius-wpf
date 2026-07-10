@@ -1,0 +1,26 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.ComboboxPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); pages that use the Combobox
+                     family merge this dictionary themselves, same as MenuPage does for Menu.xaml. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Combobox.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="24" HorizontalAlignment="Left">
+        <TextBlock Text="Combobox" FontSize="18" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" Margin="0,0,0,12" />
+        <TextBlock Margin="0,0,0,16" MaxWidth="460"
+                   Text="An editable, filterable multi-select combobox (virtual focus: real keyboard focus never leaves the text input; the highlighted row is a data pointer). Type to filter, arrow keys to move the highlight, Enter to commit, Backspace on an empty filter to drop the last chip, and each chip's X removes that value by identity."
+                   Foreground="{DynamicResource Navius.MutedForeground}" TextWrapping="Wrap" />
+
+        <!-- The generic NaviusCombobox<T> is constructed in code-behind and dropped in here; a
+             generic control is simpler to instantiate that way than via x:TypeArguments in XAML. -->
+        <ContentControl x:Name="DemoHost" Width="340" HorizontalAlignment="Left" />
+    </StackPanel>
+</UserControl>

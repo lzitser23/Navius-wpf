@@ -1,0 +1,102 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dateInput="clr-namespace:Navius.Wpf.Primitives.Controls.DateInput">
+
+    <!--
+        Not merged into Generic.xaml (out of scope for this wave; same precedent as
+        Themes/Select.xaml / Themes/Menu.xaml). Pages that use DateInput (and TimeInput/TimePicker,
+        which reuse NaviusFieldSegment's style below) merge this dictionary themselves:
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/DateInput.xaml" />
+
+        Hard rule for this wave: hairline borders, no DropShadowEffect, one-ink brand.
+    -->
+
+    <!-- Shared spinbutton cell (contract's NaviusFieldSegment; also used by NaviusTimeInput/NaviusTimePicker). -->
+    <Style TargetType="{x:Type dateInput:NaviusFieldSegment}">
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="Padding" Value="2,1" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type dateInput:NaviusFieldSegment}">
+                    <Border
+                        x:Name="Bd"
+                        Background="Transparent"
+                        CornerRadius="{DynamicResource Navius.Radius.Small}"
+                        Padding="{TemplateBinding Padding}">
+                        <TextBlock
+                            x:Name="Text"
+                            Text="{TemplateBinding DisplayText}"
+                            Foreground="{TemplateBinding Foreground}"
+                            TextAlignment="Center"
+                            MinWidth="14" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- data-placeholder -->
+                        <Trigger Property="IsPlaceholder" Value="True">
+                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Navius.MutedForeground}" />
+                        </Trigger>
+                        <!-- data-focused (per-segment) -->
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Navius.AccentForeground}" />
+                        </Trigger>
+                        <!-- data-disabled / data-readonly -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                        <Trigger Property="IsSegmentReadOnly" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="Transparent" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Root (contract's NaviusDateInput, role="group"): hairline border + PART_Segments row built in code. -->
+    <Style TargetType="{x:Type dateInput:NaviusDateInput}">
+        <Setter Property="Background" Value="{DynamicResource Navius.Background}" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Navius.Input}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type dateInput:NaviusDateInput}">
+                    <Border
+                        x:Name="Group"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource Navius.Radius.Control}"
+                        Padding="8,6">
+                        <!-- FlowDirection pinned to LeftToRight: segment order (year/month/day) must not
+                             mirror under rtl; only the arrow-key navigation direction does, handled by
+                             NaviusDateInput.OnSegmentPreviewKeyDown reading the control's own (ambient)
+                             FlowDirection. Without this pin, WPF would auto-mirror this StackPanel's
+                             child render order along with the rest of the control under FlowDirection=
+                             RightToLeft. See docs/adr/0006-rtl-dpi-hardening.md. -->
+                        <StackPanel x:Name="PART_Segments" Orientation="Horizontal" FlowDirection="LeftToRight" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Group" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                        </Trigger>
+                        <!-- data-invalid -->
+                        <Trigger Property="IsInvalidState" Value="True">
+                            <Setter TargetName="Group" Property="BorderBrush" Value="{DynamicResource Navius.Destructive}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

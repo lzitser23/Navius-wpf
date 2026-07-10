@@ -1,0 +1,197 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.UiCompositePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             xmlns:menu="clr-namespace:Navius.Wpf.Primitives.Controls.Menus;assembly=Navius.Wpf.Primitives"
+             xmlns:overlaySurface="clr-namespace:Navius.Wpf.Primitives.Controls.OverlaySurface;assembly=Navius.Wpf.Primitives"
+             xmlns:breadcrumb="clr-namespace:Navius.Wpf.Ui.Breadcrumb;assembly=Navius.Wpf.Ui"
+             xmlns:pagination="clr-namespace:Navius.Wpf.Ui.Pagination;assembly=Navius.Wpf.Ui"
+             xmlns:inputGroup="clr-namespace:Navius.Wpf.Ui.InputGroup;assembly=Navius.Wpf.Ui"
+             xmlns:buttonGroup="clr-namespace:Navius.Wpf.Ui.ButtonGroup;assembly=Navius.Wpf.Ui"
+             xmlns:splitButton="clr-namespace:Navius.Wpf.Ui.SplitButton;assembly=Navius.Wpf.Ui"
+             xmlns:sidebar="clr-namespace:Navius.Wpf.Ui.Sidebar;assembly=Navius.Wpf.Ui"
+             xmlns:resizable="clr-namespace:Navius.Wpf.Ui.Resizable;assembly=Navius.Wpf.Ui"
+             xmlns:carousel="clr-namespace:Navius.Wpf.Ui.Carousel;assembly=Navius.Wpf.Ui"
+             xmlns:commandPalette="clr-namespace:Navius.Wpf.Ui.CommandPalette;assembly=Navius.Wpf.Ui"
+             AutomationProperties.AutomationId="UiCompositeDemo"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (the orchestrator owns that file); this page
+                     merges every composite item's own dictionary itself, same precedent as every
+                     other out-of-Generic page in this gallery (DialogPage, MenuPage, ...). -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/Breadcrumb.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/Pagination.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/InputGroup.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/ButtonGroup.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/SplitButton.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/Sidebar.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/Resizable.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/Carousel.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/CommandPalette.xaml" />
+                <!-- SplitButton's dropdown content and the command palette trigger both need the
+                     Menu family's own item chrome. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Menu.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar: the flagship. Sections + items, active-item Accent indicator, built-in
+             collapse-to-icons toggle at the bottom, ArrowUp/Down/Home/End roving focus. -->
+        <sidebar:NaviusSidebar
+            x:Name="Sidebar"
+            Grid.Column="0"
+            AutomationProperties.AutomationId="CompositeSidebar">
+            <sidebar:NaviusSidebar.HeaderContent>
+                <TextBlock Text="Acme Inc" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Navius.Foreground}" />
+            </sidebar:NaviusSidebar.HeaderContent>
+            <sidebar:NaviusSidebar.FooterContent>
+                <TextBlock Text="lior@acme.inc" FontSize="12" Foreground="{DynamicResource Navius.MutedForeground}" />
+            </sidebar:NaviusSidebar.FooterContent>
+
+            <sidebar:NaviusSidebarSection Header="General">
+                <sidebar:NaviusSidebarItem Content="Dashboard" IsActive="True" AutomationProperties.AutomationId="SidebarDashboardItem">
+                    <sidebar:NaviusSidebarItem.Icon>
+                        <Path Data="M0,0 L8,0 L8,8 L0,8 Z" Fill="{DynamicResource Navius.MutedForeground}" Stretch="Uniform" />
+                    </sidebar:NaviusSidebarItem.Icon>
+                </sidebar:NaviusSidebarItem>
+                <sidebar:NaviusSidebarItem Content="Analytics">
+                    <sidebar:NaviusSidebarItem.Icon>
+                        <Path Data="M0,8 L0,4 L3,4 L3,8 M5,8 L5,0 L8,0 L8,8" Stroke="{DynamicResource Navius.MutedForeground}" StrokeThickness="1" Stretch="Uniform" />
+                    </sidebar:NaviusSidebarItem.Icon>
+                </sidebar:NaviusSidebarItem>
+            </sidebar:NaviusSidebarSection>
+
+            <sidebar:NaviusSidebarSection Header="Admin">
+                <sidebar:NaviusSidebarItem Content="Users">
+                    <sidebar:NaviusSidebarItem.Icon>
+                        <Ellipse Width="8" Height="8" Stroke="{DynamicResource Navius.MutedForeground}" StrokeThickness="1" />
+                    </sidebar:NaviusSidebarItem.Icon>
+                </sidebar:NaviusSidebarItem>
+                <sidebar:NaviusSidebarItem Content="Settings">
+                    <sidebar:NaviusSidebarItem.Icon>
+                        <Ellipse Width="8" Height="8" Stroke="{DynamicResource Navius.MutedForeground}" StrokeThickness="1" StrokeDashArray="1,1" />
+                    </sidebar:NaviusSidebarItem.Icon>
+                </sidebar:NaviusSidebarItem>
+            </sidebar:NaviusSidebarSection>
+        </sidebar:NaviusSidebar>
+
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="32" MaxWidth="720" HorizontalAlignment="Left">
+                <TextBlock Text="UI Composite" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Navius.Foreground}" />
+                <TextBlock Margin="0,4,0,28" MaxWidth="560"
+                           Text="The nine composite-tier items: Breadcrumb, Pagination, InputGroup, ButtonGroup, SplitButton, Sidebar (left rail), Resizable, Carousel, and CommandPalette (press Ctrl+K)."
+                           Foreground="{DynamicResource Navius.MutedForeground}" TextWrapping="Wrap" />
+
+                <!-- Breadcrumb -->
+                <TextBlock Text="Breadcrumb" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource Navius.Foreground}" />
+                <breadcrumb:NaviusBreadcrumb Margin="0,0,0,28" AutomationProperties.AutomationId="CompositeBreadcrumb">
+                    <breadcrumb:NaviusBreadcrumbItem Content="Home" />
+                    <breadcrumb:NaviusBreadcrumbSeparator />
+                    <breadcrumb:NaviusBreadcrumbItem Content="Projects" />
+                    <breadcrumb:NaviusBreadcrumbSeparator />
+                    <breadcrumb:NaviusBreadcrumbItem Content="Navius.Wpf" IsCurrentPage="True" />
+                </breadcrumb:NaviusBreadcrumb>
+
+                <!-- Pagination -->
+                <TextBlock Text="Pagination" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource Navius.Foreground}" />
+                <pagination:NaviusPagination
+                    x:Name="Pagination"
+                    Margin="0,0,0,28"
+                    HorizontalAlignment="Left"
+                    TotalPages="12"
+                    CurrentPage="4"
+                    AutomationProperties.AutomationId="CompositePagination" />
+
+                <!-- InputGroup -->
+                <TextBlock Text="Input Group" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource Navius.Foreground}" />
+                <inputGroup:NaviusInputGroup
+                    Width="280"
+                    Margin="0,0,0,28"
+                    HorizontalAlignment="Left"
+                    Placeholder="0.00"
+                    AutomationProperties.AutomationId="CompositeInputGroup">
+                    <inputGroup:NaviusInputGroup.LeadingContent>
+                        <TextBlock Text="$" FontWeight="SemiBold" />
+                    </inputGroup:NaviusInputGroup.LeadingContent>
+                    <inputGroup:NaviusInputGroup.TrailingContent>
+                        <TextBlock Text="USD" FontSize="12" />
+                    </inputGroup:NaviusInputGroup.TrailingContent>
+                </inputGroup:NaviusInputGroup>
+
+                <!-- ButtonGroup -->
+                <TextBlock Text="Button Group" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource Navius.Foreground}" />
+                <buttonGroup:NaviusButtonGroup Margin="0,0,0,28" HorizontalAlignment="Left" AutomationProperties.AutomationId="CompositeButtonGroup">
+                    <buttonGroup:NaviusButtonGroupItem Content="Cut" />
+                    <buttonGroup:NaviusButtonGroupItem Content="Copy" />
+                    <buttonGroup:NaviusButtonGroupItem Content="Paste" />
+                </buttonGroup:NaviusButtonGroup>
+
+                <!-- SplitButton -->
+                <TextBlock Text="Split Button" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource Navius.Foreground}" />
+                <splitButton:NaviusSplitButton
+                    Margin="0,0,0,28"
+                    HorizontalAlignment="Left"
+                    Content="Deploy"
+                    Click="OnDeployClick"
+                    AutomationProperties.AutomationId="CompositeSplitButton">
+                    <splitButton:NaviusSplitButton.Menu>
+                        <menu:NaviusMenuPopup MinWidth="200">
+                            <menu:NaviusMenuItem Header="Deploy to staging" Select="OnDeployMenuItemClick" />
+                            <menu:NaviusMenuItem Header="Deploy to production" Select="OnDeployMenuItemClick" />
+                            <navius:NaviusSeparator Margin="4,4" />
+                            <menu:NaviusMenuItem Header="Cancel deployment" Select="OnDeployMenuItemClick" />
+                        </menu:NaviusMenuPopup>
+                    </splitButton:NaviusSplitButton.Menu>
+                </splitButton:NaviusSplitButton>
+                <TextBlock x:Name="DeployStatus" Margin="0,-20,0,28" FontSize="12" Foreground="{DynamicResource Navius.MutedForeground}" />
+
+                <!-- Resizable -->
+                <TextBlock Text="Resizable" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource Navius.Foreground}" />
+                <resizable:NaviusResizablePanelGroup Height="140" Margin="0,0,0,28" AutomationProperties.AutomationId="CompositeResizable">
+                    <Border Background="{DynamicResource Navius.Card}" BorderBrush="{DynamicResource Navius.Border}" BorderThickness="1" resizable:NaviusResizablePanelGroup.MinSize="80">
+                        <TextBlock Text="Pane A" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Navius.MutedForeground}" />
+                    </Border>
+                    <Border Background="{DynamicResource Navius.Card}" BorderBrush="{DynamicResource Navius.Border}" BorderThickness="1" resizable:NaviusResizablePanelGroup.MinSize="80" resizable:NaviusResizablePanelGroup.InitialSize="2">
+                        <TextBlock Text="Pane B" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Navius.MutedForeground}" />
+                    </Border>
+                    <Border Background="{DynamicResource Navius.Card}" BorderBrush="{DynamicResource Navius.Border}" BorderThickness="1" resizable:NaviusResizablePanelGroup.MinSize="80">
+                        <TextBlock Text="Pane C" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Navius.MutedForeground}" />
+                    </Border>
+                </resizable:NaviusResizablePanelGroup>
+
+                <!-- Carousel -->
+                <TextBlock Text="Carousel" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource Navius.Foreground}" />
+                <carousel:NaviusCarousel Height="160" Margin="0,0,0,28" AutomationProperties.AutomationId="CompositeCarousel">
+                    <Border Background="{DynamicResource Navius.Muted}"><TextBlock Text="Slide 1" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Navius.Foreground}" FontSize="16" /></Border>
+                    <Border Background="{DynamicResource Navius.Muted}"><TextBlock Text="Slide 2" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Navius.Foreground}" FontSize="16" /></Border>
+                    <Border Background="{DynamicResource Navius.Muted}"><TextBlock Text="Slide 3" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Navius.Foreground}" FontSize="16" /></Border>
+                </carousel:NaviusCarousel>
+
+                <!-- CommandPalette -->
+                <TextBlock Text="Command Palette" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource Navius.Foreground}" />
+                <navius:NaviusButton
+                    HorizontalAlignment="Left"
+                    Content="Open command palette (Ctrl+K)"
+                    Click="OnOpenPaletteClick"
+                    AutomationProperties.AutomationId="OpenCommandPaletteButton" />
+                <TextBlock x:Name="PaletteStatus" Margin="0,8,0,0" FontSize="12" Foreground="{DynamicResource Navius.MutedForeground}" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <overlaySurface:NaviusOverlayLayer x:Name="OverlayLayer" Grid.Column="0" Grid.ColumnSpan="2">
+            <commandPalette:NaviusCommandPalette
+                x:Name="CommandPalette"
+                Title="Command palette"
+                Placeholder="Type a command or search..."
+                AutomationProperties.AutomationId="CompositeCommandPalette" />
+        </overlaySurface:NaviusOverlayLayer>
+    </Grid>
+</UserControl>

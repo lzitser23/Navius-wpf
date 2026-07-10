@@ -1,0 +1,80 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.SortablePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sortable="clr-namespace:Navius.Wpf.Primitives.Controls.Sortable;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); this page merges it directly. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Sortable.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="360">
+        <TextBlock Text="Sortable"
+                   FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" />
+        <TextBlock Margin="0,4,0,20"
+                   Text="Reorder a list by dragging a row, or focus a row and press Space to grab it, arrow keys to move, Space to drop, Escape to cancel."
+                   Foreground="{DynamicResource Navius.MutedForeground}"
+                   TextWrapping="Wrap" />
+
+        <TextBlock Text="Whole-row drag (one row disabled, skipped by keyboard)"
+                   Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,8" />
+        <sortable:NaviusSortable AutomationProperties.AutomationId="SortableDemo"
+                                 x:Name="PrimaryList"
+                                 Margin="0,0,0,24">
+            <sortable:NaviusSortableItem Value="draft" Label="Draft the proposal">
+                <TextBlock Text="Draft the proposal" Foreground="{DynamicResource Navius.CardForeground}" />
+            </sortable:NaviusSortableItem>
+            <sortable:NaviusSortableItem Value="review" Label="Review with the team">
+                <TextBlock Text="Review with the team" Foreground="{DynamicResource Navius.CardForeground}" />
+            </sortable:NaviusSortableItem>
+            <sortable:NaviusSortableItem Value="locked" Label="Sign-off (locked)" Disabled="True">
+                <TextBlock Text="Sign-off (locked)" Foreground="{DynamicResource Navius.MutedForeground}" />
+            </sortable:NaviusSortableItem>
+            <sortable:NaviusSortableItem Value="publish" Label="Publish">
+                <TextBlock Text="Publish" Foreground="{DynamicResource Navius.CardForeground}" />
+            </sortable:NaviusSortableItem>
+            <sortable:NaviusSortableItem Value="announce" Label="Announce">
+                <TextBlock Text="Announce" Foreground="{DynamicResource Navius.CardForeground}" />
+            </sortable:NaviusSortableItem>
+        </sortable:NaviusSortable>
+
+        <TextBlock Text="Handle-scoped drag (drag only from the grip)"
+                   Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,8" />
+        <sortable:NaviusSortable AutomationProperties.AutomationId="SortableHandleDemo"
+                                 x:Name="HandleList">
+            <sortable:NaviusSortableItem Value="alpha" Label="Alpha service">
+                <StackPanel Orientation="Horizontal">
+                    <sortable:NaviusSortableItemHandle />
+                    <TextBlock Text="Alpha service" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Navius.CardForeground}" />
+                </StackPanel>
+            </sortable:NaviusSortableItem>
+            <sortable:NaviusSortableItem Value="bravo" Label="Bravo service">
+                <StackPanel Orientation="Horizontal">
+                    <sortable:NaviusSortableItemHandle />
+                    <TextBlock Text="Bravo service" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Navius.CardForeground}" />
+                </StackPanel>
+            </sortable:NaviusSortableItem>
+            <sortable:NaviusSortableItem Value="charlie" Label="Charlie service">
+                <StackPanel Orientation="Horizontal">
+                    <sortable:NaviusSortableItemHandle />
+                    <TextBlock Text="Charlie service" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Navius.CardForeground}" />
+                </StackPanel>
+            </sortable:NaviusSortableItem>
+            <sortable:NaviusSortableItem Value="delta" Label="Delta service">
+                <StackPanel Orientation="Horizontal">
+                    <sortable:NaviusSortableItemHandle />
+                    <TextBlock Text="Delta service" VerticalAlignment="Center"
+                               Foreground="{DynamicResource Navius.CardForeground}" />
+                </StackPanel>
+            </sortable:NaviusSortableItem>
+        </sortable:NaviusSortable>
+    </StackPanel>
+</UserControl>

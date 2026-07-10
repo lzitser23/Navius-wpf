@@ -1,0 +1,61 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.ToastPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             xmlns:toast="clr-namespace:Navius.Wpf.Primitives.Controls.Toast;assembly=Navius.Wpf.Primitives"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); pages that use
+                     NaviusToast/NaviusToastViewport merge this dictionary themselves. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Toast.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <StackPanel Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top" Width="360">
+            <TextBlock Text="Toast"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Navius.Foreground}" />
+            <TextBlock Margin="0,4,0,20"
+                       Text="Manager is Limit=2 here, so a third toast queues until one of the first two is dismissed or times out. F6 focuses the viewport once a toast is visible."
+                       Foreground="{DynamicResource Navius.MutedForeground}"
+                       TextWrapping="Wrap" />
+
+            <navius:NaviusButton AutomationProperties.AutomationId="ToastInfoButton"
+                                  Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                                  Content="Show info toast" Click="OnShowInfoClick" />
+            <navius:NaviusButton AutomationProperties.AutomationId="ToastSuccessButton"
+                                  Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                                  Content="Show success toast" Click="OnShowSuccessClick" />
+            <navius:NaviusButton AutomationProperties.AutomationId="ToastErrorButton"
+                                  Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                                  Content="Show error toast (High priority)" Click="OnShowErrorClick" />
+            <navius:NaviusButton AutomationProperties.AutomationId="ToastActionButton"
+                                  Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                                  Content="Show toast with Undo action" Click="OnShowActionClick" />
+            <navius:NaviusButton AutomationProperties.AutomationId="ToastPromiseButton"
+                                  Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                                  Content="Simulate async save (loading -&gt; success)" Click="OnSimulatePromiseClick" />
+            <navius:NaviusButton AutomationProperties.AutomationId="ToastQueueDemoButton"
+                                  Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                                  Content="Add 4 at once (queue demo, Limit=2)" Click="OnQueueDemoClick" />
+            <navius:NaviusButton AutomationProperties.AutomationId="ToastClearButton"
+                                  Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                                  Content="Clear all" Click="OnClearClick" />
+        </StackPanel>
+
+        <!-- Spans the whole page so the viewport's Canvas can anchor to a true window corner
+             (BottomRight here); its Background is unset so empty regions pass pointer input
+             through to the buttons above. -->
+        <toast:NaviusToastViewport x:Name="Viewport"
+                                    AutomationProperties.AutomationId="ToastViewport"
+                                    Alignment="BottomRight" />
+    </Grid>
+</UserControl>

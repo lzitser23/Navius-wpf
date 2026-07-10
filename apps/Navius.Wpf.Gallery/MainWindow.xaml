@@ -1,0 +1,101 @@
+<Window x:Class="Navius.Wpf.Gallery.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+        mc:Ignorable="d"
+        Title="Navius Gallery" Height="640" Width="960"
+        Background="{DynamicResource Navius.Background}">
+    <DockPanel>
+        <Border DockPanel.Dock="Left" Width="200"
+                BorderBrush="{DynamicResource Navius.Border}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="12">
+                <StackPanel DockPanel.Dock="Bottom">
+                    <TextBlock x:Name="ThemeLabel"
+                               AutomationProperties.AutomationId="ThemeLabel"
+                               Text="Light"
+                               Foreground="{DynamicResource Navius.MutedForeground}"
+                               Margin="4,0,0,8" />
+                    <navius:NaviusButton AutomationProperties.AutomationId="ThemeToggle"
+                                         Content="Toggle theme"
+                                         HorizontalAlignment="Stretch"
+                                         Click="OnToggleTheme" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Navius.Wpf"
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Navius.Foreground}"
+                               Margin="4,0,0,12" />
+                    <ListBox x:Name="Nav"
+                             AutomationProperties.AutomationId="Nav"
+                             SelectionChanged="OnNavChanged"
+                             Background="Transparent" BorderThickness="0"
+                             Foreground="{DynamicResource Navius.Foreground}">
+                        <ListBoxItem Content="Gate" />
+                        <ListBoxItem Content="Toggle" />
+                        <ListBoxItem Content="Checkbox" />
+                        <ListBoxItem Content="RadioGroup" />
+                        <ListBoxItem Content="Label" />
+                        <ListBoxItem Content="Slider" />
+                        <ListBoxItem Content="Progress" />
+                        <ListBoxItem Content="Separator" />
+                        <ListBoxItem Content="Positioning" />
+                        <ListBoxItem Content="Overlay" />
+                        <ListBoxItem Content="Tooltip" />
+                        <ListBoxItem Content="Popover" />
+                        <ListBoxItem Content="PreviewCard" />
+                        <ListBoxItem Content="Dialog" />
+                        <ListBoxItem Content="AlertDialog" />
+                        <ListBoxItem Content="Drawer" />
+                        <ListBoxItem Content="Menu" />
+                        <ListBoxItem Content="ContextMenu" />
+                        <ListBoxItem Content="Menubar" />
+                        <ListBoxItem Content="NavigationMenu" />
+                        <ListBoxItem Content="Toast" />
+                        <ListBoxItem Content="Select" />
+                        <ListBoxItem Content="Combobox" />
+                        <ListBoxItem Content="Autocomplete" />
+                        <ListBoxItem Content="Tabs" />
+                        <ListBoxItem Content="Accordion" />
+                        <ListBoxItem Content="Collapsible" />
+                        <ListBoxItem Content="ToggleGroup" />
+                        <ListBoxItem Content="Switch" />
+                        <ListBoxItem Content="NumberField" />
+                        <ListBoxItem Content="Rating" />
+                        <ListBoxItem Content="Meter" />
+                        <ListBoxItem Content="ScrollArea" />
+                        <ListBoxItem Content="OneTimePasswordField" />
+                        <ListBoxItem Content="PasswordToggleField" />
+                        <ListBoxItem Content="Field" />
+                        <ListBoxItem Content="Form" />
+                        <ListBoxItem Content="Calendar" />
+                        <ListBoxItem Content="DatePicker" />
+                        <ListBoxItem Content="DateRangePicker" />
+                        <ListBoxItem Content="DateInput" />
+                        <ListBoxItem Content="TimeInput" />
+                        <ListBoxItem Content="TimePicker" />
+                        <ListBoxItem Content="MaskedInput" />
+                        <ListBoxItem Content="CurrencyInput" />
+                        <ListBoxItem Content="TagInput" />
+                        <ListBoxItem Content="FileUpload" />
+                        <ListBoxItem Content="Tree" />
+                        <ListBoxItem Content="Sortable" />
+                        <ListBoxItem Content="DataGrid" />
+                        <ListBoxItem Content="MessageScroller" />
+                        <ListBoxItem Content="Avatar" />
+                        <ListBoxItem Content="AspectRatio" />
+                        <ListBoxItem Content="ColorPicker" />
+                        <ListBoxItem Content="Charts" />
+                        <ListBoxItem Content="UiDisplay" />
+                        <ListBoxItem Content="UiComposite" />
+                        <ListBoxItem Content="Toolbar" />
+                        <ListBoxItem Content="Rtl" />
+                        <ListBoxItem Content="HighContrast" />
+                    </ListBox>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+        <ContentControl x:Name="Host" Margin="8" />
+    </DockPanel>
+</Window>

@@ -1,0 +1,39 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.RatingPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); this page merges it directly. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Rating.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock Text="Rating" FontSize="18" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" Margin="0,0,0,12" />
+
+        <TextBlock Text="Unrated (Max 5)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusRating AutomationProperties.AutomationId="UnratedRating"
+                              HorizontalAlignment="Left" Margin="0,0,0,16" />
+
+        <TextBlock Text="Rated (3 of 5)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusRating AutomationProperties.AutomationId="RatedRating"
+                              HorizontalAlignment="Left" Value="3" Margin="0,0,0,16" />
+
+        <TextBlock Text="Half-steps allowed (3.5 of 5)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusRating AutomationProperties.AutomationId="HalfRating"
+                              HorizontalAlignment="Left" AllowHalf="True" Value="3.5" Margin="0,0,0,16" />
+
+        <TextBlock Text="Read-only (4 of 5)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusRating AutomationProperties.AutomationId="ReadOnlyRating"
+                              HorizontalAlignment="Left" ReadOnly="True" Value="4" Margin="0,0,0,16" />
+
+        <TextBlock Text="Disabled" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <navius:NaviusRating AutomationProperties.AutomationId="DisabledRating"
+                              HorizontalAlignment="Left" IsEnabled="False" Value="2" />
+    </StackPanel>
+</UserControl>

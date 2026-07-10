@@ -1,0 +1,75 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.OverlayPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             xmlns:overlays="clr-namespace:Navius.Wpf.Primitives.Overlays;assembly=Navius.Wpf.Primitives"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); pages that use
+                     OverlayBackdrop merge this dictionary themselves. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/OverlayBackdrop.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <StackPanel Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <TextBlock Text="Overlays"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Navius.Foreground}" />
+            <TextBlock Margin="0,4,0,24"
+                       MaxWidth="420"
+                       Text="Modal card: Escape closes it, a click outside closes it, focus is trapped inside while open and restored to this button on close."
+                       Foreground="{DynamicResource Navius.MutedForeground}"
+                       TextWrapping="Wrap" />
+            <navius:NaviusButton x:Name="OpenButton"
+                                  AutomationProperties.AutomationId="OpenOverlayButton"
+                                  HorizontalAlignment="Left"
+                                  Content="Open modal"
+                                  Click="OnOpenClick" />
+        </StackPanel>
+
+        <Grid x:Name="OverlayLayer" Visibility="Collapsed">
+            <overlays:OverlayBackdrop AutomationProperties.AutomationId="OverlayBackdrop" />
+
+            <Border x:Name="PanelRoot"
+                    AutomationProperties.AutomationId="OverlayPanel"
+                    Width="360"
+                    Padding="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource Navius.Popover}"
+                    BorderBrush="{DynamicResource Navius.Border}"
+                    BorderThickness="1"
+                    CornerRadius="{DynamicResource Navius.Radius.Card}">
+                <StackPanel>
+                    <TextBlock Text="Edit profile"
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Navius.PopoverForeground}" />
+                    <TextBlock Margin="0,4,0,16"
+                               Text="Esc, outside click, or Close all dismiss this card."
+                               Foreground="{DynamicResource Navius.MutedForeground}"
+                               TextWrapping="Wrap" />
+                    <TextBox x:Name="NameInput"
+                             AutomationProperties.AutomationId="OverlayNameInput"
+                             Margin="0,0,0,8"
+                             Text="Name" />
+                    <TextBox x:Name="EmailInput"
+                             AutomationProperties.AutomationId="OverlayEmailInput"
+                             Margin="0,0,0,16"
+                             Text="Email" />
+                    <navius:NaviusButton AutomationProperties.AutomationId="OverlayCloseButton"
+                                          HorizontalAlignment="Right"
+                                          Content="Close"
+                                          Click="OnCloseClick" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

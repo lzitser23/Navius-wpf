@@ -1,0 +1,135 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Navius.Wpf.Primitives.Controls"
+    xmlns:autocomplete="clr-namespace:Navius.Wpf.Primitives.Controls.Autocomplete">
+
+    <!--
+        Not merged into Generic.xaml (out of scope: another family owns that file, same precedent as
+        Themes/Popover.xaml). Consumers merge this dictionary themselves, e.g. in the hosting page's
+        own Resources:
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Autocomplete.xaml" />
+
+        Hairline borders, no shadows, one-ink brand (deliberately NOT the DropShadowEffect that
+        Popover.xaml uses). Exactly one Style targets the non-generic base so every closed
+        NaviusAutocomplete<T> shares this template.
+    -->
+
+    <DataTemplate x:Key="Navius.Autocomplete.DefaultRowTemplate">
+        <Border
+            x:Name="Row"
+            Padding="8,6"
+            Background="Transparent"
+            CornerRadius="{DynamicResource Navius.Radius.Small}">
+            <TextBlock
+                Foreground="{DynamicResource Navius.PopoverForeground}"
+                Text="{Binding Text}"
+                TextTrimming="CharacterEllipsis" />
+        </Border>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                <Setter TargetName="Row" Property="Background" Value="{DynamicResource Navius.Accent}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <Style TargetType="{x:Type autocomplete:NaviusAutocompleteBase}">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="MinWidth" Value="240" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type autocomplete:NaviusAutocompleteBase}">
+                    <Grid>
+                        <Border
+                            x:Name="InputBorder"
+                            Background="{DynamicResource Navius.Popover}"
+                            BorderBrush="{DynamicResource Navius.Input}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource Navius.Radius.Control}">
+                            <Grid>
+                                <TextBox
+                                    x:Name="PART_Input"
+                                    Padding="10,7"
+                                    VerticalContentAlignment="Center"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    CaretBrush="{DynamicResource Navius.Foreground}"
+                                    Foreground="{DynamicResource Navius.Foreground}"
+                                    Text="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Margin="11,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Foreground="{DynamicResource Navius.MutedForeground}"
+                                    IsHitTestVisible="False"
+                                    Text="{TemplateBinding Placeholder}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Value, RelativeSource={RelativeSource AncestorType={x:Type autocomplete:NaviusAutocompleteBase}}}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Value, RelativeSource={RelativeSource AncestorType={x:Type autocomplete:NaviusAutocompleteBase}}}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+
+                        <controls:NaviusAnchoredPopup
+                            x:Name="PART_Popup"
+                            Align="{TemplateBinding Align}"
+                            AlignOffset="{TemplateBinding AlignOffset}"
+                            Anchor="{Binding ElementName=InputBorder}"
+                            IsOpen="{TemplateBinding IsOpen}"
+                            Side="{TemplateBinding Side}"
+                            SideOffset="{TemplateBinding SideOffset}">
+                            <Border
+                                x:Name="PART_PopupContent"
+                                MinWidth="{TemplateBinding ActualWidth}"
+                                Background="{DynamicResource Navius.Popover}"
+                                BorderBrush="{DynamicResource Navius.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource Navius.Radius.Card}"
+                                Focusable="False">
+                                <Grid>
+                                    <ScrollViewer
+                                        MaxHeight="280"
+                                        Padding="4"
+                                        Focusable="False"
+                                        HorizontalScrollBarVisibility="Disabled"
+                                        VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl
+                                            x:Name="PART_List"
+                                            Focusable="False"
+                                            ItemsSource="{TemplateBinding FilteredRows}"
+                                            KeyboardNavigation.TabNavigation="None" />
+                                    </ScrollViewer>
+                                    <TextBlock
+                                        x:Name="PART_Empty"
+                                        Margin="12,10"
+                                        Foreground="{DynamicResource Navius.MutedForeground}"
+                                        Text="No results"
+                                        Visibility="Collapsed" />
+                                </Grid>
+                            </Border>
+                        </controls:NaviusAnchoredPopup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger SourceName="PART_Input" Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="InputBorder" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                        </Trigger>
+                        <Trigger Property="IsEmpty" Value="True">
+                            <Setter TargetName="PART_Empty" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

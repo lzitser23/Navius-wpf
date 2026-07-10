@@ -1,0 +1,127 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Navius.Wpf.Primitives.Controls"
+    xmlns:cal="clr-namespace:Navius.Wpf.Primitives.Controls.Calendar"
+    xmlns:drp="clr-namespace:Navius.Wpf.Primitives.Controls.DateRangePicker">
+
+    <!--
+        Merged into Themes/Generic.xaml (M6 audit 2026-07-09: corrected; this file previously
+        claimed it was NOT merged there, which was stale/false. Generic.xaml already includes it).
+        Consumers do not need to merge this dictionary themselves.
+
+        Hard rule for this wave: hairline borders, no DropShadowEffect, one-ink brand. Same
+        anatomy as Themes/DatePicker.xaml (kept as a sibling dictionary rather than shared,
+        matching how each family owns its own Themes file); the Calendar dictionary is merged for
+        the calendar part styles.
+    -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Calendar.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <Style TargetType="{x:Type drp:NaviusDateRangePicker}">
+        <Setter Property="MinWidth" Value="260" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type drp:NaviusDateRangePicker}">
+                    <Grid>
+                        <ToggleButton
+                            x:Name="PART_Trigger"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Center"
+                            IsChecked="{Binding IsOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                    <Border
+                                        x:Name="TriggerBorder"
+                                        Background="{DynamicResource Navius.Background}"
+                                        BorderBrush="{DynamicResource Navius.Input}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource Navius.Radius.Control}">
+                                        <ContentPresenter
+                                            Margin="12,8"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="TriggerBorder" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                                        </Trigger>
+                                        <Trigger Property="IsKeyboardFocused" Value="True">
+                                            <Setter TargetName="TriggerBorder" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="TriggerBorder" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock
+                                    x:Name="Label"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    TextTrimming="CharacterEllipsis"
+                                    Foreground="{TemplateBinding Foreground}"
+                                    Text="{TemplateBinding DisplayText}" />
+
+                                <!-- hairline calendar glyph -->
+                                <Path
+                                    Grid.Column="1"
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Data="M 1,3 H 13 V 13 H 1 Z M 1,6 H 13 M 4,1 V 4 M 10,1 V 4"
+                                    Stroke="{DynamicResource Navius.MutedForeground}"
+                                    StrokeThickness="1.2"
+                                    StrokeStartLineCap="Round"
+                                    StrokeEndLineCap="Round"
+                                    StrokeLineJoin="Round" />
+                            </Grid>
+                        </ToggleButton>
+
+                        <controls:NaviusAnchoredPopup
+                            x:Name="PART_Popup"
+                            Anchor="{Binding ElementName=PART_Trigger}"
+                            Side="{TemplateBinding Side}"
+                            Align="{TemplateBinding Align}"
+                            SideOffset="{TemplateBinding SideOffset}"
+                            AlignOffset="{TemplateBinding AlignOffset}"
+                            IsOpen="{TemplateBinding IsOpen}">
+                            <Border
+                                x:Name="PART_PopupContent"
+                                Background="Transparent"
+                                Focusable="False"
+                                FocusVisualStyle="{x:Null}">
+                                <cal:NaviusCalendar
+                                    x:Name="PART_Calendar"
+                                    Style="{StaticResource Navius.Calendar.Style}" />
+                            </Border>
+                        </controls:NaviusAnchoredPopup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- data-placeholder: nothing selected -> muted label -->
+                        <Trigger Property="HasSelection" Value="False">
+                            <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource Navius.MutedForeground}" />
+                        </Trigger>
+                        <!-- data-disabled -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="PART_Trigger" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

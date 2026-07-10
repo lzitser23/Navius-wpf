@@ -1,0 +1,136 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:splitButton="clr-namespace:Navius.Wpf.Ui.SplitButton"
+    xmlns:buttonGroup="clr-namespace:Navius.Wpf.Ui.ButtonGroup"
+    xmlns:menu="clr-namespace:Navius.Wpf.Primitives.Controls.Menus;assembly=Navius.Wpf.Primitives">
+
+    <!--
+        Not merged into Generic.xaml (the orchestrator owns that file). Consumers merge this
+        dictionary themselves. A page hosting a NaviusSplitButton must ALSO merge
+        Navius.Wpf.Primitives' Themes/Menu.xaml, since the dropdown content is a NaviusMenuPopup of
+        NaviusMenuItem rows styled by that dictionary:
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/SplitButton.xaml" />
+
+        The two template parts (PART_Primary, PART_Chevron) get x:Key'd local styles rather than
+        implicit TargetType styles for plain Button / menu:NaviusMenuTrigger: an implicit style here
+        would silently reskin every other Button or NaviusMenuTrigger merged into the same page.
+    -->
+
+    <buttonGroup:RoundedClipConverter x:Key="RoundedClipConverter" />
+
+    <Style x:Key="Navius.SplitButton.PrimaryStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource Navius.Primary}" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.PrimaryForeground}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Root" Background="{TemplateBinding Background}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.9" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.8" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Navius.SplitButton.ChevronStyle" TargetType="{x:Type menu:NaviusMenuTrigger}">
+        <Setter Property="Background" Value="{DynamicResource Navius.Primary}" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.PrimaryForeground}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,7" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type menu:NaviusMenuTrigger}">
+                    <Border x:Name="Root" Background="{TemplateBinding Background}">
+                        <Path
+                            Data="M 0,0 L 4,4 L 8,0"
+                            Margin="{TemplateBinding Padding}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Stroke="{TemplateBinding Foreground}"
+                            StrokeThickness="1.4"
+                            StrokeStartLineCap="Round"
+                            StrokeEndLineCap="Round"
+                            StrokeLineJoin="Round" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.9" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.8" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type splitButton:NaviusSplitButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type splitButton:NaviusSplitButton}">
+                    <Border
+                        x:Name="Root"
+                        BorderBrush="{DynamicResource Navius.Primary}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource Navius.Radius.Control}"
+                        SnapsToDevicePixels="True">
+                        <Grid x:Name="ClipHost">
+                            <Grid.Clip>
+                                <MultiBinding Converter="{StaticResource RoundedClipConverter}">
+                                    <Binding ElementName="ClipHost" Path="ActualWidth" />
+                                    <Binding ElementName="ClipHost" Path="ActualHeight" />
+                                    <Binding ElementName="Root" Path="CornerRadius" />
+                                </MultiBinding>
+                            </Grid.Clip>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Button
+                                x:Name="PART_Primary"
+                                Grid.Column="0"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Command="{TemplateBinding Command}"
+                                CommandParameter="{TemplateBinding CommandParameter}"
+                                CommandTarget="{TemplateBinding CommandTarget}"
+                                Style="{StaticResource Navius.SplitButton.PrimaryStyle}" />
+
+                            <Border Grid.Column="1" Width="1" Background="{DynamicResource Navius.PrimaryForeground}" Opacity="0.25" />
+
+                            <menu:NaviusMenuTrigger
+                                x:Name="PART_Chevron"
+                                Grid.Column="2"
+                                Menu="{TemplateBinding Menu}"
+                                Style="{StaticResource Navius.SplitButton.ChevronStyle}" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

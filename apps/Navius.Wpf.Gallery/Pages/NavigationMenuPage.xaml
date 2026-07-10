@@ -1,0 +1,90 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.NavigationMenuPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:nav="clr-namespace:Navius.Wpf.Primitives.Controls.NavigationMenu;assembly=Navius.Wpf.Primitives"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here, another family owns that
+                     file); pages that use the NavigationMenu family merge this dictionary
+                     themselves. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/NavigationMenu.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="32">
+        <TextBlock Text="NavigationMenu"
+                   FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" />
+        <TextBlock Margin="0,4,0,24"
+                   MaxWidth="520"
+                   Text="M2 scope: per-item popup mode only (each open panel owns its own NaviusAnchoredPopup, anchored to its own trigger). The shared morphing viewport (UseSharedViewport=true) is a stub that throws NotSupportedException; see the 'Shared viewport' button below."
+                   Foreground="{DynamicResource Navius.MutedForeground}"
+                   TextWrapping="Wrap" />
+
+        <nav:NaviusNavigationMenu AutomationProperties.AutomationId="GalleryNavigationMenu"
+                                   Delay="100" CloseDelay="150"
+                                   HorizontalAlignment="Left">
+            <nav:NaviusNavigationMenuList>
+                <nav:NaviusNavigationMenuItem Value="products">
+                    <StackPanel>
+                        <nav:NaviusNavigationMenuTrigger>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Products" />
+                                <nav:NaviusNavigationMenuIcon>
+                                    <TextBlock Text="&#9662;" />
+                                </nav:NaviusNavigationMenuIcon>
+                            </StackPanel>
+                        </nav:NaviusNavigationMenuTrigger>
+                        <nav:NaviusNavigationMenuContent>
+                            <StackPanel Width="220">
+                                <nav:NaviusNavigationMenuLink Content="Analytics" />
+                                <nav:NaviusNavigationMenuLink Content="Dashboards" />
+                                <nav:NaviusNavigationMenuLink Content="Alerts" Active="True" />
+                            </StackPanel>
+                        </nav:NaviusNavigationMenuContent>
+                    </StackPanel>
+                </nav:NaviusNavigationMenuItem>
+
+                <nav:NaviusNavigationMenuItem Value="resources">
+                    <StackPanel>
+                        <nav:NaviusNavigationMenuTrigger>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Resources" />
+                                <nav:NaviusNavigationMenuIcon>
+                                    <TextBlock Text="&#9662;" />
+                                </nav:NaviusNavigationMenuIcon>
+                            </StackPanel>
+                        </nav:NaviusNavigationMenuTrigger>
+                        <nav:NaviusNavigationMenuContent>
+                            <StackPanel Width="220">
+                                <nav:NaviusNavigationMenuLink Content="Docs" />
+                                <nav:NaviusNavigationMenuLink Content="Blog" />
+                            </StackPanel>
+                        </nav:NaviusNavigationMenuContent>
+                    </StackPanel>
+                </nav:NaviusNavigationMenuItem>
+
+                <nav:NaviusNavigationMenuItem Value="pricing">
+                    <nav:NaviusNavigationMenuLink Content="Pricing" />
+                </nav:NaviusNavigationMenuItem>
+            </nav:NaviusNavigationMenuList>
+        </nav:NaviusNavigationMenu>
+
+        <Button x:Name="SharedViewportButton"
+                AutomationProperties.AutomationId="SharedViewportButton"
+                Margin="0,24,0,0"
+                HorizontalAlignment="Left"
+                Content="Try UseSharedViewport (throws)"
+                Click="OnSharedViewportClick" />
+        <TextBlock x:Name="StatusText"
+                   Margin="0,8,0,0"
+                   Foreground="{DynamicResource Navius.MutedForeground}" />
+    </StackPanel>
+</UserControl>

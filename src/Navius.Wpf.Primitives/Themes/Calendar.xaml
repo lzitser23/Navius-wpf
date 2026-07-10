@@ -1,0 +1,326 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cal="clr-namespace:Navius.Wpf.Primitives.Controls.Calendar">
+
+    <!--
+        Merged into Themes/Generic.xaml directly (M6 audit 2026-07-09: corrected; this file
+        previously claimed it was NOT merged there, which was stale/false). Also reachable
+        transitively via Themes/DatePicker.xaml / DateRangePicker.xaml, which merge it the same
+        way Themes/ContextMenu.xaml merges Themes/Menu.xaml. Consumers do not need to merge this
+        dictionary themselves.
+
+        Hard rule for this wave: hairline borders, no DropShadowEffect, one-ink brand.
+
+        The part styles below are KEYED (not implicit) and wired through the native Calendar's own
+        CalendarDayButtonStyle / CalendarButtonStyle / CalendarItemStyle properties: Calendar's
+        internal population code stamps those styles onto every CalendarDayButton / CalendarButton /
+        CalendarItem it creates, which keeps working after NaviusAnchoredPopup reparents the picker
+        popup content into a Popup (where ambient implicit-style lookup is unreliable). The
+        NaviusCalendar style itself is exposed both keyed (Navius.Calendar.Style, for explicit
+        template references inside the pickers) and implicit (for standalone page use).
+    -->
+
+    <!-- One day cell (month view): today/selected/outside-month/blackout states per the brand. -->
+    <Style x:Key="Navius.Calendar.DayButtonStyle" TargetType="{x:Type CalendarDayButton}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.PopoverForeground}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinWidth" Value="32" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Margin" Value="1" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type CalendarDayButton}">
+                    <Border
+                        x:Name="Bd"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource Navius.Radius.Small}">
+                        <ContentPresenter
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- web data-outside-month: day belongs to the adjacent month -->
+                        <Trigger Property="IsInactive" Value="True">
+                            <Setter Property="Opacity" Value="0.35" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Navius.AccentForeground}" />
+                        </Trigger>
+                        <!-- keyboard focus ring: hairline, no glow -->
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                        </Trigger>
+                        <!-- web data-today: hairline ring, no fill (one-ink; selected wins below) -->
+                        <Trigger Property="IsToday" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                        </Trigger>
+                        <!-- web data-selected (and the range fill for SingleRange selections) -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Navius.Primary}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Navius.Primary}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Navius.PrimaryForeground}" />
+                        </Trigger>
+                        <Trigger Property="IsBlackedOut" Value="True">
+                            <Setter Property="Opacity" Value="0.3" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- One month/year cell (year and decade views). CalendarButton exposes HasSelectedDays
+         (not IsSelected) for the cell containing the current selection. -->
+    <Style x:Key="Navius.Calendar.MonthButtonStyle" TargetType="{x:Type CalendarButton}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.PopoverForeground}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinWidth" Value="56" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Margin" Value="1" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type CalendarButton}">
+                    <Border
+                        x:Name="Bd"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource Navius.Radius.Small}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsInactive" Value="True">
+                            <Setter Property="Opacity" Value="0.35" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Navius.AccentForeground}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                        </Trigger>
+                        <Trigger Property="HasSelectedDays" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Navius.Primary}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Navius.Primary}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Navius.PrimaryForeground}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Nav / header buttons chrome shared by PART_PreviousButton / PART_NextButton / PART_HeaderButton. -->
+    <Style x:Key="Navius.Calendar.ChromeButton" TargetType="{x:Type Button}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border
+                        x:Name="Bd"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="Transparent"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource Navius.Radius.Small}">
+                        <ContentPresenter Margin="8,4" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- CalendarItem: month header (prev / label / next) + month grid + year/decade grid. Grid
+         population (day-of-week titles via the DayTitleTemplate template resource, day / month /
+         year cells) is done entirely by Calendar's own code once it finds PART_MonthView /
+         PART_YearView by name; this template only supplies chrome and empty Grids for that code
+         to populate. -->
+    <Style x:Key="Navius.Calendar.ItemStyle" TargetType="{x:Type CalendarItem}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type CalendarItem}">
+                    <ControlTemplate.Resources>
+                        <!-- Looked up by name from CalendarItem.OnApplyTemplate for the
+                             day-of-week header row. -->
+                        <DataTemplate x:Key="DayTitleTemplate">
+                            <TextBlock
+                                Margin="0,4,0,8"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Foreground="{DynamicResource Navius.MutedForeground}"
+                                Text="{Binding}" />
+                        </DataTemplate>
+                    </ControlTemplate.Resources>
+                    <Grid x:Name="PART_Root">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Button
+                                x:Name="PART_PreviousButton"
+                                Grid.Column="0"
+                                Style="{StaticResource Navius.Calendar.ChromeButton}">
+                                <Path
+                                    Width="7" Height="10"
+                                    Data="M 6,0 L 1,5 L 6,10"
+                                    Stroke="{DynamicResource Navius.Foreground}"
+                                    StrokeThickness="1.4"
+                                    StrokeStartLineCap="Round"
+                                    StrokeEndLineCap="Round"
+                                    StrokeLineJoin="Round" />
+                            </Button>
+
+                            <Button
+                                x:Name="PART_HeaderButton"
+                                Grid.Column="1"
+                                HorizontalAlignment="Center"
+                                FontWeight="SemiBold"
+                                Style="{StaticResource Navius.Calendar.ChromeButton}" />
+
+                            <Button
+                                x:Name="PART_NextButton"
+                                Grid.Column="2"
+                                Style="{StaticResource Navius.Calendar.ChromeButton}">
+                                <Path
+                                    Width="7" Height="10"
+                                    Data="M 1,0 L 6,5 L 1,10"
+                                    Stroke="{DynamicResource Navius.Foreground}"
+                                    StrokeThickness="1.4"
+                                    StrokeStartLineCap="Round"
+                                    StrokeEndLineCap="Round"
+                                    StrokeLineJoin="Round" />
+                            </Button>
+                        </Grid>
+
+                        <Grid x:Name="PART_MonthView" Grid.Row="1" Visibility="Visible" HorizontalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                        </Grid>
+
+                        <Grid x:Name="PART_YearView" Grid.Row="1" Visibility="Hidden" HorizontalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                        </Grid>
+
+                        <Rectangle
+                            x:Name="PART_DisabledVisual"
+                            Grid.RowSpan="2"
+                            Fill="{DynamicResource Navius.Popover}"
+                            Opacity="0.6"
+                            Visibility="Collapsed" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="PART_DisabledVisual" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Calendar root: NaviusCalendar hosts a single CalendarItem; the three part styles above are
+         wired through the native style properties so Calendar's own population code stamps them. -->
+    <Style x:Key="Navius.Calendar.Style" TargetType="{x:Type cal:NaviusCalendar}">
+        <Setter Property="Background" Value="{DynamicResource Navius.Popover}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Navius.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.PopoverForeground}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="CalendarDayButtonStyle" Value="{StaticResource Navius.Calendar.DayButtonStyle}" />
+        <Setter Property="CalendarButtonStyle" Value="{StaticResource Navius.Calendar.MonthButtonStyle}" />
+        <Setter Property="CalendarItemStyle" Value="{StaticResource Navius.Calendar.ItemStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type cal:NaviusCalendar}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource Navius.Radius.Card}"
+                        Padding="{TemplateBinding Padding}">
+                        <StackPanel x:Name="PART_Root" HorizontalAlignment="Center">
+                            <CalendarItem
+                                x:Name="PART_CalendarItem"
+                                Style="{TemplateBinding CalendarItemStyle}" />
+                        </StackPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Implicit alias for standalone page use. -->
+    <Style TargetType="{x:Type cal:NaviusCalendar}" BasedOn="{StaticResource Navius.Calendar.Style}" />
+
+</ResourceDictionary>

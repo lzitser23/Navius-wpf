@@ -1,0 +1,43 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.SeparatorPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); this page merges it directly. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Separator.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top">
+        <TextBlock Text="Separator"
+                   FontSize="20" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" />
+        <TextBlock Margin="0,4,0,24"
+                   MaxWidth="420"
+                   Text="A hairline divider. Non-decorative reports role=separator to automation; decorative is purely visual."
+                   Foreground="{DynamicResource Navius.MutedForeground}"
+                   TextWrapping="Wrap" />
+
+        <TextBlock Text="Horizontal" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <TextBlock Text="Above" Foreground="{DynamicResource Navius.Foreground}" />
+        <navius:NaviusSeparator AutomationProperties.AutomationId="HorizontalSeparator"
+                                 Width="260" Margin="0,8,0,8" />
+        <TextBlock Text="Below" Foreground="{DynamicResource Navius.Foreground}" Margin="0,0,0,24" />
+
+        <TextBlock Text="Vertical (decorative)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <StackPanel Orientation="Horizontal" Height="32">
+            <TextBlock Text="Left" VerticalAlignment="Center" Foreground="{DynamicResource Navius.Foreground}" />
+            <navius:NaviusSeparator AutomationProperties.AutomationId="VerticalSeparator"
+                                     Orientation="Vertical" Decorative="True" Margin="12,0,12,0" />
+            <TextBlock Text="Right" VerticalAlignment="Center" Foreground="{DynamicResource Navius.Foreground}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

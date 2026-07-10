@@ -1,0 +1,145 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:tree="clr-namespace:Navius.Wpf.Primitives.Controls.Tree">
+
+    <tree:BoolInverseConverter x:Key="Navius.Tree.BoolInverseConverter" />
+
+    <!-- Implicit (DataType-keyed) HierarchicalDataTemplate: recurses NaviusTreeNode.Children
+         automatically at every nesting level, the natural WPF mapping for the contract's
+         data-driven mode (see docs/parity/tree.md "Open questions"). -->
+    <HierarchicalDataTemplate DataType="{x:Type tree:NaviusTreeNode}" ItemsSource="{Binding Children}">
+        <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+    </HierarchicalDataTemplate>
+
+    <!-- NaviusTreeItem: one treeitem row + its (virtualized) children host. -->
+    <Style TargetType="{x:Type tree:NaviusTreeItem}">
+        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+        <Setter Property="IsEnabled" Value="{Binding Disabled, Converter={StaticResource Navius.Tree.BoolInverseConverter}}" />
+        <Setter Property="Padding" Value="6,4" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <!-- Nested TreeViewItems host their own children through this same panel, keeping the
+             10k-node gate virtualized at every depth, not just the top level. -->
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type tree:NaviusTreeItem}">
+                    <StackPanel>
+                        <Border x:Name="Bd" Background="Transparent" BorderThickness="1" BorderBrush="Transparent"
+                                CornerRadius="{DynamicResource Navius.Radius.Small}" Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ToggleButton x:Name="Expander" Grid.Column="0"
+                                              Width="14" Height="14" Focusable="False"
+                                              Background="Transparent" BorderThickness="0"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                            <Path x:Name="Arrow" Data="M4,2 L9,7 L4,12"
+                                                  Stroke="{DynamicResource Navius.MutedForeground}"
+                                                  StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                  Fill="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  RenderTransformOrigin="0.5,0.5">
+                                                <Path.RenderTransform>
+                                                    <RotateTransform Angle="0" />
+                                                </Path.RenderTransform>
+                                            </Path>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="Arrow" Property="RenderTransform">
+                                                        <Setter.Value>
+                                                            <RotateTransform Angle="90" />
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="Header" Grid.Column="1" ContentSource="Header"
+                                                  VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                        <ItemsPresenter x:Name="ItemsHost" Visibility="Collapsed" Margin="16,0,0,0" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <!-- data-leaf: no expand affordance on nodes with no children -->
+                        <DataTrigger Binding="{Binding HasChildren}" Value="False">
+                            <Setter TargetName="Expander" Property="Visibility" Value="Hidden" />
+                        </DataTrigger>
+                        <!-- role=group presence: only rendered while expanded -->
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="ItemsHost" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Navius.Muted}" />
+                        </Trigger>
+                        <!-- data-selected: Accent fill (wins over hover, listed after it) -->
+                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Navius.Accent}" />
+                            <Setter TargetName="Header" Property="TextBlock.Foreground" Value="{DynamicResource Navius.AccentForeground}" />
+                        </DataTrigger>
+                        <!-- data-focused -->
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                        </Trigger>
+                        <!-- data-disabled -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusTree: role="tree" root chrome. One-ink brand: hairline border, no shadow. -->
+    <Style TargetType="{x:Type tree:NaviusTree}">
+        <Setter Property="Background" Value="{DynamicResource Navius.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Navius.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <!-- 10k-node gate: virtualization must stay on. Explicit (not just relying on TreeView's
+             own default) so a future retemplate can't silently regress it; DataGridTests/TreeTests
+             both assert this via a style-application guard. -->
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type tree:NaviusTree}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource Navius.Radius.Control}">
+                        <ScrollViewer Focusable="False" CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}" Padding="{TemplateBinding Padding}">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

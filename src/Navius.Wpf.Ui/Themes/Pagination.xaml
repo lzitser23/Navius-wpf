@@ -1,0 +1,107 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:pagination="clr-namespace:Navius.Wpf.Ui.Pagination"
+    xmlns:toggleGroup="clr-namespace:Navius.Wpf.Primitives.Controls.ToggleGroup;assembly=Navius.Wpf.Primitives">
+
+    <!--
+        Not merged into Generic.xaml (the orchestrator owns that file). Consumers merge this
+        dictionary themselves:
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/Pagination.xaml" />
+    -->
+
+    <pagination:PaginationCurrentPageConverter x:Key="PaginationCurrentPageConverter" />
+
+    <Style x:Key="Navius.Pagination.NavButton" TargetType="Button">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource Navius.Radius.Control}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource Navius.Muted}" />
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <DataTemplate x:Key="Navius.Pagination.TokenTemplate" DataType="{x:Type pagination:PaginationPageToken}">
+        <Grid Margin="2,0">
+            <TextBlock
+                x:Name="EllipsisText"
+                Text="&#8230;"
+                Width="32" Height="32"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                TextAlignment="Center"
+                Foreground="{DynamicResource Navius.MutedForeground}"
+                Visibility="Collapsed" />
+            <toggleGroup:NaviusToggleGroupItem
+                x:Name="PageItem"
+                Width="32" Height="32"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Content="{Binding Page}"
+                Command="{x:Static pagination:NaviusPagination.GoToPageCommand}"
+                CommandParameter="{Binding Page}"
+                CommandTarget="{Binding RelativeSource={RelativeSource AncestorType={x:Type pagination:NaviusPagination}}}">
+                <toggleGroup:NaviusToggleGroupItem.IsChecked>
+                    <!-- OneWay is required: IsChecked defaults to TwoWay and PaginationPageToken.Page
+                         is read-only, which crashes binding activation during the first measure pass. -->
+                    <MultiBinding Mode="OneWay" Converter="{StaticResource PaginationCurrentPageConverter}">
+                        <Binding Path="Page" Mode="OneWay" />
+                        <Binding Path="CurrentPage" RelativeSource="{RelativeSource AncestorType={x:Type pagination:NaviusPagination}}" Mode="OneWay" />
+                    </MultiBinding>
+                </toggleGroup:NaviusToggleGroupItem.IsChecked>
+            </toggleGroup:NaviusToggleGroupItem>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsEllipsis}" Value="True">
+                <Setter TargetName="EllipsisText" Property="Visibility" Value="Visible" />
+                <Setter TargetName="PageItem" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <Style TargetType="{x:Type pagination:NaviusPagination}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type pagination:NaviusPagination}">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource Navius.Pagination.NavButton}" Command="{x:Static pagination:NaviusPagination.PreviousCommand}">
+                            <Path Data="M 5,0 L 1,4 L 5,8" Stroke="{DynamicResource Navius.Foreground}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+                        </Button>
+                        <ItemsControl ItemsSource="{TemplateBinding Pages}" ItemTemplate="{StaticResource Navius.Pagination.TokenTemplate}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                        <Button Style="{StaticResource Navius.Pagination.NavButton}" Command="{x:Static pagination:NaviusPagination.NextCommand}">
+                            <Path Data="M 1,0 L 5,4 L 1,8" Stroke="{DynamicResource Navius.Foreground}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+                        </Button>
+                    </StackPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

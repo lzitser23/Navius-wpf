@@ -1,0 +1,72 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.DrawerPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:navius="clr-namespace:Navius.Wpf.Primitives.Controls;assembly=Navius.Wpf.Primitives"
+             xmlns:overlaySurface="clr-namespace:Navius.Wpf.Primitives.Controls.OverlaySurface;assembly=Navius.Wpf.Primitives"
+             xmlns:drawer="clr-namespace:Navius.Wpf.Primitives.Controls.Drawer;assembly=Navius.Wpf.Primitives"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); pages that use
+                     NaviusDrawer merge this dictionary themselves. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Drawer.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <StackPanel Margin="32" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <TextBlock Text="Drawer"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Navius.Foreground}" />
+            <TextBlock Margin="0,4,0,24"
+                       MaxWidth="420"
+                       Text="A modal sheet docked to one edge, sliding in/out (150ms translate + fade). Same dismiss semantics as Dialog. Drag-to-dismiss is deferred for this milestone; use Escape, an outside click, or the Close button."
+                       Foreground="{DynamicResource Navius.MutedForeground}"
+                       TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal">
+                <navius:NaviusButton AutomationProperties.AutomationId="OpenDrawerLeftButton"
+                                      Margin="0,0,8,0"
+                                      Content="Open left"
+                                      Click="OnOpenLeftClick" />
+                <navius:NaviusButton AutomationProperties.AutomationId="OpenDrawerRightButton"
+                                      Margin="0,0,8,0"
+                                      Content="Open right"
+                                      Click="OnOpenRightClick" />
+                <navius:NaviusButton AutomationProperties.AutomationId="OpenDrawerTopButton"
+                                      Margin="0,0,8,0"
+                                      Content="Open top"
+                                      Click="OnOpenTopClick" />
+                <navius:NaviusButton AutomationProperties.AutomationId="OpenDrawerBottomButton"
+                                      Content="Open bottom"
+                                      Click="OnOpenBottomClick" />
+            </StackPanel>
+        </StackPanel>
+
+        <!--
+            Contract: NaviusDrawer is declared directly inside the NaviusOverlayLayer (see
+            NaviusOverlayLayer's class remarks).
+        -->
+        <overlaySurface:NaviusOverlayLayer x:Name="OverlayLayer">
+            <drawer:NaviusDrawer x:Name="MyDrawer"
+                                  AutomationProperties.AutomationId="MyDrawer"
+                                  Title="Notifications"
+                                  Description="Drag-to-dismiss is deferred; use Escape, an outside click, or Close.">
+                <StackPanel>
+                    <TextBlock Text="Sheet content goes here."
+                               Foreground="{DynamicResource Navius.PopoverForeground}"
+                               Margin="0,0,0,16" />
+                    <navius:NaviusButton AutomationProperties.AutomationId="DrawerCloseButton"
+                                          HorizontalAlignment="Right"
+                                          Content="Close"
+                                          Command="{x:Static overlaySurface:NaviusOverlaySurfaceBase.CloseCommand}" />
+                </StackPanel>
+            </drawer:NaviusDrawer>
+        </overlaySurface:NaviusOverlayLayer>
+    </Grid>
+</UserControl>

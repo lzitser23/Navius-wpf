@@ -1,0 +1,166 @@
+# Sortable
+
+## Parts
+
+| Part | Element rendered | Purpose |
+|---|---|---|
+| NaviusSortable | `<div role="list" data-navius-sortable>` + a visually hidden `<div role="status" aria-live="polite" data-navius-sortable-status>` | Root: owns the ordered key list, cascades `SortableContext`, drives the JS pointer-drag engine (`createSortable`) and the C#-owned APG "grab and move" keyboard reducer, announces transitions via the live region |
+| NaviusSortableItem | `<div role="listitem" data-navius-sortable-item>` | One reorderable row; drag target and roving-tabindex keyboard focus target, keyed by `Value` |
+| NaviusSortableItemHandle | `<span data-navius-sortable-handle>` | Optional drag handle; when present, scopes pointer drag start to this element only |
+
+## Parameters
+
+### NaviusSortable
+
+| Name | Type | Default | Notes |
+|---|---|---|---|
+| Values | `IReadOnlyList<string>?` | null | Ordered item keys, controlled (bind with `@bind-Values`) |
+| ValuesChanged | `EventCallback<IReadOnlyList<string>>` | | |
+| DefaultValues | `IReadOnlyList<string>?` | null | Uncontrolled initial order |
+| Orientation | `SortableOrientation` (`Vertical`\|`Horizontal`\|`Grid`) | `Vertical` | Drives the engine's midpoint math; keyboard stays linear (next/prev) even for `Grid` |
+| Disabled | `bool` | false | Reactive: destroys/recreates the JS sortable engine when toggled |
+| OnReorder | `EventCallback<SortableReorderEventArgs>` | | Fired once per committed reorder (pointer or keyboard) with old/new index |
+| ChildContent | `RenderFragment?` | null | |
+| Attributes | `IDictionary<string,object>?` | null | Captured unmatched attributes |
+
+### NaviusSortableItem
+
+| Name | Type | Default | Notes |
+|---|---|---|---|
+| Value | `string` | required | Stable key the root tracks order by |
+| Label | `string?` | null | Accessible name for live-region announcements; defaults to `Value` |
+| Disabled | `bool` | false | Per-item disabled; skipped during roving keyboard navigation |
+| ChildContent | `RenderFragment?` | null | |
+| Attributes | `IDictionary<string,object>?` | null | Captured unmatched attributes |
+
+### NaviusSortableItemHandle
+
+| Name | Type | Default | Notes |
+|---|---|---|---|
+| ChildContent | `RenderFragment?` | null | |
+| Attributes | `IDictionary<string,object>?` | null | Captured unmatched attributes |
+
+## Events
+
+| Part | Event | Signature |
+|---|---|---|
+| NaviusSortable | ValuesChanged | `EventCallback<IReadOnlyList<string>>`, fired on every committed order mutation (drop, keyboard drop, Escape restore) |
+| NaviusSortable | OnReorder | `EventCallback<SortableReorderEventArgs>` (`record SortableReorderEventArgs(int OldIndex, int NewIndex)`), fired once per committed reorder when old != new index, both pointer and keyboard paths |
+
+## State + data attributes
+
+| Element | Attribute | Meaning |
+|---|---|---|
+| Root | `data-navius-sortable`, `role="list"` | Marker |
+| Root | `data-orientation` | `"horizontal"` / `"vertical"` / `"grid"` |
+| Root | `data-disabled`, `aria-disabled` | Present when `Disabled` |
+| Root | `data-dragging` | Present while a pointer drag or keyboard grab is active |
+| Root | live region: `role="status" aria-live="polite" data-navius-sortable-status`, visually-hidden clip-rect styling | Screen-reader announcements ("Grabbed...", "Moved...", "Dropped...", "Reorder cancelled...") |
+| Item | `data-navius-sortable-item`, `data-navius-sortable-id="{Value}"`, `role="listitem"` | Marker + stable id |
+| Item | `data-keyboard-grabbed`, `aria-grabbed` | Present while this item is keyboard-grabbed |
+| Item | `data-disabled` | Present when item or root disabled |
+| Item | `aria-roledescription="sortable item"` | |
+| Item | `tabindex` | `0` for the single roving-tabindex-active item, `-1` otherwise |
+| Item | `data-dragging`, `data-drop-target` | Painted directly by the JS engine on the DOM during pointer drag, never rendered by C# (a Blazor re-render leaves them untouched, "passthrough") |
+| Handle | `data-navius-sortable-handle`, `aria-hidden="true"` | Scopes pointer-drag start when present (`SortableContext.HasHandle`); aria-hidden because keyboard reordering acts on the whole item, not the handle |
+| SortableContext (C# state) | `Keys`, `Disabled`, `Orientation`, `ActiveKey` (roving tabindex), `GrabbedKey` (keyboard grab), `HasHandle`, per-item labels and disabled set | Shared cascaded state; `Changed` event drives part re-render |
+
+## Keyboard
+
+APG "grab and move" model, implemented entirely in C# on `NaviusSortable.HandleItemKeyDownAsync`, routed from each item's `@onkeydown`.
+
+| Key | Behavior |
+|---|---|
+| Space / Enter (not grabbing) | Grab the focused item: records original order/index, sets `GrabbedKey`, announces "Grabbed... Use the arrow keys to move, space to drop, escape to cancel." |
+| ArrowDown / ArrowRight (not grabbing) | Move roving focus to the next enabled item (does not reorder) |
+| ArrowUp / ArrowLeft (not grabbing) | Move roving focus to the previous enabled item |
+| Home / End (not grabbing) | Move roving focus to first/last enabled item |
+| Space / Enter (grabbing) | Drop: commits the move, clears `GrabbedKey`, announces "Dropped...", fires `OnReorder` if position changed |
+| Escape (grabbing) | Cancel: restores the original order captured at grab time, announces "Reorder cancelled...", does not fire `OnReorder` |
+| ArrowDown / ArrowRight (grabbing) | Move the grabbed item one enabled slot forward: order mutates and `ValuesChanged`/announcement fire immediately, but `OnReorder` fires only on the later drop/commit |
+| ArrowUp / ArrowLeft (grabbing) | Move the grabbed item one enabled slot backward |
+| Home / End (grabbing) | Move the grabbed item to the first/last enabled slot |
+
+Disabled rows are skipped by roving navigation (`NextEnabled`/`FirstEnabled`/`LastEnabled`) so focus never lands on an unreachable row.
+
+Pointer drag (mouse/touch) is handled by the JS engine (`createSortable`) via `[JSInvokable] OnDragStart`/`OnDragOver`/`OnDrop`/`OnCancel` callbacks on the root; the engine reports per-container indices and paints `data-dragging`/`data-drop-target` directly on the DOM. If a handle (`NaviusSortableItemHandle`) is present, pointer drag is scoped to it via a `[data-navius-sortable-handle]` selector passed into `SortableOptions.Handle`. If the JS module fails to load, keyboard reordering still fully works.
+
+Cross-list (`Group`) transfer between separate `NaviusSortable` containers is explicitly NOT supported (the engine reports indices relative to a single container only).
+
+## Accessibility
+
+- Root: `role="list"`, `aria-disabled` when disabled.
+- Item: `role="listitem"`, `aria-roledescription="sortable item"`, `aria-grabbed` (true while keyboard-grabbed).
+- Roving tabindex: exactly one enabled item has `tabindex="0"`; the rest are `tabindex="-1"`. Falls back to the first enabled item if the active/seed key vanishes or becomes disabled.
+- Live region (`role="status" aria-live="polite"`) announces grab, move, drop, and cancel transitions with human-readable position text ("Position N of M").
+- Handle is `aria-hidden="true"` by default (mouse-only affordance; keyboard operates on the whole item), overridable via `Attributes`.
+- Focus management: after a keyboard move or Escape-restore, focus is explicitly re-requested onto the moved/restored item (`RequestFocus`/`ConsumeFocus`, applied via `ElementReference.FocusAsync()` in `OnAfterRender`) so focus follows the item across re-renders.
+
+## WPF strategy
+
+Tier B: custom lookless control. WPF has no built-in reorderable-list control comparable to this (drag-to-reorder `ListBox` requires manual `AdornerLayer`/`DragDrop` implementation regardless), so this should be a custom `Control`/`ItemsControl` pair (`SortableList` + `SortableListItem`) built on `System.Windows.Controls.Primitives.Selector` or plain `ItemsControl`, using `AutomationPeer` overrides to expose `ListAutomationPeer`/`ListItemAutomationPeer`-like `role="list"`/`role="listitem"` semantics and `RaiseAutomationEvent`/`LiveRegion` (UIA `LiveSetting`) for the announcements instead of a visually-hidden `aria-live` div. Pointer drag maps to WPF's native `DragDrop.DoDragDrop`/`PreviewMouseMove` pattern (replacing `createSortable`); the keyboard grab-and-move reducer (Space/Enter grab, arrows move, Space/Enter drop, Escape cancel) ports as pure C# state-machine logic onto `PreviewKeyDown`. `data-dragging`/`data-drop-target`/`data-keyboard-grabbed` become boolean dependency properties driving `Style` triggers. The handle-scoped drag start (`[data-navius-sortable-handle]`) maps to checking `e.OriginalSource` ancestry against a named/tagged handle element in `PreviewMouseLeftButtonDown`.
+
+## Open questions
+
+- WPF drag visuals (ghost/insertion indicator) need a concrete design; the web version leans on the JS engine painting `data-dragging`/`data-drop-target` directly, which has no WPF equivalent without an `AdornerLayer`.
+- Grid orientation's "nearest cell by 2D distance" pointer logic needs a WPF-native hit-test replacement; keyboard-linear behavior can port directly.
+- Cross-list group transfer is out of scope here too, confirm the WPF port also defers it rather than scope-creeping beyond parity.
+- Live-region announcement text is English-only, hardcoded in C#; decide if the WPF port needs localization now or can carry the same hardcoded strings.
+
+## WPF implementation notes
+
+Implemented as a Tier B custom lookless control family under `Controls/Sortable/`:
+
+- `NaviusSortable` (an `ItemsControl` subclass, not a `Selector`: there is no "selected" concept). Owns the ordered key list, the roving-tabindex active key, and the keyboard grab state. Declared `NaviusSortableItem` children are their own containers (`IsItemItsOwnContainerOverride`), so the visual order is the live `Items` collection order and `Values` mirrors it.
+- `NaviusSortableItem` (a `ContentControl`): the pointer drag source and roving keyboard target. The web `data-dragging` / `data-drop-target` / `data-keyboard-grabbed` DOM attributes became the `IsDragging` / `IsDropTarget` / `IsKeyboardGrabbed` boolean DPs driving `Style` triggers in `Themes/Sortable.xaml`.
+- `NaviusSortableItemHandle` (a marker `ContentControl`): rendered as a six-dot grip; when present in an item, pointer drag is scoped to start only from within it.
+- `SortableKeyboardReducer` (pure, framework-agnostic, no WPF dependency): the entire APG "grab and move" transition logic (`NextEnabled`/`PrevEnabled`/`FirstEnabled`/`LastEnabled`, `Rove` for roving focus, `Move` for grab-moves) operating on `IReadOnlyList<string>` keys plus an `is-disabled` predicate. This is the piece factored pure for testability (mirrors `NaviusRatingMath`); the control just wires `PreviewKeyDown` and `DragDrop` to it.
+- Automation: `NaviusSortableAutomationPeer` reports `AutomationControlType.List`; `NaviusSortableItemAutomationPeer` reports `AutomationControlType.ListItem` with `GetLocalizedControlType` returning "sortable item" (the contract's `aria-roledescription`). `PositionInSet` / `SizeOfSet` are pushed onto each item as attached properties whenever the order or count changes (in `RefreshItemStates`). The handle's peer returns false from `IsControlElement`/`IsContentElement`, the UIA equivalent of `aria-hidden`.
+
+### Behavioral deltas from the web contract
+
+- **Announcements via UIA notification, not a live-region div.** The visually-hidden `role="status" aria-live="polite"` announcer is replaced by `AutomationPeer.RaiseNotificationEvent` (the same WPF-native swap the Toast family makes, and cited here for the same reasoning). `NaviusSortable.Announce` raises it for grab / move / drop / cancel, building the human-readable "Position N of M" text in C#. It requires Windows 10 1709+ and a listening AT; a no-op otherwise. Announcement strings stay English-only and hardcoded, matching the contract (the open question about localization is deferred, same as the web).
+- **Grid orientation uses a single Euclidean nearest-center heuristic.** Pointer drop target is the realized item whose center is nearest the drop point by squared 2D distance. For Vertical/Horizontal the off-axis distance is near constant so the on-axis coordinate dominates; for `Grid` this is exactly the doc's "nearest cell by 2D distance" requirement. This resolves the open question with one pragmatic path for all three orientations rather than separate midpoint vs 2D code paths.
+- **Keyboard nav is linear for every orientation** (including Grid), per the contract: ArrowDown and ArrowRight both move forward, ArrowUp and ArrowLeft both move backward. Under `FlowDirection.RightToLeft`, Left/Right are mirrored (matching the Rating family's RTL convention); Up/Down are never mirrored.
+- **`Drop` was named `DropGrabbed`** on the control to avoid hiding `UIElement.Drop` (the drag-drop routed event). All other public method names track the contract's verbs (`Grab`, `MoveGrabbed`, `CancelGrab`).
+- **`ValuesChanged` fires on every committed order mutation** (each keyboard move, keyboard drop, pointer drop, and Escape-restore when the order actually changed); `OnReorder` fires only once per committed reorder (keyboard drop or pointer drop) and only when the moved item's index actually changed, carrying `OldIndex`/`NewIndex`. Intermediate keyboard moves deliberately do not fire `OnReorder`.
+- **Cross-list transfer is out of scope**, matching the contract. `OnDrop` ignores any dropped item whose source container is not this `NaviusSortable` (guarded via `Items.Contains`).
+- **Drag visuals** are trigger-driven (grabbed row highlight, dragging-row opacity, drop-target highlight) rather than an `AdornerLayer` ghost / insertion indicator. The open question about a bespoke ghost adorner is left for a later pass; the `IsDropTarget` highlight covers the essential "where will it land" affordance.
+
+### Virtualization / performance
+
+Sortable does not need UI virtualization: it is designed for small, fully-materialized reorderable lists (the per-item drag/keyboard targets and roving tabindex assume every row is realized). Only the Tree and DataGrid families carry the virtualization/perf requirement from the task brief; Sortable's only "factored pure for perf/testability" requirement is the `SortableKeyboardReducer`, which is satisfied. This omission is intentional, not an oversight.
+
+## M6 audit (2026-07-09)
+
+### Confirmed fixed
+
+None. The keyboard reducer and automation peers hold up.
+
+### Verified TRUE
+
+- **APG grab-and-move keyboard is fully wired and matches the table.** `HandleItemKey`
+  (`NaviusSortable.cs:154-186`) routes Space/Enter to grab-then-drop, Escape to cancel, Down/Up to
+  rove-or-move forward/backward, Home/End to first/last, and mirrors Left/Right under
+  `FlowDirection.RightToLeft`. The pure transitions in `SortableKeyboardReducer.cs` are exhaustively
+  unit-tested (`SortableTests.cs:54-218`), and the control-level grab/move/drop/cancel paths are
+  tested against a real `NaviusSortable` (`SortableTests.cs:247-405`), including the contract's
+  ValuesChanged-per-move but OnReorder-only-on-drop split and Escape-restore-without-OnReorder.
+- **Claimed AutomationPeer support is real.** `OnCreateAutomationPeer` returns
+  `NaviusSortableAutomationPeer` reporting `AutomationControlType.List` (`NaviusSortable.cs:132`;
+  peer at `NaviusSortableAutomationPeer.cs:16`); `NaviusSortableItem.OnCreateAutomationPeer` returns
+  the ListItem peer with `GetLocalizedControlType` = "sortable item" and name resolved from
+  Label/Value (`NaviusSortableItem.cs:96`, peer 28-47); the handle's peer returns false from
+  `IsControlElement`/`IsContentElement` (the aria-hidden equivalent, `NaviusSortableItemHandle.cs:41-43`).
+  All three verified in `SortableTests.cs:481-518`. `PositionInSet`/`SizeOfSet` are pushed onto items
+  in `RefreshItemStates` and asserted (`SortableTests.cs:433-444`). Note: the contract's `role=list`/
+  `role=listitem` are UIA control types, not interactive UIA patterns, so no pattern-provider
+  interface is claimed or required.
+- Roving tabindex keeps exactly one enabled tab stop, skipping disabled rows
+  (`SortableTests.cs:409-431`). Cross-list transfer is guarded off (`NaviusSortable.cs:346-348`).
+
+### Plausible / residual (not fixed)
+
+- Pointer-drag paths (`OnDrop`/`OnDragOver`/`NearestIndex`, `NaviusSortable.cs:313-431`) have no
+  automated coverage because they need a live, laid-out visual tree; only the keyboard paths are
+  unit-tested. Drag ghost/insertion-adorner visuals remain deferred, as the notes already state.

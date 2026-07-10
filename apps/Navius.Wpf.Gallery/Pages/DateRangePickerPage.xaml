@@ -1,0 +1,31 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.DateRangePickerPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:drp="clr-namespace:Navius.Wpf.Primitives.Controls.DateRangePicker;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); pages that use the
+                     DateRangePicker family merge this dictionary themselves (it merges
+                     Calendar.xaml transitively), same as SelectPage does for Select.xaml. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/DateRangePicker.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="24" HorizontalAlignment="Left">
+        <TextBlock Text="DateRangePicker" FontSize="18" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" Margin="0,0,0,12" />
+        <TextBlock Margin="0,0,0,16" MaxWidth="420"
+                   Text="A calendar-popup range picker (NaviusDateRangePicker): the first pick (click or Enter) sets the start, the second sets the end (ordered automatically) and closes; Escape reverts both endpoints to what they were when the popup opened. The trigger shows 'start - end' as a read-only display."
+                   Foreground="{DynamicResource Navius.MutedForeground}" TextWrapping="Wrap" />
+
+        <TextBlock Text="Date range" FontWeight="SemiBold" Margin="0,0,0,6"
+                   Foreground="{DynamicResource Navius.Foreground}" />
+        <drp:NaviusDateRangePicker
+            AutomationProperties.AutomationId="DateRangePickerDemo"
+            Placeholder="Pick a date range"
+            HorizontalAlignment="Left" />
+    </StackPanel>
+</UserControl>

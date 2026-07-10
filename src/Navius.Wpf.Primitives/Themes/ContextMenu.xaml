@@ -1,0 +1,56 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:contextMenu="clr-namespace:Navius.Wpf.Primitives.Controls.ContextMenu">
+
+    <!-- The ContextMenu family reuses the Menu family's item stack (NaviusMenuItem /
+         CheckboxItem / RadioItem / GroupLabel) verbatim, per the parity docs' near-identical
+         part tables; merge their styles here so a NaviusContextMenuPopup-hosted item tree is
+         themed without the consumer having to merge both dictionaries by hand. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Navius.Wpf.Primitives;component/Themes/Menu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- NaviusContextMenuTrigger: an invisible surface; Background is set so an otherwise
+         empty area still hit-tests for right-click. -->
+    <Style TargetType="{x:Type contextMenu:NaviusContextMenuTrigger}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type contextMenu:NaviusContextMenuTrigger}">
+                    <Border Background="{TemplateBinding Background}">
+                        <ContentPresenter />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- NaviusContextMenuPopup: same popover-surface chrome as NaviusMenuPopup. -->
+    <Style TargetType="{x:Type contextMenu:NaviusContextMenuPopup}">
+        <Setter Property="Background" Value="{DynamicResource Navius.Popover}" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.PopoverForeground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Navius.Border}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="HasDropShadow" Value="False" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type contextMenu:NaviusContextMenuPopup}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource Navius.Radius.Control}"
+                        Padding="{TemplateBinding Padding}">
+                        <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+                            <ItemsPresenter Grid.IsSharedSizeScope="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

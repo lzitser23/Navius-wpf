@@ -1,0 +1,44 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.MaskedInputPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:masked="clr-namespace:Navius.Wpf.Primitives.Controls.MaskedInput;assembly=Navius.Wpf.Primitives"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Not merged into Generic.xaml (out of scope here); this page merges it directly. -->
+                <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Primitives;component/Themes/MaskedInput.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock Text="MaskedInput" FontSize="18" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Navius.Foreground}" Margin="0,0,0,12" />
+
+        <TextBlock Text="US phone (000) 000-0000" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <masked:NaviusMaskedInput AutomationProperties.AutomationId="MaskedInputDemo"
+                                  Width="220" HorizontalAlignment="Left"
+                                  Mask="(000) 000-0000" Margin="0,0,0,16" />
+
+        <TextBlock Text="Date 00/00/0000 with placeholder" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <masked:NaviusMaskedInput AutomationProperties.AutomationId="DateMaskedInput"
+                                  Width="220" HorizontalAlignment="Left"
+                                  Mask="00/00/0000" PlaceholderChar="_" Margin="0,0,0,16" />
+
+        <TextBlock Text="License plate AA-0000 (eager)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <masked:NaviusMaskedInput AutomationProperties.AutomationId="PlateMaskedInput"
+                                  Width="220" HorizontalAlignment="Left"
+                                  Mask="AA-0000" Lazy="False" Margin="0,0,0,16" />
+
+        <TextBlock Text="Invalid (skin hook)" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <masked:NaviusMaskedInput AutomationProperties.AutomationId="InvalidMaskedInput"
+                                  Width="220" HorizontalAlignment="Left"
+                                  Mask="0000" Invalid="True" Margin="0,0,0,16" />
+
+        <TextBlock Text="Disabled" Foreground="{DynamicResource Navius.MutedForeground}" Margin="0,0,0,4" />
+        <masked:NaviusMaskedInput AutomationProperties.AutomationId="DisabledMaskedInput"
+                                  Width="220" HorizontalAlignment="Left"
+                                  Mask="(000) 000-0000" DefaultValue="5551234567" IsEnabled="False" />
+    </StackPanel>
+</UserControl>
