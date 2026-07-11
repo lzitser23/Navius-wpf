@@ -145,4 +145,28 @@ public class CollapsibleTests
         Assert.True(root.Open);
         Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
     }
+
+    [StaFact]
+    public void DisabledTriggerAutomationPeer_InvokeAndExpand_ThrowAndDoNotToggle()
+    {
+        // Regression (DEFECT 2): a disabled collapsible trigger must not be operable through UIA.
+        var (root, trigger, _) = CreateCollapsible();
+        root.IsEnabled = false;
+        Assert.False(trigger.IsEnabled);
+
+        var peer = (AutomationPeer)trigger.GetType()
+            .GetMethod("OnCreateAutomationPeer", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(trigger, null)!;
+
+        Assert.False(peer.IsEnabled());
+
+        var invoke = (IInvokeProvider)peer.GetPattern(PatternInterface.Invoke)!;
+        var expandCollapse = (IExpandCollapseProvider)peer.GetPattern(PatternInterface.ExpandCollapse)!;
+
+        Assert.Throws<ElementNotEnabledException>(() => invoke.Invoke());
+        Assert.Throws<ElementNotEnabledException>(() => expandCollapse.Expand());
+
+        Assert.False(root.Open);
+        Assert.False(trigger.IsPanelOpen);
+    }
 }

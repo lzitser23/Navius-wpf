@@ -394,4 +394,25 @@ public class ComboboxTests : IDisposable
             combobox.IsOpen = false;
         }
     }
+
+    [StaFact]
+    public void DisabledComboboxAutomationPeer_ReportsDisabled_AndExpandThrowsWithoutOpening()
+    {
+        // Regression (DEFECT 2): a Disabled combobox previously reported IsEnabled == true through
+        // UIA and its ExpandCollapse.Expand opened the popup regardless. The peer must reflect the
+        // Disabled flag and refuse to operate.
+        var (combobox, _) = CreateApplied();
+        combobox.Disabled = true;
+
+        var peer = combobox.GetType()
+            .GetMethod("OnCreateAutomationPeer", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(combobox, null) as AutomationPeer;
+
+        Assert.NotNull(peer);
+        Assert.False(peer!.IsEnabled());
+
+        var expandCollapse = Assert.IsAssignableFrom<IExpandCollapseProvider>(peer);
+        Assert.Throws<ElementNotEnabledException>(() => expandCollapse.Expand());
+        Assert.False(combobox.IsOpen);
+    }
 }

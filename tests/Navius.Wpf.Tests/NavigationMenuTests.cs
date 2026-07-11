@@ -231,6 +231,28 @@ public class NavigationMenuTests : IDisposable
     }
 
     [StaFact]
+    public void DisabledTrigger_ExpandCollapseProvider_ThrowsAndDoesNotOpen()
+    {
+        // Regression (DEFECT 2 sweep): a disabled navigation-menu trigger must not be expandable
+        // through UIA. Disabled maps onto the inherited IsEnabled for this control.
+        var host = new NaviusNavigationMenu();
+        var item = new NaviusNavigationMenuItem { Value = "products" };
+        var trigger = new NaviusNavigationMenuTrigger { IsEnabled = false };
+        item.Content = trigger;
+        host.Content = item;
+
+        var peer = (AutomationPeer)typeof(UIElement)
+            .GetMethod("OnCreateAutomationPeer", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(trigger, null)!;
+
+        Assert.False(peer.IsEnabled());
+
+        var provider = (IExpandCollapseProvider)peer.GetPattern(PatternInterface.ExpandCollapse)!;
+        Assert.Throws<ElementNotEnabledException>(() => provider.Expand());
+        Assert.Null(host.Value);
+    }
+
+    [StaFact]
     public void Content_Subscribe_TracksHostValueAndResolvesAnchor()
     {
         var host = new NaviusNavigationMenu();

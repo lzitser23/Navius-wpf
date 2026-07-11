@@ -200,6 +200,7 @@ internal sealed class NaviusNavigationMenuTriggerAutomationPeer : ButtonAutomati
 
     public void Expand()
     {
+        ThrowIfDisabled();
         var host = NavigationMenuHostBase.GetHost(Trigger);
         if (host is not null && Trigger.OwningValue is { } value)
         {
@@ -209,10 +210,22 @@ internal sealed class NaviusNavigationMenuTriggerAutomationPeer : ButtonAutomati
 
     public void Collapse()
     {
+        ThrowIfDisabled();
         var host = NavigationMenuHostBase.GetHost(Trigger);
         if (host is not null && Trigger.OwningValue is { } value)
         {
             host.RequestClose(value);
+        }
+    }
+
+    // A disabled trigger must not be operable through UIA. ButtonAutomationPeer.Invoke already
+    // throws when disabled; the custom ExpandCollapse provider must match (Disabled maps onto the
+    // inherited IsEnabled for this control, per the type remarks).
+    private void ThrowIfDisabled()
+    {
+        if (!Trigger.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
         }
     }
 }

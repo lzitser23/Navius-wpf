@@ -5,6 +5,14 @@
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!--
+      NU1701: LiveChartsCore.SkiaSharpView.WPF 2.0.5 pulls OpenTK 3.x, OpenTK.GLWpfControl,
+      and SkiaSharp.Views.WPF builds that only ship net4x assets, so restore falls back to
+      the .NETFramework asset on both modern TFMs. The compat shim loads them fine at
+      runtime (exercised by tests/Navius.Wpf.Charts.Tests); suppressed until LiveCharts
+      ships a dependency set with modern-TFM assets.
+    -->
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
