@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using Navius.Wpf.Primitives.Controls.Accordion;
 using Navius.Wpf.Primitives.Theming;
 
@@ -296,6 +297,8 @@ public class AccordionTests : IDisposable
         Assert.Equal(ExpandCollapseState.Collapsed, expandCollapse!.ExpandCollapseState);
 
         invoke!.Invoke();
+        // Invoke queues activation on the dispatcher per the UIA contract, so pump before asserting.
+        PumpDispatcher();
 
         Assert.Equal("a", root.Value);
         Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
@@ -325,5 +328,82 @@ public class AccordionTests : IDisposable
 
         Assert.Null(root.Value);
         Assert.False(a.Trigger.IsPanelOpen);
+    }
+
+    [StaFact]
+    public void TriggerAutomationPeer_Invoke_ExecutesBoundCommandOnceAndRaisesClickOnce()
+    {
+        // Regression: the peer previously raised ClickEvent with a bare RaiseEvent, which fires Click
+        // but skips ButtonBase.OnClick, so a bound Command never executed from UIA. Routing through
+        // OnClick executes the command exactly once and raises Click exactly once.
+        var executions = 0;
+        var clicks = 0;
+        var command = new RelayCommand(_ => executions++);
+        var trigger = new NaviusAccordionTrigger { Command = command };
+        trigger.Click += (_, _) => clicks++;
+
+        var invoke = (IInvokeProvider)PeerFor(trigger).GetPattern(PatternInterface.Invoke)!;
+        invoke.Invoke();
+        PumpDispatcher();
+
+        Assert.Equal(1, executions);
+        Assert.Equal(1, clicks);
+    }
+
+    [StaFact]
+    public void TriggerAutomationPeer_Invoke_IsAsync_DoesNotActivateBeforePump()
+    {
+        // Regression: Invoke previously ran inline, violating the UIA contract that it return
+        // immediately. The activation must be queued on the dispatcher, so nothing happens until
+        // the queue is pumped. (Before the fix, this assert-without-pump would already see the click.)
+        var clicks = 0;
+        var trigger = new NaviusAccordionTrigger();
+        trigger.Click += (_, _) => clicks++;
+
+        var invoke = (IInvokeProvider)PeerFor(trigger).GetPattern(PatternInterface.Invoke)!;
+        invoke.Invoke();
+
+        Assert.Equal(0, clicks);
+
+        PumpDispatcher();
+
+        Assert.Equal(1, clicks);
+    }
+
+    [StaFact]
+    public void TriggerAutomationPeer_Expand_IsAsync_OpensPanelAfterPump()
+    {
+        var (root, a, _, _) = CreateAccordion();
+        var expandCollapse = (IExpandCollapseProvider)PeerFor(a.Trigger).GetPattern(PatternInterface.ExpandCollapse)!;
+
+        expandCollapse.Expand();
+
+        Assert.Null(root.Value);
+
+        PumpDispatcher();
+
+        Assert.Equal("a", root.Value);
+        Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
+    }
+
+    private static AutomationPeer PeerFor(NaviusAccordionTrigger trigger) =>
+        (AutomationPeer)trigger.GetType()
+            .GetMethod("OnCreateAutomationPeer", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(trigger, null)!;
+
+    private static void PumpDispatcher() =>
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
+
+    private sealed class RelayCommand : ICommand
+    {
+        private readonly Action<object?> _execute;
+
+        public RelayCommand(Action<object?> execute) => _execute = execute;
+
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
+
+        public bool CanExecute(object? parameter) => true;
+
+        public void Execute(object? parameter) => _execute(parameter);
     }
 }
