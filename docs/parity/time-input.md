@@ -181,3 +181,16 @@ Plausible/residual: the shared segment engine (`SegmentEngine.cs`, `SegmentKeyMa
 shared with `NaviusDateInput` and outside this family's edit scope) owns Home/End/PageUp/PageDown/
 Backspace/Delete; those keys are wired through the same handler but their per-key coverage lives in
 the DateInput suite, not re-duplicated here.
+
+## Post-release fixes (2026-07-11)
+
+- **`Required` was a dead DP here too, now fixed (PR #4).** `NaviusTimeInput`'s `RequiredProperty`
+  was declared but never read in `UpdateComputedState`, the identical bug class the M6 audit above
+  already found and fixed on the sibling `NaviusDateInput` (see `date-input.md`'s M6 section) --
+  this family's own M6 audit (above) focused on segment navigation and did not catch it at the time.
+  `UpdateComputedState` now folds `Required && value is null` (the WPF-local `ValueMissing` signal,
+  since the composed value stays null until every segment is filled) into `IsInvalidState` alongside
+  `Invalid`/`outOfRange`, and `RequiredProperty` was given the same `OnBoundChanged` callback
+  `Invalid`/`MinValue`/`MaxValue` already use, so toggling `Required` alone recomputes state.
+  Regression tests: `Required_EmptyValue_SetsIsInvalidState`,
+  `Required_False_EmptyValue_DoesNotSetIsInvalidState`, `Required_ComposedValue_ClearsIsInvalidState`.

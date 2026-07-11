@@ -377,3 +377,14 @@ Escape/Tab revert-to-committed-label behavior. `NaviusComboboxAutomationPeer`'s 
 `ComboBox` + `IExpandCollapseProvider`-only shape, with the `aria-activedescendant` gap
 explicitly undocumented as deferred (not falsely claimed as done), matches the code. No confirmed
 or plausible disparities found.
+
+## Post-release fixes (2026-07-11)
+
+- **Disabled combobox now reports disabled through UIA (PR #3).**
+  `NaviusComboboxAutomationPeer.IsEnabledCore` now folds in the `Disabled` DP
+  (`base.IsEnabledCore() && !_owner.Disabled`). The `Disabled` DP is the combobox's own semantic
+  disabled state and is independent of the inherited `IsEnabled` the base peer reflects by default,
+  so previously a `Disabled` combobox reported `IsEnabled == true` to UIA.
+- **Expand/Collapse now guard against disabled (PR #3).** `IExpandCollapseProvider.Expand`/`Collapse`
+  throw `ElementNotEnabledException` when `Disabled` or not `IsEnabled`; previously `Expand` opened
+  the popup unconditionally, so a disabled combobox's popup could still be opened through UIA.

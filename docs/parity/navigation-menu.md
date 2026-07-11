@@ -301,3 +301,10 @@ Adversarial parity re-audit of the NavigationMenu family against the C#/XAML. Ho
 
 - Dismissal nested-popup gap: a press inside one host's open Content panel while a *different* host's (or nested `NaviusNavigationMenuSub`'s) popup is open is invisible to both window-level hooks and won't auto-close the other. Already documented as a known gap in the WPF notes; traces into `NaviusAnchoredPopup`'s separate transparent child-HWND rendering (forbidden shared infra), so reported rather than fixed.
 - `NaviusNavigationMenuLink.Active` maps `aria-current="page"` onto `AutomationProperties.ItemStatus="page"`. Defensible (no exact UIA aria-current equivalent) but an approximation; noted for cross-family consistency review.
+
+## Post-release fixes (2026-07-11)
+
+- **Disabled trigger now refuses UIA ExpandCollapse (PR #3).** `NaviusNavigationMenuTrigger`'s
+  `IExpandCollapseProvider.Expand`/`Collapse` now throw `ElementNotEnabledException` when the trigger
+  is disabled, closing the same UIA disabled-control gap fixed across Accordion/Collapsible/Combobox
+  in the same audit sweep; previously the provider acted on the host regardless of `IsEnabled`.

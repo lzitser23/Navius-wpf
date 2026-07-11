@@ -99,3 +99,21 @@ the root's plain `Group`-type peer with no data-state attribute (matching the co
 carries no data-* state" asymmetry), `KeepMounted`/`PanelHeightAnimator` mount lifecycle, and
 `HiddenUntilFound`'s documented drop. All check out against the code and `CollapsibleTests.cs`. No
 confirmed or plausible disparities found.
+
+## Post-release fixes (2026-07-11)
+
+- **Disabled trigger now refuses UIA activation (PR #3).** `IInvokeProvider.Invoke` and
+  `IExpandCollapseProvider.Expand`/`Collapse` on `NaviusCollapsibleTriggerAutomationPeer` previously
+  raised `Click` regardless of `IsEnabled`, so a disabled collapsible could still be toggled through
+  UIA. All three now throw `ElementNotEnabledException` when the trigger is disabled.
+- **UIA Invoke now queues via the dispatcher; ExpandCollapse stays synchronous (PR #9, #10).**
+  `Invoke` queues activation with `Dispatcher.BeginInvoke(DispatcherPriority.Input, ...)`, satisfying
+  the UIA contract that `IInvokeProvider.Invoke` return immediately. `Expand`/`Collapse` are
+  deliberately left synchronous: the `IExpandCollapseProvider` contract requires the requested state
+  to be reached before the call returns, so these call the activation hook directly instead of
+  queuing it.
+- **UIA activation now executes the bound Command (PR #9).** Both paths route through a new internal
+  `AutomationInvoke() => OnClick()` hook rather than a bare `RaiseEvent(ButtonBase.ClickEvent)`. The
+  bare `RaiseEvent` raised `Click` but skipped `ButtonBase.OnClick`, where command execution lives, so
+  a `Command` bound to the trigger never ran when activated via UIA; it now does, exactly once per
+  activation.
