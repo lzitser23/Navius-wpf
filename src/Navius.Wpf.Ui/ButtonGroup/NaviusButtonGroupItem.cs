@@ -1,8 +1,10 @@
+using System;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Controls.Primitives;
+using System.Windows.Threading;
 
 namespace Navius.Wpf.Ui.ButtonGroup;
 
@@ -58,6 +60,10 @@ internal sealed class NaviusButtonGroupItemAutomationPeer : FrameworkElementAuto
             throw new ElementNotEnabledException();
         }
 
-        _owner.AutomationInvoke();
+        // The UIA IInvokeProvider.Invoke contract requires this call to return immediately, so queue
+        // the activation onto the owner's dispatcher rather than running it inline, matching WPF's
+        // native ButtonAutomationPeer. This keeps the UIA client from blocking when activation opens
+        // a modal dialog or does other synchronous work.
+        _owner.Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(_owner.AutomationInvoke));
     }
 }

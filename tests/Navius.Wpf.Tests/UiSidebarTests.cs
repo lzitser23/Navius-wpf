@@ -3,6 +3,7 @@ using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Navius.Wpf.Ui.Sidebar;
 using Xunit;
 
@@ -120,6 +121,10 @@ public class UiSidebarTests
         var peer = UIElementAutomationPeer.CreatePeerForElement(item);
         ((IInvokeProvider)peer!.GetPattern(PatternInterface.Invoke)).Invoke();
 
+        // Invoke queues activation on the dispatcher per the UIA contract, so it has not run yet;
+        // pump at Background priority (below the Input priority the peer queues at) to flush it.
+        PumpDispatcher();
+
         Assert.True(clicked);
     }
 
@@ -137,10 +142,16 @@ public class UiSidebarTests
         var peer = UIElementAutomationPeer.CreatePeerForElement(item);
         ((IInvokeProvider)peer!.GetPattern(PatternInterface.Invoke)).Invoke();
 
+        // Invoke is queued on the dispatcher (UIA contract); pump before asserting the command ran.
+        PumpDispatcher();
+
         Assert.Equal(1, executions);
         Assert.Same(parameter, received);
         Assert.Equal(1, clicks);
     }
+
+    private static void PumpDispatcher() =>
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
 
     private sealed class RelayCommand : ICommand
     {
@@ -153,7 +164,7 @@ public class UiSidebarTests
             _canExecute = canExecute;
         }
 
-        public event EventHandler? CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
 
         public bool CanExecute(object? parameter) => _canExecute(parameter);
 
