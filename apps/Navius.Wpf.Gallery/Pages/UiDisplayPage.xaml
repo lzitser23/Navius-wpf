@@ -68,6 +68,12 @@
                     <alert:NaviusAlertDescription Content="You can add components to your project using the CLI." />
                 </StackPanel>
             </alert:NaviusAlert>
+            <alert:NaviusAlert AutomationProperties.AutomationId="AlertWarning" Variant="Warning" Margin="0,0,0,8">
+                <StackPanel>
+                    <alert:NaviusAlertTitle Content="Review recommended" />
+                    <alert:NaviusAlertDescription Content="This configuration may reduce text contrast." />
+                </StackPanel>
+            </alert:NaviusAlert>
             <alert:NaviusAlert AutomationProperties.AutomationId="AlertDestructive" Variant="Destructive" Margin="0,0,0,24">
                 <StackPanel>
                     <alert:NaviusAlertTitle Content="Deployment failed" />

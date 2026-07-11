@@ -19,7 +19,7 @@
                                       prominent than Primary" roles onto the one control pair)
           Muted(+Fg)              -> Control/GrayText             (de-emphasized text uses the
                                       dedicated GrayText system role)
-          Destructive(+Fg)        -> WindowText/Window            (no system "danger/red" key exists
+          Destructive/Warning(+Fg)-> WindowText/Window            (no system severity-color key exists
                                       in SystemColors, so this falls back to WindowText per the
                                       "system-red only if a system key exists, else WindowText" rule;
                                       destructive affordances rely on icon/label, not hue, in HC)
@@ -47,6 +47,8 @@
     <!-- No SystemColors "danger/red" key exists; falls back to WindowText per the mapping rule above. -->
     <SolidColorBrush x:Key="Navius.Destructive" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
     <SolidColorBrush x:Key="Navius.DestructiveForeground" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
+    <SolidColorBrush x:Key="Navius.Warning" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
+    <SolidColorBrush x:Key="Navius.WarningForeground" Color="{DynamicResource {x:Static SystemColors.WindowColorKey}}" />
     <SolidColorBrush x:Key="Navius.Border" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
     <SolidColorBrush x:Key="Navius.Input" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
     <SolidColorBrush x:Key="Navius.Ring" Color="{DynamicResource {x:Static SystemColors.HighlightColorKey}}" />
