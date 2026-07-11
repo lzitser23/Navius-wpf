@@ -743,6 +743,11 @@
           "target": "NaviusWpf/Themes/Tokens.Dark.xaml"
         },
         {
+          "path": "src/Navius.Wpf.Primitives/Themes/Tokens.HighContrast.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Tokens.HighContrast.xaml"
+        },
+        {
           "path": "src/Navius.Wpf.Primitives/Themes/Tokens.Light.xaml",
           "type": "registry:theme",
           "target": "NaviusWpf/Themes/Tokens.Light.xaml"

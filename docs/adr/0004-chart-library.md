@@ -56,3 +56,18 @@ Use `LiveChartsCore.SkiaSharpView.WPF` (LiveCharts2) as the chart engine behind
   engine later would need an equivalent per-point styling hook.
 - A future consumer that needs ScottPlot-style large-dataset scientific plotting can add a
   second thin wrapper project without touching `Navius.Wpf.Charts` or this decision.
+
+## Update 2026-07-11: registry policy for Charts
+
+The copy-paste registry (`registry/registry.json`, driven by `navius-wpf registry-sync` and
+`navius-wpf add`) is deliberately scoped to Navius-owned source whose complete compile closure can
+be vendored into a consumer project. Under that scope:
+
+- `Navius.Wpf.Charts` is not a registry item. It is a third-party-engine adapter (its rendering is
+  LiveCharts2, a `PackageReference`); it is distributed as an optional package, not as vendorable
+  source, and its compile closure cannot be satisfied by copying files alone.
+- No `registry:chart` item type will be added.
+- The current registry and CLI are designed for self-contained source vendoring, not for modifying
+  a consumer's package references. Revisit only if the CLI later gains generic
+  `packageDependencies` installation support, at which point a Charts registry item that pulls in
+  the LiveCharts2 package reference could be reconsidered.

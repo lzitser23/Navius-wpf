@@ -61,7 +61,7 @@ public class NaviusTimeInput : Control
         nameof(ReadOnly), typeof(bool), typeof(NaviusTimeInput), new PropertyMetadata(false, OnReadOnlyChanged));
 
     public static readonly DependencyProperty RequiredProperty = DependencyProperty.Register(
-        nameof(Required), typeof(bool), typeof(NaviusTimeInput), new PropertyMetadata(false));
+        nameof(Required), typeof(bool), typeof(NaviusTimeInput), new PropertyMetadata(false, OnBoundChanged));
 
     public static readonly DependencyProperty InvalidProperty = DependencyProperty.Register(
         nameof(Invalid), typeof(bool), typeof(NaviusTimeInput), new PropertyMetadata(false, OnBoundChanged));
@@ -392,7 +392,13 @@ public class NaviusTimeInput : Control
         var outOfRange = value is not null &&
             ((MinValue is { } min && value < min) || (MaxValue is { } max && value > max));
         SetValue(IsOutOfRangePropertyKey, outOfRange);
-        SetValue(IsInvalidStatePropertyKey, Invalid || outOfRange);
+
+        // Required drives Field validity (ValueMissing) "when composing is incomplete" (the same
+        // contract as NaviusDateInput): the composed value is null until every segment is filled,
+        // so Required && value is null is the WPF-local ValueMissing signal. Wired here to match
+        // NaviusDateInput's M6 audit fix -- Required was a dead property on this sibling too.
+        var valueMissing = Required && value is null;
+        SetValue(IsInvalidStatePropertyKey, Invalid || outOfRange || valueMissing);
     }
 
     private void FocusSegment(int index)

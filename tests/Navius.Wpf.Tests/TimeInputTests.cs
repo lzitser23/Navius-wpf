@@ -334,4 +334,37 @@ public class TimeInputTests : IDisposable
 
         Assert.Equal(ltrUnits, rtlUnits);
     }
+
+    // ---- Required drives ValueMissing (parity with NaviusDateInput's M6 fix) -------------------
+
+    [StaFact]
+    public void Required_EmptyValue_SetsIsInvalidState()
+    {
+        // Regression (issue #2): Required was a dead DP on NaviusTimeInput -- it never fed into
+        // IsInvalidState, so a required-but-empty time input never reported invalid, the same bug
+        // class the M6 audit fixed on NaviusDateInput.
+        var input = CreateApplied(i => i.Required = true);
+
+        Assert.True(input.IsInvalidState);
+    }
+
+    [StaFact]
+    public void Required_False_EmptyValue_DoesNotSetIsInvalidState()
+    {
+        var input = CreateApplied();
+
+        Assert.False(input.IsInvalidState);
+    }
+
+    [StaFact]
+    public void Required_ComposedValue_ClearsIsInvalidState()
+    {
+        var input = CreateApplied(i =>
+        {
+            i.Required = true;
+            i.Value = new TimeOnly(9, 30);
+        });
+
+        Assert.False(input.IsInvalidState);
+    }
 }
