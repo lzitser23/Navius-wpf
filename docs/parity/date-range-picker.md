@@ -1,5 +1,13 @@
 # DateRangePicker
 
+**Scope (2026-07-11)**: this document covers the web family's contract and, on the WPF side, only
+the composite `NaviusDateRangePicker`. The two sibling controls it composes are independent
+public registry items with their own APIs and standalone parity docs: `calendar.md`
+(`NaviusCalendar`) and `date-picker.md` (`NaviusDatePicker` plus the shared
+`NaviusDatePickerBase`). Their per-control material previously lived in this file's "WPF
+implementation notes" and was moved out per the coverage rule in `README.md`; composite-level
+facts stay here.
+
 ## Parts
 
 | Part | Element rendered | Purpose |
@@ -144,7 +152,7 @@ Compose two Tier-B `DateInput` controls (see `date-input.md`) plus a `System.Win
 
 ## WPF implementation notes
 
-Shipped as three families in one batch: `Controls/Calendar/NaviusCalendar` (the calendar surface this contract says has no source in `Navius.Primitives` at all), `Controls/DatePicker/NaviusDatePicker` (+ the shared `NaviusDatePickerBase`), and `Controls/DateRangePicker/NaviusDateRangePicker` (+ `NaviusDateRange` + `DateRangeCommitEngine`). Themes: `Themes/Calendar.xaml`, `Themes/DatePicker.xaml`, `Themes/DateRangePicker.xaml` (the picker dictionaries merge Calendar.xaml transitively, the ContextMenu-merges-Menu precedent). All three ARE merged into `Themes/Generic.xaml` (M6 audit 2026-07-09: corrected -- this previously claimed the opposite, which was false; see `Themes/Generic.xaml`'s own merge list).
+Shipped as three families in one batch: Calendar and DatePicker are documented standalone in `calendar.md` and `date-picker.md` (moved there 2026-07-11); this section keeps only the composite: `Controls/DateRangePicker/NaviusDateRangePicker` (+ `NaviusDateRange` + `DateRangeCommitEngine`), which derives the shared `NaviusDatePickerBase` (owned by `date-picker.md`) and templates a `NaviusCalendar` (owned by `calendar.md`). Theme: `Themes/DateRangePicker.xaml` (merges Calendar.xaml transitively, the ContextMenu-merges-Menu precedent), merged into `Themes/Generic.xaml` (M6 audit 2026-07-09: corrected -- this previously claimed the opposite, which was false; see `Themes/Generic.xaml`'s own merge list).
 
 ### Part mapping
 
@@ -154,21 +162,21 @@ Shipped as three families in one batch: `Controls/Calendar/NaviusCalendar` (the 
 | `NaviusDateRangePickerControl` (`role="group"` + hidden bubble inputs) | Dropped: no native-form mirror in WPF (repo precedent, same as Select dropping NaviusBubbleInput); `StartName`/`EndName`/`Required`/`Invalid` not ported |
 | `NaviusDateRangePickerInput` (two segmented `NaviusDateInput` endpoints) | NOT ported here: the segment-field brain is the DateInput family, owned by a concurrent agent this wave. The trigger shows a plain read-only display ("start - end" formatted per `CultureInfo.CurrentCulture`); composing editable endpoint fields into the picker is a follow-up once both families are merged |
 | `NaviusDateRangePickerSeparator` | The literal " - " inside the display string (aria-hidden has no equivalent need; the string is one UIA value) |
-| `NaviusDateRangePickerContent` (Popover Portal > Positioner > Popup, `role="dialog"`) | `NaviusAnchoredPopup` (PART_Popup) hosting PART_PopupContent; `Side`/`Align`/`SideOffset`/`AlignOffset` are flat properties on the picker root (Positioner-collapse precedent from Popover). Align defaults to Start per this contract's Content default |
-| `NaviusDateRangePickerTrigger` (`aria-haspopup`/`aria-expanded`) | PART_Trigger ToggleButton; `IExpandCollapseProvider` on the picker's peer replaces the ARIA pair, as this doc's "WPF strategy" section predicted |
-| `ZitsCalendar` (styled-layer, no source in this repo) | `NaviusCalendar`, Tier A: derives `System.Windows.Controls.Calendar`, inheriting the native keyboard model (arrows/PageUp/PageDown/Home/End/Enter) and `CalendarAutomationPeer` for free, re-templated to tokens (keyed styles wired through the native `CalendarDayButtonStyle`/`CalendarButtonStyle`/`CalendarItemStyle` properties so Calendar's own population code stamps every cell even after the popup reparents the tree) |
+| `NaviusDateRangePickerContent` (Popover Portal > Positioner > Popup, `role="dialog"`) | `NaviusAnchoredPopup` (PART_Popup) hosting PART_PopupContent; `Side`/`Align`/`SideOffset`/`AlignOffset` are flat properties on the picker root, declared on the shared base (Positioner-collapse precedent from Popover; property table in `date-picker.md`). Align defaults to Start per this contract's Content default |
+| `NaviusDateRangePickerTrigger` (`aria-haspopup`/`aria-expanded`) | PART_Trigger ToggleButton (shared base, see `date-picker.md`); `IExpandCollapseProvider` on the picker's peer replaces the ARIA pair, as this doc's "WPF strategy" section predicted |
+| `ZitsCalendar` (styled-layer, no source in this repo) | `NaviusCalendar`, Tier A: derives the native `System.Windows.Controls.Calendar`, inheriting its keyboard model and `CalendarAutomationPeer` for free, re-templated to tokens. Standalone family: the part styles, keyed-style rationale, and keyboard verification status are in `calendar.md` |
 
 ### Commit model
 
-`DateRangeCommitEngine` (pure, STA-free tests): first pick sets Start; second pick sets End, swapped so `Start <= End`; a pick after a complete range starts fresh. Picks are detected as (a) left mouse-up on a `CalendarDayButton` or (b) Enter/Space bubbling out of the calendar, both with `handledEventsToo` since Calendar's class handlers mark them handled. `Calendar.SelectedDatesChanged` is deliberately NOT a commit source: the native calendar moves selection on every arrow key, and the contract wants arrows to navigate without committing. The calendar runs in `CalendarSelectionMode.SingleRange` purely so start/end/middle days all render selected (the `data-range-start`/`data-range-end`/`data-range-middle` styling implied by the web e2e); native Shift-to-extend semantics never drive the committed value.
+`DateRangeCommitEngine` (pure, STA-free tests): first pick sets Start; second pick sets End, swapped so `Start <= End`; a pick after a complete range starts fresh. Picks arrive through the shared base's detection (left mouse-up on a `CalendarDayButton`, or Enter/Space bubbling out of the calendar, both with `handledEventsToo`; mechanics and the mouse-capture-release quirk in `date-picker.md`). `Calendar.SelectedDatesChanged` is deliberately NOT a commit source: the native calendar moves selection on every arrow key, and the contract wants arrows to navigate without committing. The calendar runs in `CalendarSelectionMode.SingleRange` purely so start/end/middle days all render selected (the `data-range-start`/`data-range-end`/`data-range-middle` styling implied by the web e2e); native Shift-to-extend semantics never drive the committed value.
 
 Escape reverts BOTH endpoints to their open-time snapshot, then closes (the contract's "Esc reverts both"); an outside press keeps whatever was committed (each pick updates `Value` and fires `ValueChanged` immediately, matching the web firing per endpoint set) and just dismisses. The typed-backwards-range open question above resolves trivially here: with no endpoint inputs, every range flows through the engine and is always ordered.
 
 ### Recorded deltas
 
 - The two endpoint segment inputs, hidden bubble inputs, `role="group"` control wrapper, and `Granularity`/`MinValue`/`MaxValue` passthroughs are not ported (DateInput family split + no-native-form precedent). `MinValue`/`MaxValue` can later map to the calendar part's `DisplayDateStart`/`DisplayDateEnd`.
-- UIA: peers report `AutomationControlType.Custom` with localized control types "date picker" / "date range picker" (the native `DatePickerAutomationPeer` shape) plus read-only `IValueProvider` ("start - end", empty while unset, never the placeholder) and `IExpandCollapseProvider`; the M3 gate showed template-only text otherwise exposes nothing over UIA. The web Popup's `role="dialog"` has no direct equivalent; ExpandCollapse plus moved-in focus is the native WPF idiom (APG date-picker-dialog tiebreak).
-- Keyboard (the web contract had NO e2e-confirmed keyboard path for popup or grid, so WAI-ARIA APG plus native WPF Calendar won every tiebreak): Enter/Space/ArrowDown open when closed; the native Calendar keyboard model navigates inside (arrows by day, PageUp/PageDown by month, Home/End week edges); Enter/Space commit a pick; Escape cancels; outside press dismisses (OverlayStack, trigger and popup content registered as input roots per the Select precedent). Only the open-when-closed keys (Enter/Space/ArrowDown), Escape-cancels, and the pick-commit engine are actually unit-tested; the in-grid native Calendar navigation (arrows/PageUp/PageDown/Home/End) and outside-press dismissal are asserted only as "inherited from native Calendar behavior," not independently driven by a test (see M6 audit below -- the prior wording here, "all confirmed by unit tests," overstated this).
+- UIA: `NaviusDateRangePickerAutomationPeer` reports `AutomationControlType.Custom` with localized control type "date range picker" (the native `DatePickerAutomationPeer` shape, same peer shape as `NaviusDatePicker`'s; the M3-gate rationale and the `role="dialog"` to ExpandCollapse APG tiebreak are recorded in `date-picker.md`, "Accessibility") plus read-only `IValueProvider` ("start - end" formatted, "start - " while the second pick is pending, empty while unset, never the placeholder) and `IExpandCollapseProvider` over `IsOpen`.
+- Keyboard (the web contract had NO e2e-confirmed keyboard path for popup or grid, so WAI-ARIA APG plus native WPF Calendar won every tiebreak): the open/close/pick key handling is the shared base's, documented key-by-key with handler traceability in `date-picker.md`; the composite differences are Escape (reverts BOTH endpoints before closing, `CancelAndClose` override) and pick commit (routes through `DateRangeCommitEngine`, closing only when the range completes). Only the open-when-closed keys (Enter/Space/ArrowDown), Escape-reverts-and-closes, and the pick-commit engine are actually unit-tested here; the in-grid native Calendar navigation (arrows/PageUp/PageDown/Home/End, see `calendar.md` for the wording caveat) and outside-press dismissal are asserted only as "inherited from native Calendar behavior," not independently driven by a test (see M6 audit below -- the prior wording here, "all confirmed by unit tests," overstated this).
 - Mid-interaction range display: after a pick the committed range is repainted onto `SelectedDates`, but arrowing then collapses the native highlight to the focused day until the next pick (state is never lost, display only). The web's two-month layout is single-month here (native Calendar shows one month per view).
 - `NaviusDateRange` is a `readonly record struct` over `DateTime?` (not `DateOnly`) to match the native Calendar's value type; `Ordered()` from the web contract is unnecessary because the engine orders on commit.
 
@@ -190,6 +198,10 @@ of that claim were false: `Themes/Generic.xaml` merges all three directly, and a
 implementation notes" intro and the three theme files' header comments (not `Generic.xaml` itself,
 which is out of scope for this audit's edits either way). No functional impact -- consumers were
 already getting these styles for free via `Generic.xaml`; only the comments were wrong.
+(2026-07-11 docs-pass addendum: the same stale "Not merged into Generic.xaml" wording also
+survives in the three Gallery pages' resource comments, including
+`apps/Navius.Wpf.Gallery/Pages/DateRangePickerPage.xaml`; comment-only, not fixed in the
+docs-only split that created `calendar.md`/`date-picker.md`.)
 
 **CONFIRMED, fixed.** The doc's "Keyboard" delta bullet claimed "all confirmed by unit tests," but
 no test in `DateRangePickerTests.cs`/`DatePickerTests.cs`/`CalendarTests.cs` drives PageUp/PageDown/
