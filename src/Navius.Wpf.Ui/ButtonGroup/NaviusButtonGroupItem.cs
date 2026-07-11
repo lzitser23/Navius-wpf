@@ -1,4 +1,7 @@
 using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls.Primitives;
 
 namespace Navius.Wpf.Ui.ButtonGroup;
@@ -17,5 +20,38 @@ public class NaviusButtonGroupItem : ButtonBase
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(NaviusButtonGroupItem),
             new FrameworkPropertyMetadata(typeof(NaviusButtonGroupItem)));
+    }
+
+    protected override AutomationPeer OnCreateAutomationPeer() => new NaviusButtonGroupItemAutomationPeer(this);
+}
+
+/// <summary>
+/// Reports role="button" plus UIA InvokePattern for this bare ButtonBase item, which otherwise
+/// exposes no control type or invoke surface at all (deriving ButtonBase directly, not the native
+/// Button, skips ButtonAutomationPeer). Same shape as NaviusBreadcrumbItem's peer; Invoke honors
+/// IsEnabled and throws ElementNotEnabledException when disabled, the repo convention shared with
+/// NaviusCollapsibleTriggerAutomationPeer / NaviusNumberFieldAutomationPeer.
+/// </summary>
+internal sealed class NaviusButtonGroupItemAutomationPeer : FrameworkElementAutomationPeer, IInvokeProvider
+{
+    private readonly NaviusButtonGroupItem _owner;
+
+    public NaviusButtonGroupItemAutomationPeer(NaviusButtonGroupItem owner) : base(owner) => _owner = owner;
+
+    protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Button;
+
+    protected override string GetClassNameCore() => nameof(NaviusButtonGroupItem);
+
+    public override object? GetPattern(PatternInterface patternInterface) =>
+        patternInterface == PatternInterface.Invoke ? this : base.GetPattern(patternInterface);
+
+    void IInvokeProvider.Invoke()
+    {
+        if (!_owner.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
+        }
+
+        _owner.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, _owner));
     }
 }

@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls.Primitives;
 
 namespace Navius.Wpf.Ui.Sidebar;
@@ -40,6 +42,8 @@ public class NaviusSidebarItem : ButtonBase
         set => SetValue(IsActiveProperty, value);
     }
 
+    protected override AutomationPeer OnCreateAutomationPeer() => new NaviusSidebarItemAutomationPeer(this);
+
     private static void OnIsActiveChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if ((bool)e.NewValue)
@@ -50,5 +54,37 @@ public class NaviusSidebarItem : ButtonBase
         {
             d.ClearValue(AutomationProperties.ItemStatusProperty);
         }
+    }
+}
+
+/// <summary>
+/// Reports role="button" plus UIA InvokePattern for this bare ButtonBase item, so its activation
+/// surface (and the ItemStatus="current" the control sets on the active row) are actually reachable
+/// by assistive tech; deriving ButtonBase directly skips ButtonAutomationPeer, leaving no control
+/// type or invoke pattern otherwise. Same shape as NaviusBreadcrumbItem's peer; Invoke honors
+/// IsEnabled and throws ElementNotEnabledException when disabled, the repo convention shared with
+/// NaviusCollapsibleTriggerAutomationPeer / NaviusNumberFieldAutomationPeer.
+/// </summary>
+internal sealed class NaviusSidebarItemAutomationPeer : FrameworkElementAutomationPeer, IInvokeProvider
+{
+    private readonly NaviusSidebarItem _owner;
+
+    public NaviusSidebarItemAutomationPeer(NaviusSidebarItem owner) : base(owner) => _owner = owner;
+
+    protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Button;
+
+    protected override string GetClassNameCore() => nameof(NaviusSidebarItem);
+
+    public override object? GetPattern(PatternInterface patternInterface) =>
+        patternInterface == PatternInterface.Invoke ? this : base.GetPattern(patternInterface);
+
+    void IInvokeProvider.Invoke()
+    {
+        if (!_owner.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
+        }
+
+        _owner.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, _owner));
     }
 }

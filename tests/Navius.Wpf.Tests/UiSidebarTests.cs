@@ -1,3 +1,6 @@
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Input;
 using Navius.Wpf.Ui.Sidebar;
 using Xunit;
@@ -72,5 +75,50 @@ public class UiSidebarTests
         item.IsActive = false;
 
         Assert.Equal(string.Empty, System.Windows.Automation.AutomationProperties.GetItemStatus(item));
+    }
+
+    [StaFact]
+    public void NaviusSidebarItem_AutomationPeer_ReportsButtonControlType()
+    {
+        var item = new NaviusSidebarItem();
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(item);
+
+        Assert.NotNull(peer);
+        Assert.Equal(AutomationControlType.Button, peer!.GetAutomationControlType());
+    }
+
+    [StaFact]
+    public void NaviusSidebarItem_AutomationPeer_ExposesInvokePattern()
+    {
+        var item = new NaviusSidebarItem();
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(item);
+
+        Assert.IsAssignableFrom<IInvokeProvider>(peer!.GetPattern(PatternInterface.Invoke));
+    }
+
+    [StaFact]
+    public void NaviusSidebarItem_AutomationPeer_DisabledInvoke_Throws()
+    {
+        var item = new NaviusSidebarItem { IsEnabled = false };
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(item);
+        var invoke = (IInvokeProvider)peer!.GetPattern(PatternInterface.Invoke);
+
+        Assert.Throws<ElementNotEnabledException>(() => invoke.Invoke());
+    }
+
+    [StaFact]
+    public void NaviusSidebarItem_AutomationPeer_EnabledInvoke_RaisesClick()
+    {
+        var item = new NaviusSidebarItem();
+        var clicked = false;
+        item.Click += (_, _) => clicked = true;
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(item);
+        ((IInvokeProvider)peer!.GetPattern(PatternInterface.Invoke)).Invoke();
+
+        Assert.True(clicked);
     }
 }
