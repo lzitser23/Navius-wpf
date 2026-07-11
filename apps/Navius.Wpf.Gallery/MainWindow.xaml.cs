@@ -79,6 +79,7 @@ public partial class MainWindow : Window
             "Avatar" => new AvatarPage(),
             "AspectRatio" => new AspectRatioPage(),
             "ColorPicker" => new ColorPickerPage(),
+            "CollectionPicker" => new CollectionPickerPage(),
             "Charts" => new ChartsPage(),
             "UiDisplay" => new UiDisplayPage(),
             "UiComposite" => new UiCompositePage(),

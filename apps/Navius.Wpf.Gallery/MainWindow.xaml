@@ -86,6 +86,7 @@
                         <ListBoxItem Content="Avatar" />
                         <ListBoxItem Content="AspectRatio" />
                         <ListBoxItem Content="ColorPicker" />
+                        <ListBoxItem Content="CollectionPicker" />
                         <ListBoxItem Content="Charts" />
                         <ListBoxItem Content="UiDisplay" />
                         <ListBoxItem Content="UiComposite" />

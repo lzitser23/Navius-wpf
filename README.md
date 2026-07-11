@@ -58,7 +58,7 @@ live in [`docs/parity/`](docs/parity/), one document per family.
 - **Real accessibility mechanics.** Custom `AutomationPeer`s report the intended UIA
   control types and patterns; keyboard maps are implemented per family and pinned by
   routed-key unit tests against real windows.
-- **A styled layer, `Navius.Wpf.Ui`**: 19 vendorable styled items (Sidebar,
+- **A styled layer, `Navius.Wpf.Ui`**: 20 vendorable styled items (Sidebar,
   CommandPalette, Card, Timeline, and more) built as `ControlTemplate`s over the same
   warm-grayscale token system as the web catalog.
 - **Runtime theming.** Light, Dark, and HighContrast token dictionaries swapped live
@@ -72,7 +72,7 @@ live in [`docs/parity/`](docs/parity/), one document per family.
 - **Charts, `Navius.Wpf.Charts`**: a thin themed wrapper over LiveCharts2 that follows
   the token themes at runtime ([ADR-0004](docs/adr/0004-chart-library.md)).
 - **Copy-paste vendoring.** The `navius-wpf` dotnet tool copies any registry item's
-  source (78 items: 58 primitive, 19 styled, 1 core) into your project with
+  source (79 items: 58 primitive, 20 styled, 1 core) into your project with
   transitive dependency closure and namespace rewriting; a CI-style gate builds the
   vendored output to prove the closure compiles.
 - **Test-verified.** 1281 tests across five projects: 1212 unit (STA, real windows),
