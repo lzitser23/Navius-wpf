@@ -183,3 +183,15 @@ Adversarial re-verification of the sections above against the shipped C#/XAML.
 ### PLAUSIBLE / residual (not fixed)
 
 - **Non-modal Drawer does not restore focus on close**, same root cause as the Dialog residual (focus-restore capture in `Overlays/OverlayStack.cs` is gated on `TrapFocus`, which tracks modality). Left for the Overlays owner.
+
+## Post-release fixes (2026-07-11)
+
+- **Reopen-during-exit race fixed.** The shared `NaviusOverlaySurfaceBase` gained an engage-generation
+  guard: `Engage()` bumps a counter, and the exit-completion callback captures that counter when the
+  close begins and no-ops if a newer `Engage` has happened since. Closing a Drawer and reopening it
+  within the ~150ms exit fade no longer lets the stale exit callback run `layer.RemoveSurface` /
+  `Visibility = Collapsed` / `IsOpen = false` against the freshly reopened session and collapse it.
+  Regression test lives on the shared base's Dialog coverage
+  (`DialogTests.Reopen_DuringExitAnimation_KeepsTheNewSessionOpen`); Drawer shares the fix since it
+  shares the base, matching the "Canceled `Closing` desynced `IsOpen`" fix's own M6-era precedent of
+  covering Drawer from the Dialog test (PR #3).

@@ -187,3 +187,14 @@ entirely, undocumented as a drop." This affects every family built on `NaviusOve
 is reported here rather than fixed: `Overlays/` is explicitly audit-and-report-only for this
 batch, and the fix (adding a cancelable open-focus hook to the shared session/options types) would
 touch infrastructure other concurrently-running auditors' families also depend on.
+
+## Post-release fixes (2026-07-11)
+
+- **Reopen-during-exit race fixed.** The shared `NaviusOverlaySurfaceBase` gained an engage-generation
+  guard: `Engage()` bumps a counter, and the exit-completion callback captures that counter when the
+  close begins and no-ops if a newer `Engage` has happened since. Closing an AlertDialog and reopening
+  it within the ~150ms exit fade no longer lets the stale exit callback run `layer.RemoveSurface` /
+  `Visibility = Collapsed` / `IsOpen = false` against the freshly reopened session and collapse it.
+  Regression test lives on the shared base's Dialog coverage
+  (`DialogTests.Reopen_DuringExitAnimation_KeepsTheNewSessionOpen`); AlertDialog shares the fix since
+  it shares the base (PR #3).

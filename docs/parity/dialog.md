@@ -181,3 +181,12 @@ Adversarial re-verification of every claim in the sections above against the shi
 
 - **Non-modal Dialog does not restore focus on close.** `OverlayStack.Push` only captures `RestoreFocusTarget` when `options.TrapFocus` is true, and `TrapFocusEffective => ModalEffective`, so a non-modal Dialog (`Modal="false"`) never restores focus to the pre-open element on close, unlike the web contract which restores focus even in the non-modal path. The gate lives in `Overlays/OverlayStack.cs` (outside this agent's edit boundary) and the WPF port has no discrete "trigger" element, so this is left as a residual for the Overlays owner to decide.
 - **`IsDialogCore` availability comment.** `NaviusDialog.cs` and this doc's WPF strategy note say `IsDialogCore` is "available since .NET 6"; it appears to actually be a later addition. It compiles clean on the `net8.0-windows`/`net10.0-windows` targets, so this is a cosmetic comment-accuracy nit only, not verified against the exact framework version here.
+
+## Post-release fixes (2026-07-11)
+
+- **Reopen-during-exit race fixed.** The shared `NaviusOverlaySurfaceBase` gained an engage-generation
+  guard: `Engage()` bumps a counter, and the exit-completion callback captures that counter when the
+  close begins and no-ops if a newer `Engage` has happened since. Closing a Dialog and reopening it
+  within the ~150ms exit fade no longer lets the stale exit callback run `layer.RemoveSurface` /
+  `Visibility = Collapsed` / `IsOpen = false` against the freshly reopened session and collapse it.
+  Regression: `DialogTests.Reopen_DuringExitAnimation_KeepsTheNewSessionOpen` (PR #3).
