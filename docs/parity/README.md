@@ -2,9 +2,15 @@
 
 One file per web Navius primitive family, extracted 2026-07-09 from `E:\Lzitser\navius\src\Navius.Primitives\Components\` (the source of truth). Each file has the same 8 sections: Parts, Parameters, Events, State + data attributes, Keyboard, Accessibility, WPF strategy, Open questions.
 
+Two additional files, [calendar](calendar.md) and [date-picker](date-picker.md) (added 2026-07-11), document WPF-side families that have no web extraction of their own: their web contract source is the date-range-picker family composition, as each file's header states. They follow the same section discipline against the shipped WPF source instead of a web extraction.
+
 Tier values are the extractor's proposal per family; they get confirmed or overridden when the family's wave starts. Tier A: derive from a native WPF control. Tier B: custom lookless control. Tier C: reinterpret or retire with an ADR.
 
-Distribution: 22 tier A, 33 tier B, 3 tier C (58 total).
+Distribution: 22 tier A, 33 tier B, 3 tier C over the 58 web-extracted families. With the two WPF-side docs (calendar: tier A, date-picker: tier B, both previously folded into date-range-picker.md) the directory documents 60 families total.
+
+## Coverage rule
+
+Policy (2026-07-11, decided while splitting Calendar and DatePicker out of date-range-picker.md; see issue #2): **every registry item that ships a user-facing control gets its own generated docs page on wpf.naviusui.dev, and every such `registry:primitive` item additionally gets its own parity document here.** User-facing means a consumer declares the control directly (it has its own Gallery page or documented consumer surface). Dependency-only infrastructure may remain grouped into the parity doc of a family that owns it, even when it is a registry item a consumer could technically `add` directly: today that is `core` (`registry:core`), and `anchored-popup`, `overlay-surface`, and `button-automation-peer` (all `registry:primitive`, reached through the dependency closure: positioning, the dialog/alert-dialog/drawer surface base, and the shared button peer), plus `internal` (`registry:styled`, the styled layer's shared helpers). Calendar and DatePicker are user-facing registry items with distinct APIs, so folding them into the composite's doc violated this rule; calendar.md and date-picker.md fix that. `registry:styled` items get docs pages but not parity documents, since they are not web primitive families and are outside this directory's web-parity scope.
 
 | Family | Parts | Params | Proposed tier |
 |---|---|---|---|
@@ -15,6 +21,7 @@ Distribution: 22 tier A, 33 tier B, 3 tier C (58 total).
 | [autocomplete](autocomplete.md) | 20 | 59 | B |
 | [avatar](avatar.md) | 3 | 8 | B |
 | [button](button.md) | 1 | 7 | A |
+| [calendar](calendar.md) * | 1 | 0 | A (shipped) |
 | [checkbox](checkbox.md) | 3 | 18 | A |
 | [collapsible](collapsible.md) | 3 | 8 | A |
 | [color-picker](color-picker.md) | 8 | 24 | B |
@@ -24,6 +31,7 @@ Distribution: 22 tier A, 33 tier B, 3 tier C (58 total).
 | [currency-input](currency-input.md) | 1 | 14 | A |
 | [data-grid](data-grid.md) | 1 | 14 | A |
 | [date-input](date-input.md) | 4 | 27 | B |
+| [date-picker](date-picker.md) * | 1 (+ shared base) | 9 | B (shipped) |
 | [date-range-picker](date-range-picker.md) | 6 | 27 | B |
 | [dialog](dialog.md) | 8 | 27 | B |
 | [direction-provider](direction-provider.md) | 1 | 2 | C |
@@ -66,6 +74,8 @@ Distribution: 22 tier A, 33 tier B, 3 tier C (58 total).
 | [tooltip](tooltip.md) | 7 | 15 | A |
 | [tree](tree.md) | 6 | 20 | A |
 | [visually-hidden](visually-hidden.md) | 1 | 2 | C |
+
+\* calendar and date-picker have no web extraction; their Parts/Params count the shipped WPF public surface (calendar adds no members over the native Calendar; date-picker's 9 params are `Value` plus the 8 dependency properties on the shared `NaviusDatePickerBase`) and their tier is the shipped tier, not a proposal.
 
 ## Cross-cutting port risks flagged during extraction
 
