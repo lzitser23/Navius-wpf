@@ -171,7 +171,11 @@ internal sealed class NaviusBreadcrumbItemAutomationPeer : FrameworkElementAutom
 
     void IInvokeProvider.Invoke()
     {
-        if (!Item.IsEnabled)
+        // GetPattern only hands out this provider for a non-current crumb, but a UIA client can cache
+        // the provider while the crumb is navigable and call Invoke after it becomes the current page.
+        // Guard IsCurrentPage here too so a cached provider cannot activate the terminal, non-navigable
+        // entry (which exposes no Invoke pattern and runs no activation path).
+        if (!Item.IsEnabled || Item.IsCurrentPage)
         {
             throw new ElementNotEnabledException();
         }
