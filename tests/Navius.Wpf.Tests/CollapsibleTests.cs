@@ -215,19 +215,51 @@ public class CollapsibleTests
     }
 
     [StaFact]
-    public void TriggerAutomationPeer_Expand_IsAsync_OpensPanelAfterPump()
+    public void TriggerAutomationPeer_ExpandAndCollapse_AreBlockingAndExecuteCommand()
     {
         var (root, trigger, _) = CreateCollapsible();
+        var clicks = 0;
+        var commandExecutions = 0;
+        trigger.Command = new RelayCommand(_ => commandExecutions++);
+        trigger.Click += (_, _) => clicks++;
         var expandCollapse = (IExpandCollapseProvider)PeerFor(trigger).GetPattern(PatternInterface.ExpandCollapse)!;
 
         expandCollapse.Expand();
 
-        Assert.False(root.Open);
+        Assert.True(root.Open);
+        Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, commandExecutions);
 
-        PumpDispatcher();
+        expandCollapse.Collapse();
+
+        Assert.False(root.Open);
+        Assert.Equal(ExpandCollapseState.Collapsed, expandCollapse.ExpandCollapseState);
+        Assert.Equal(2, clicks);
+        Assert.Equal(2, commandExecutions);
+    }
+
+    [StaFact]
+    public void TriggerAutomationPeer_RepeatedExpandAndCollapse_AreIdempotent()
+    {
+        var (root, trigger, _) = CreateCollapsible();
+        var clicks = 0;
+        trigger.Click += (_, _) => clicks++;
+        var expandCollapse = (IExpandCollapseProvider)PeerFor(trigger).GetPattern(PatternInterface.ExpandCollapse)!;
+
+        expandCollapse.Expand();
+        expandCollapse.Expand();
 
         Assert.True(root.Open);
         Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
+        Assert.Equal(1, clicks);
+
+        expandCollapse.Collapse();
+        expandCollapse.Collapse();
+
+        Assert.False(root.Open);
+        Assert.Equal(ExpandCollapseState.Collapsed, expandCollapse.ExpandCollapseState);
+        Assert.Equal(2, clicks);
     }
 
     private static AutomationPeer PeerFor(NaviusCollapsibleTrigger trigger) =>

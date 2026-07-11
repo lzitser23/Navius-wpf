@@ -371,19 +371,51 @@ public class AccordionTests : IDisposable
     }
 
     [StaFact]
-    public void TriggerAutomationPeer_Expand_IsAsync_OpensPanelAfterPump()
+    public void TriggerAutomationPeer_ExpandAndCollapse_AreBlockingAndExecuteCommand()
     {
-        var (root, a, _, _) = CreateAccordion();
+        var (root, a, _, _) = CreateAccordion(collapsible: true);
+        var clicks = 0;
+        var commandExecutions = 0;
+        a.Trigger.Command = new RelayCommand(_ => commandExecutions++);
+        a.Trigger.Click += (_, _) => clicks++;
         var expandCollapse = (IExpandCollapseProvider)PeerFor(a.Trigger).GetPattern(PatternInterface.ExpandCollapse)!;
 
         expandCollapse.Expand();
 
-        Assert.Null(root.Value);
+        Assert.Equal("a", root.Value);
+        Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, commandExecutions);
 
-        PumpDispatcher();
+        expandCollapse.Collapse();
+
+        Assert.Null(root.Value);
+        Assert.Equal(ExpandCollapseState.Collapsed, expandCollapse.ExpandCollapseState);
+        Assert.Equal(2, clicks);
+        Assert.Equal(2, commandExecutions);
+    }
+
+    [StaFact]
+    public void TriggerAutomationPeer_RepeatedExpandAndCollapse_AreIdempotent()
+    {
+        var (root, a, _, _) = CreateAccordion(collapsible: true);
+        var clicks = 0;
+        a.Trigger.Click += (_, _) => clicks++;
+        var expandCollapse = (IExpandCollapseProvider)PeerFor(a.Trigger).GetPattern(PatternInterface.ExpandCollapse)!;
+
+        expandCollapse.Expand();
+        expandCollapse.Expand();
 
         Assert.Equal("a", root.Value);
         Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
+        Assert.Equal(1, clicks);
+
+        expandCollapse.Collapse();
+        expandCollapse.Collapse();
+
+        Assert.Null(root.Value);
+        Assert.Equal(ExpandCollapseState.Collapsed, expandCollapse.ExpandCollapseState);
+        Assert.Equal(2, clicks);
     }
 
     private static AutomationPeer PeerFor(NaviusAccordionTrigger trigger) =>
