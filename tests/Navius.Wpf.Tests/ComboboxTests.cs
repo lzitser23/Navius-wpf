@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
@@ -9,6 +10,7 @@ using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Markup;
 using Navius.Wpf.Primitives.Controls.Combobox;
 using Navius.Wpf.Primitives.Theming;
 
@@ -103,6 +105,8 @@ public class ComboboxEngineTests
 
 public class ComboboxTests : IDisposable
 {
+    private sealed record NamedOption(string Name);
+
     static ComboboxTests()
     {
         // pack://application URIs only resolve once an Application exists in the process. Guarded
@@ -208,6 +212,23 @@ public class ComboboxTests : IDisposable
         _ = new Window { Resources = CreateThemedScope(), Content = combobox };
 
         Assert.True(combobox.ApplyTemplate());
+    }
+
+    [StaFact]
+    public void NonGenericCombobox_LoadsFromXaml_AndTracksBoundItems()
+    {
+        var combobox = Assert.IsType<NaviusCombobox>(XamlReader.Parse(
+            "<combo:NaviusCombobox xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:combo='clr-namespace:Navius.Wpf.Primitives.Controls.Combobox;assembly=Navius.Wpf.Primitives' />"));
+        var options = new ObservableCollection<NamedOption> { new("Apple") };
+        combobox.DisplayMemberPath = nameof(NamedOption.Name);
+        combobox.ItemsSource = options;
+
+        options.Add(new NamedOption("Banana"));
+        Assert.Equal(new[] { "Apple", "Banana" }, combobox.FilteredRows!.Select(row => row.Text));
+
+        combobox.Value = options[1];
+
+        Assert.Equal("Banana", combobox.Query);
     }
 
     [StaFact]

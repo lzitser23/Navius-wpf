@@ -7,6 +7,8 @@ using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Markup;
+using System.Windows.Threading;
 using Navius.Wpf.Primitives.Controls.Select;
 using Navius.Wpf.Primitives.Positioning;
 using Navius.Wpf.Primitives.Theming;
@@ -15,6 +17,8 @@ namespace Navius.Wpf.Tests;
 
 public class SelectTests : IDisposable
 {
+    private sealed record NamedOption(string Name);
+
     static SelectTests()
     {
         // pack://application URIs only resolve once an Application exists in the process.
@@ -172,6 +176,46 @@ public class SelectTests : IDisposable
         select.Style = (Style)scope[typeof(NaviusSelectBase)];
 
         Assert.True(select.ApplyTemplate());
+    }
+
+    [StaFact]
+    public void NonGenericSelect_LoadsFromXaml_AndDisplaysBoundItems()
+    {
+        var select = Assert.IsType<NaviusSelect>(XamlReader.Parse(
+            "<select:NaviusSelect xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:select='clr-namespace:Navius.Wpf.Primitives.Controls.Select;assembly=Navius.Wpf.Primitives' />"));
+        var options = new[] { new NamedOption("Apple"), new NamedOption("Banana") };
+        select.Resources = CreateThemedScope();
+        select.Style = (Style)select.Resources[typeof(NaviusSelectBase)];
+        select.DisplayMemberPath = nameof(NamedOption.Name);
+        select.ItemsSource = options;
+        var window = new Window
+        {
+            Content = select,
+            Width = 300,
+            Height = 200,
+            Left = -10000,
+            Top = -10000,
+            ShowInTaskbar = false,
+        };
+        try
+        {
+            window.Show();
+            select.IsOpen = true;
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+            var option = Assert.IsType<NaviusSelectItem>(select.ItemContainerGenerator.ContainerFromIndex(1));
+
+            Assert.Same(options[1], option.Value);
+            Assert.Equal("Banana", option.DisplayText);
+
+            option.RaiseSelectEvent();
+
+            Assert.Same(options[1], select.Value);
+            Assert.Equal("Banana", select.DisplayText);
+        }
+        finally
+        {
+            window.Close();
+        }
     }
 
     [StaFact]
