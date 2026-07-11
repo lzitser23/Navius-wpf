@@ -340,7 +340,7 @@ int RegistrySync()
     AddCoreCs(Path.Combine(primitivesRoot, "Positioning"), "NaviusWpf/Primitives/Positioning");
     AddCoreCs(Path.Combine(primitivesRoot, "Theming"), "NaviusWpf/Primitives/Theming");
     AddCoreCs(Path.Combine(controlsDir, "Internal"), "NaviusWpf/Primitives/Controls/Internal");
-    foreach (var themeName in new[] { "Tokens.Light.xaml", "Tokens.Dark.xaml", "OverlayBackdrop.xaml" })
+    foreach (var themeName in new[] { "Tokens.Light.xaml", "Tokens.Dark.xaml", "Tokens.HighContrast.xaml", "OverlayBackdrop.xaml" })
     {
         var p = Path.Combine(themesDir, themeName);
         if (File.Exists(p))
@@ -456,12 +456,14 @@ int RegistrySync()
         unclassified.Add("src/Navius.Wpf.Ui: directory not found");
     }
 
-    // Charts is explicitly out of scope this wave (owned by a concurrent agent) - if/when it
-    // shows up under src/, note it instead of silently registering or silently ignoring it.
+    // Charts is intentionally not a registry item: it is a third-party-engine adapter distributed
+    // as an optional package (ADR-0004), not Navius-owned source whose compile closure can be
+    // vendored. Reconsider only if the CLI later gains generic packageDependencies installation
+    // support. If/when it shows up under src/, note it instead of silently registering or ignoring.
     var chartsDir = Path.Combine(syncRoot, "src", "Navius.Wpf.Charts");
     if (Directory.Exists(chartsDir))
     {
-        unclassified.Add("src/Navius.Wpf.Charts: found but intentionally excluded (owned by a concurrent agent this wave)");
+        unclassified.Add("src/Navius.Wpf.Charts: found but intentionally excluded (third-party-engine adapter, distributed as an optional package per ADR-0004)");
     }
 
     // --- dependency closure: which items does each item's source actually reference? --------

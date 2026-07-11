@@ -67,6 +67,33 @@ public sealed class VendoringClosureTests : IDisposable
         Assert.True(buildResult.ExitCode == 0, $"vendored '{itemName}' did not compile (exit {buildResult.ExitCode}):\n{buildResult.StdOut}\n{buildResult.StdErr}");
     }
 
+    [Fact]
+    public void AddCore_VendorsAllThreeTokenDictionaries()
+    {
+        // Regression (issue #2): registry-sync hardcoded the core theme-file list to Light + Dark
+        // only, so a vendored `core` silently dropped Tokens.HighContrast.xaml and the high-contrast
+        // theme never shipped to consumers. Assert all three token dictionaries land.
+        var repoRoot = FindRepoRoot();
+        var cliProject = Path.Combine(repoRoot, "tools", "Navius.Wpf.Cli", "Navius.Wpf.Cli.csproj");
+        Assert.True(File.Exists(cliProject), $"CLI project not found: {cliProject}");
+
+        var tempDir = Path.Combine(Path.GetTempPath(), "navius-wpf-cli-tests", $"core-tokens-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+        _tempDirs.Add(tempDir);
+
+        var addArgs = $"run --project \"{cliProject}\" -- add core --to \"{tempDir}\" --namespace ClosureTest --root \"{repoRoot}\"";
+        var addResult = RunProcess("dotnet", addArgs, repoRoot);
+        _output.WriteLine($"$ dotnet {addArgs}\n{addResult.StdOut}\n{addResult.StdErr}");
+        Assert.True(addResult.ExitCode == 0, $"'navius-wpf add core' failed (exit {addResult.ExitCode}):\n{addResult.StdOut}\n{addResult.StdErr}");
+
+        var themesDir = Path.Combine(tempDir, "NaviusWpf", "Themes");
+        foreach (var tokenFile in new[] { "Tokens.Light.xaml", "Tokens.Dark.xaml", "Tokens.HighContrast.xaml" })
+        {
+            var path = Path.Combine(themesDir, tokenFile);
+            Assert.True(File.Exists(path), $"vendored core is missing token dictionary {tokenFile} (expected at {path})");
+        }
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
