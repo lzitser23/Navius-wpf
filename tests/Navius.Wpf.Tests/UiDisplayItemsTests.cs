@@ -166,6 +166,26 @@ public class UiDisplayItemsTests
     }
 
     [StaFact]
+    public void Badge_PillUsesFiniteCircularEndsInsteadOfAnEllipse()
+    {
+        var dictionary = MergeTheme("Badge.xaml");
+        try
+        {
+            var badge = new NaviusBadge { Content = "Live" };
+            ApplyStyleAndTemplate(badge, typeof(NaviusBadge));
+            badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+
+            var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(badge, 0));
+            Assert.Equal(new CornerRadius(8), border.CornerRadius);
+            Assert.True(badge.DesiredSize.Width > border.CornerRadius.TopLeft * 2);
+        }
+        finally
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+        }
+    }
+
+    [StaFact]
     public void Badge_DestructiveVariant_SwitchesToDestructiveBackground()
     {
         var dictionary = MergeTheme("Badge.xaml");
