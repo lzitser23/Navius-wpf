@@ -116,10 +116,11 @@ public abstract class NaviusAutocompleteBase : Control
 
     /// <summary>
     /// WPF implicit-style lookup keys on the concrete (closed generic) type, and the theme-style
-    /// path (DefaultStyleKey) only consults Generic.xaml, which this family deliberately does not
-    /// touch. So the shared base-typed style from the consumer-merged Themes/Autocomplete.xaml is
-    /// resolved here explicitly, by its base-type key, at Initialized/Loaded time. A locally set
-    /// Style always wins.
+    /// path (DefaultStyleKey) only consults Generic.xaml keyed by that closed type, which never
+    /// matches a style authored against the open base type. The shared base-typed style lives in
+    /// Themes/Autocomplete.xaml (merged into Generic.xaml), so it is resolved here explicitly via
+    /// TryFindResource by its base-type key at Initialized/Loaded time. A locally set Style always
+    /// wins.
     /// </summary>
     private void ResolveThemeStyle()
     {
