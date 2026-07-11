@@ -82,7 +82,7 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
     void IInvokeProvider.Invoke()
     {
         ThrowIfDisabled();
-        QueueActivation();
+        QueueInvoke();
     }
 
     void IExpandCollapseProvider.Expand()
@@ -90,7 +90,7 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
         ThrowIfDisabled();
         if (!_owner.IsPanelOpen)
         {
-            QueueActivation();
+            _owner.AutomationInvoke();
         }
     }
 
@@ -99,7 +99,7 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
         ThrowIfDisabled();
         if (_owner.IsPanelOpen)
         {
-            QueueActivation();
+            _owner.AutomationInvoke();
         }
     }
 
@@ -115,9 +115,10 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
         }
     }
 
-    // The UIA Invoke/Expand/Collapse contract requires these calls to return immediately, so queue the
-    // activation onto the owner's dispatcher rather than running it inline, matching WPF's native peers.
-    // Activation routes through OnClick so the bound Command executes (a bare RaiseEvent would not).
-    private void QueueActivation() =>
+    // UIA Invoke must return immediately, so queue activation onto the owner's dispatcher, matching
+    // WPF's native peers. Expand/Collapse are deliberately synchronous: their provider contract requires
+    // the requested state to be reached before they return. Both paths route through OnClick so the bound
+    // Command executes (a bare RaiseEvent would not).
+    private void QueueInvoke() =>
         _owner.Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(_owner.AutomationInvoke));
 }
