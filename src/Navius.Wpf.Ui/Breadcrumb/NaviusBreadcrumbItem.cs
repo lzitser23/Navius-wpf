@@ -2,8 +2,10 @@ using System;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace Navius.Wpf.Ui.Breadcrumb;
 
@@ -98,6 +100,13 @@ public class NaviusBreadcrumbItem : ContentControl, ICommandSource
 
     protected override AutomationPeer OnCreateAutomationPeer() => new NaviusBreadcrumbItemAutomationPeer(this);
 
+    /// <summary>
+    /// Runs the same activation path as a mouse click or Enter/Space (raise Click, execute the bound
+    /// Command), so a UIA Invoke drives the existing behavior without duplicating it. Called by the
+    /// peer's IInvokeProvider.Invoke; the peer only exposes Invoke on a non-current crumb.
+    /// </summary>
+    internal void AutomationInvoke() => Activate();
+
     private void Activate()
     {
         RaiseEvent(new RoutedEventArgs(ClickEvent, this));
@@ -137,14 +146,40 @@ public class NaviusBreadcrumbItem : ContentControl, ICommandSource
     }
 }
 
-internal sealed class NaviusBreadcrumbItemAutomationPeer : FrameworkElementAutomationPeer
+/// <summary>
+/// Reports Hyperlink for a navigable crumb and Text for the current page. A non-current crumb also
+/// exposes UIA InvokePattern so assistive tech can activate it (mouse and keyboard already run the
+/// same activation path); the current page reports Text and exposes no Invoke pattern.
+/// </summary>
+internal sealed class NaviusBreadcrumbItemAutomationPeer : FrameworkElementAutomationPeer, IInvokeProvider
 {
     public NaviusBreadcrumbItemAutomationPeer(NaviusBreadcrumbItem owner) : base(owner)
     {
     }
 
+    private NaviusBreadcrumbItem Item => (NaviusBreadcrumbItem)Owner;
+
     protected override AutomationControlType GetAutomationControlTypeCore() =>
-        ((NaviusBreadcrumbItem)Owner).IsCurrentPage ? AutomationControlType.Text : AutomationControlType.Hyperlink;
+        Item.IsCurrentPage ? AutomationControlType.Text : AutomationControlType.Hyperlink;
 
     protected override string GetClassNameCore() => nameof(NaviusBreadcrumbItem);
+
+    public override object? GetPattern(PatternInterface patternInterface) =>
+        patternInterface == PatternInterface.Invoke && !Item.IsCurrentPage
+            ? this
+            : base.GetPattern(patternInterface);
+
+    void IInvokeProvider.Invoke()
+    {
+        if (!Item.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
+        }
+
+        // The UIA IInvokeProvider.Invoke contract requires this call to return immediately, so queue
+        // the activation onto the owner's dispatcher rather than running it inline, matching WPF's
+        // native ButtonAutomationPeer. This keeps the UIA client from blocking when activation opens
+        // a modal dialog or does other synchronous work.
+        Item.Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(Item.AutomationInvoke));
+    }
 }
