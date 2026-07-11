@@ -23,6 +23,12 @@ public class NaviusButtonGroupItem : ButtonBase
     }
 
     protected override AutomationPeer OnCreateAutomationPeer() => new NaviusButtonGroupItemAutomationPeer(this);
+
+    /// <summary>
+    /// Routes a UIA Invoke through ButtonBase.OnClick so it both raises Click and executes the bound
+    /// Command, matching how the native ButtonAutomationPeer activates a button.
+    /// </summary>
+    internal void AutomationInvoke() => OnClick();
 }
 
 /// <summary>
@@ -52,6 +58,6 @@ internal sealed class NaviusButtonGroupItemAutomationPeer : FrameworkElementAuto
             throw new ElementNotEnabledException();
         }
 
-        _owner.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, _owner));
+        _owner.AutomationInvoke();
     }
 }

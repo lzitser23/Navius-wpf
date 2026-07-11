@@ -1,3 +1,4 @@
+using System;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
@@ -120,5 +121,42 @@ public class UiSidebarTests
         ((IInvokeProvider)peer!.GetPattern(PatternInterface.Invoke)).Invoke();
 
         Assert.True(clicked);
+    }
+
+    [StaFact]
+    public void NaviusSidebarItem_AutomationPeer_EnabledInvoke_ExecutesBoundCommandWithParameter()
+    {
+        object? received = null;
+        var executions = 0;
+        var command = new RelayCommand(p => { received = p; executions++; }, _ => true);
+        var parameter = new object();
+        var clicks = 0;
+        var item = new NaviusSidebarItem { Command = command, CommandParameter = parameter };
+        item.Click += (_, _) => clicks++;
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(item);
+        ((IInvokeProvider)peer!.GetPattern(PatternInterface.Invoke)).Invoke();
+
+        Assert.Equal(1, executions);
+        Assert.Same(parameter, received);
+        Assert.Equal(1, clicks);
+    }
+
+    private sealed class RelayCommand : ICommand
+    {
+        private readonly Action<object?> _execute;
+        private readonly Func<object?, bool> _canExecute;
+
+        public RelayCommand(Action<object?> execute, Func<object?, bool> canExecute)
+        {
+            _execute = execute;
+            _canExecute = canExecute;
+        }
+
+        public event EventHandler? CanExecuteChanged;
+
+        public bool CanExecute(object? parameter) => _canExecute(parameter);
+
+        public void Execute(object? parameter) => _execute(parameter);
     }
 }
