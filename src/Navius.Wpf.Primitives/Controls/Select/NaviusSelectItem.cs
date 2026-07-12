@@ -7,7 +7,7 @@ namespace Navius.Wpf.Primitives.Controls.Select;
 
 /// <summary>
 /// A single option row inside a <see cref="NaviusSelectBase"/> listbox (contract's
-/// NaviusSelectItem, role="option"). Tier B: derives from the bare <see cref="Control"/> rather
+/// NaviusSelectItem, role="option"). Tier B: derives from <see cref="ContentControl"/> rather
 /// than ListBoxItem/ComboBoxItem, because the owning Select is not a WPF Selector and drives
 /// selection itself by walking its containers (mirroring NaviusRadioGroup.SyncCheckedFromValue),
 /// so <see cref="IsSelectedValue"/> is a plain owner-set property, not Selector.IsSelected.

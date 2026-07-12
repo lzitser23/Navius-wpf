@@ -259,6 +259,53 @@ public class SelectTests : IDisposable
         }
     }
 
+    private sealed class NameTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate? NameTemplate { get; set; }
+
+        public override DataTemplate? SelectTemplate(object? item, DependencyObject container) =>
+            item is NamedOption ? NameTemplate : null;
+    }
+
+    [StaFact]
+    public void NonGenericSelect_RendersDataBoundRows_ThroughItemTemplateSelector()
+    {
+        var template = (DataTemplate)XamlReader.Parse(
+            "<DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><TextBlock Text='{Binding Name}' /></DataTemplate>");
+        var selector = new NameTemplateSelector { NameTemplate = template };
+        var select = Assert.IsType<NaviusSelect>(XamlReader.Parse(
+            "<select:NaviusSelect xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:select='clr-namespace:Navius.Wpf.Primitives.Controls.Select;assembly=Navius.Wpf.Primitives' />"));
+        var options = new[] { new NamedOption("Apple"), new NamedOption("Banana") };
+        select.Resources = CreateThemedScope();
+        select.Style = (Style)select.Resources[typeof(NaviusSelectBase)];
+        select.ItemTemplateSelector = selector;
+        select.ItemsSource = options;
+        var window = new Window
+        {
+            Content = select,
+            Width = 300,
+            Height = 200,
+            Left = -10000,
+            Top = -10000,
+            ShowInTaskbar = false,
+        };
+        try
+        {
+            window.Show();
+            select.IsOpen = true;
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+            var option = Assert.IsType<NaviusSelectItem>(select.ItemContainerGenerator.ContainerFromIndex(1));
+
+            Assert.Same(selector, option.ContentTemplateSelector);
+            Assert.Same(options[1], option.Content);
+            Assert.NotNull(FindTextBlock(option, "Banana"));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [StaFact]
     public void NonGenericSelect_ResolvesDottedDisplayMemberPath_ForTheTriggerLabel()
     {

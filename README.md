@@ -76,7 +76,7 @@ live in [`docs/parity/`](docs/parity/), one document per family.
   source (79 items: 58 primitive, 20 styled, 1 core) into your project with
   transitive dependency closure and namespace rewriting; a CI-style gate builds the
   vendored output to prove the closure compiles.
-- **Test-verified.** 1335 tests across five projects: 1264 unit (STA, real windows),
+- **Test-verified.** 1336 tests across five projects: 1265 unit (STA, real windows),
   38 motion, 23 charts, 4 vendoring-closure, and 6 FlaUI-driven UIA end-to-end tests.
   Every family also carries a recorded adversarial audit in its parity doc.
 - **RTL and DPI hardening** ([ADR-0006](docs/adr/0006-rtl-dpi-hardening.md)):
@@ -227,7 +227,7 @@ apps/
 tools/
   Navius.Wpf.Cli/          # registry vendoring tool (list / add / registry-sync)
   Navius.Wpf.Captures/     # theme-sweep screenshot harness for the Gallery
-tests/                     # five test projects, 1335 tests
+tests/                     # five test projects, 1336 tests
 docs/
   parity/                  # one contract + port-notes + audit doc per family
   adr/                     # architecture decision records
