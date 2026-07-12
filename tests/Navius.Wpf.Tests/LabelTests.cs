@@ -80,6 +80,46 @@ public class LabelTests
     }
 
     [StaFact]
+    public void For_Changed_RewiresTargetAndClearsOldAssociation()
+    {
+        var root = new StackPanel();
+        NameScope.SetNameScope(root, new NameScope());
+        var first = new TextBox();
+        var second = new TextBox();
+        root.RegisterName("FirstBox", first);
+        root.RegisterName("SecondBox", second);
+        root.Children.Add(first);
+        root.Children.Add(second);
+        var label = new NaviusLabel();
+        root.Children.Add(label);
+
+        label.For = "FirstBox";
+        label.For = "SecondBox";
+
+        Assert.Same(second, label.Target);
+        Assert.Null(AutomationProperties.GetLabeledBy(first));
+        Assert.Same(label, AutomationProperties.GetLabeledBy(second));
+    }
+
+    [StaFact]
+    public void For_Cleared_ClearsTargetAndAssociation()
+    {
+        var root = new StackPanel();
+        NameScope.SetNameScope(root, new NameScope());
+        var target = new TextBox();
+        root.RegisterName("TargetBox", target);
+        root.Children.Add(target);
+        var label = new NaviusLabel();
+        root.Children.Add(label);
+
+        label.For = "TargetBox";
+        label.For = null;
+
+        Assert.Null(label.Target);
+        Assert.Null(AutomationProperties.GetLabeledBy(target));
+    }
+
+    [StaFact]
     public void MouseDown_SingleClick_DoesNotSuppressDefault()
     {
         var label = new NaviusLabel();

@@ -239,4 +239,16 @@ public class TimePickerTests
         expandCollapse.Collapse();
         Assert.False(picker.IsOpen);
     }
+
+    [StaFact]
+    public void AutomationPeer_ExpandCollapsePattern_DisabledPickerRefusesActions()
+    {
+        var picker = new NaviusTimePicker { IsEnabled = false, IsOpen = true };
+        var peer = new NaviusTimePickerAutomationPeer(picker);
+        var provider = (IExpandCollapseProvider)peer.GetPattern(PatternInterface.ExpandCollapse)!;
+
+        Assert.Throws<ElementNotEnabledException>(provider.Expand);
+        Assert.Throws<ElementNotEnabledException>(provider.Collapse);
+        Assert.True(picker.IsOpen);
+    }
 }

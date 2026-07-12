@@ -682,6 +682,22 @@ public class SelectTests : IDisposable
         Assert.False(select.IsOpen);
     }
 
+    [StaFact]
+    public void AutomationPeer_ExpandCollapsePattern_DisabledSelectRefusesActions()
+    {
+        var select = CreateSelect();
+        select.IsOpen = true;
+        select.IsEnabled = false;
+        var rootPeer = typeof(NaviusSelectBase)
+            .GetMethod("OnCreateAutomationPeer", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(select, null) as AutomationPeer;
+        var provider = (IExpandCollapseProvider)rootPeer!.GetPattern(PatternInterface.ExpandCollapse);
+
+        Assert.Throws<ElementNotEnabledException>(provider.Expand);
+        Assert.Throws<ElementNotEnabledException>(provider.Collapse);
+        Assert.True(select.IsOpen);
+    }
+
     // ---- Value/Values as real DPs (issue #19: `Value="{Binding ..., Mode=TwoWay}"` threw because
     // no DependencyProperty named "Value"/"Values" existed) -----------------------------------
 

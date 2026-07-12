@@ -117,11 +117,21 @@ public class NaviusDatePickerAutomationPeer : FrameworkElementAutomationPeer, IV
 
     public void Expand()
     {
-        if (Picker.IsEnabled)
-        {
-            Picker.IsOpen = true;
-        }
+        ThrowIfDisabled();
+        Picker.IsOpen = true;
     }
 
-    public void Collapse() => Picker.IsOpen = false;
+    public void Collapse()
+    {
+        ThrowIfDisabled();
+        Picker.IsOpen = false;
+    }
+
+    private void ThrowIfDisabled()
+    {
+        if (!Picker.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
+        }
+    }
 }

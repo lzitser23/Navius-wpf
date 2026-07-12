@@ -47,9 +47,11 @@ public class UiDisplayItemsTests
         // a Style applied. Guarded on a known key rather than nesting inside the block above:
         // whichever test class's static ctor runs first still needs to merge tokens even when it
         // lost the Application-creation race.
-        if (!Application.Current.Resources.Contains("Navius.Border"))
+        var application = Application.Current
+            ?? throw new InvalidOperationException("A WPF Application is required for UI display tests.");
+        if (!application.Resources.Contains("Navius.Border"))
         {
-            Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary
+            application.Resources.MergedDictionaries.Add(new ResourceDictionary
             {
                 Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Tokens.Light.xaml", UriKind.Absolute),
             });

@@ -148,7 +148,11 @@ public class UiCommandPaletteTests
             _canExecute = canExecute;
         }
 
-        public event System.EventHandler? CanExecuteChanged;
+        public event System.EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
 
         public bool CanExecute(object? parameter) => _canExecute(parameter);
 

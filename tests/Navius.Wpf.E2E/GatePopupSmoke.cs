@@ -23,7 +23,9 @@ public class GatePopupSmoke
             Assert.NotNull(state);
             Assert.Equal("Closed", state.Name);
 
-            window.FindFirstDescendant(cf => cf.ByAutomationId("GateOpen")).AsButton().Invoke();
+            var trigger = window.FindFirstDescendant(cf => cf.ByAutomationId("GateOpen"));
+            Assert.NotNull(trigger);
+            trigger.AsButton().Invoke();
 
             var opened = Retry.WhileFalse(
                 () => window.FindFirstDescendant(cf => cf.ByAutomationId("GatePopupState"))?.Name == "Open",
