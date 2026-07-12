@@ -4,6 +4,8 @@ namespace Navius.Wpf.Motion.Tests;
 
 public class SpringKeyframeBakerTests
 {
+    private static readonly MotionPolicy FullMotion = new(() => true);
+
     [StaFact]
     public void Reduced_motion_emits_only_the_final_value_at_zero()
     {
@@ -21,7 +23,7 @@ public class SpringKeyframeBakerTests
     [StaFact]
     public void Keyframe_times_are_strictly_increasing()
     {
-        var animation = SpringKeyframeBaker.Bake(Spring.Bouncy, 0, 1);
+        var animation = SpringKeyframeBaker.Bake(Spring.Bouncy, 0, 1, motionPolicy: FullMotion);
         var times = animation.KeyFrames.Cast<DoubleKeyFrame>().Select(k => k.KeyTime.TimeSpan).ToArray();
 
         Assert.True(times.Length >= 2);
@@ -34,7 +36,7 @@ public class SpringKeyframeBakerTests
     [StaFact]
     public void First_keyframe_is_at_zero_with_the_origin_value()
     {
-        var animation = SpringKeyframeBaker.Bake(Spring.Default, 5, 20);
+        var animation = SpringKeyframeBaker.Bake(Spring.Default, 5, 20, motionPolicy: FullMotion);
         var first = Assert.IsType<LinearDoubleKeyFrame>(animation.KeyFrames[0]);
 
         Assert.Equal(TimeSpan.Zero, first.KeyTime.TimeSpan);
@@ -44,7 +46,7 @@ public class SpringKeyframeBakerTests
     [StaFact]
     public void Last_keyframe_lands_exactly_on_the_target_at_the_settle_duration()
     {
-        var animation = SpringKeyframeBaker.Bake(Spring.Snappy, 0, 250);
+        var animation = SpringKeyframeBaker.Bake(Spring.Snappy, 0, 250, motionPolicy: FullMotion);
         var last = Assert.IsType<LinearDoubleKeyFrame>(animation.KeyFrames[^1]);
 
         Assert.Equal(250, last.Value);
@@ -58,8 +60,8 @@ public class SpringKeyframeBakerTests
     {
         // A kicked spring (nonzero initial velocity) still starts exactly at "from" and
         // still lands exactly on "to", it just gets there on a different curve.
-        var kicked = SpringKeyframeBaker.Bake(Spring.Default, 0, 1, initialVelocity: 5);
-        var atRest = SpringKeyframeBaker.Bake(Spring.Default, 0, 1, initialVelocity: 0);
+        var kicked = SpringKeyframeBaker.Bake(Spring.Default, 0, 1, initialVelocity: 5, motionPolicy: FullMotion);
+        var atRest = SpringKeyframeBaker.Bake(Spring.Default, 0, 1, initialVelocity: 0, motionPolicy: FullMotion);
 
         Assert.Equal(0d, Assert.IsType<LinearDoubleKeyFrame>(kicked.KeyFrames[0]).Value);
         Assert.Equal(1d, Assert.IsType<LinearDoubleKeyFrame>(kicked.KeyFrames[^1]).Value);
@@ -75,7 +77,7 @@ public class SpringKeyframeBakerTests
         // mid-run, so step size should vary noticeably across the run, bottoming out
         // near the dense bound somewhere and topping out near the sparse bound at the
         // tail rather than staying at one fixed rate throughout.
-        var animation = SpringKeyframeBaker.Bake(Spring.Default, 0, 1);
+        var animation = SpringKeyframeBaker.Bake(Spring.Default, 0, 1, motionPolicy: FullMotion);
         var times = animation.KeyFrames.Cast<DoubleKeyFrame>().Select(k => k.KeyTime.TimeSpan.TotalSeconds).ToArray();
 
         var gaps = new double[times.Length - 1];
@@ -100,7 +102,7 @@ public class SpringKeyframeBakerTests
     public void Handles_a_from_equal_to_target_run_without_hanging()
     {
         // No displacement and no initial velocity: the spring is already at rest.
-        var animation = SpringKeyframeBaker.Bake(Spring.Default, 3, 3);
+        var animation = SpringKeyframeBaker.Bake(Spring.Default, 3, 3, motionPolicy: FullMotion);
 
         Assert.True(animation.KeyFrames.Count >= 2);
         Assert.Equal(3, Assert.IsType<LinearDoubleKeyFrame>(animation.KeyFrames[0]).Value);
