@@ -29,6 +29,9 @@ public sealed class VendoringClosureTests : IDisposable
     [Theory]
     // button: a simple Tier A item with no registryDependencies.
     [InlineData("button")]
+    // collection-picker: a styled item whose generated registry entry must include both code
+    // and its Ui-prefixed theme dictionary.
+    [InlineData("collection-picker")]
     // select: a composite item whose registryDependencies closure (core, anchored-popup) must
     // land alongside it, or the vendored output references types that were never copied.
     [InlineData("select")]

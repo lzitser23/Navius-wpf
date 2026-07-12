@@ -486,6 +486,25 @@
       ]
     },
     {
+      "name": "collection-picker",
+      "type": "registry:styled",
+      "title": "CollectionPicker",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "src/Navius.Wpf.Ui/Themes/CollectionPicker.xaml",
+          "type": "registry:theme",
+          "target": "NaviusWpf/Themes/Ui.CollectionPicker.xaml"
+        },
+        {
+          "path": "src/Navius.Wpf.Ui/CollectionPicker/NaviusCollectionPicker.cs",
+          "type": "registry:code",
+          "target": "NaviusWpf/Ui/CollectionPicker/NaviusCollectionPicker.cs"
+        }
+      ]
+    },
+    {
       "name": "color-picker",
       "type": "registry:primitive",
       "title": "ColorPicker",
