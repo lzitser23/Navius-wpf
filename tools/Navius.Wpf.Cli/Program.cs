@@ -73,16 +73,29 @@ for (int i = 0; i < args.Length; i++)
 {
     switch (args[i])
     {
-        case "--to": to = args[++i]; break;
-        case "--namespace": ns = args[++i]; break;
+        case "--to":
+            if (!TryReadOptionValue(args, ref i, out to)) return 1;
+            break;
+        case "--namespace":
+            if (!TryReadOptionValue(args, ref i, out ns)) return 1;
+            break;
         case "--root":
-            root = Path.GetFullPath(args[++i]);
+            if (!TryReadOptionValue(args, ref i, out var rootValue)) return 1;
+            root = Path.GetFullPath(rootValue!);
             rootExplicit = true;
             break;
         case "--registry":
-            registryPath = Path.GetFullPath(args[++i]);
+            if (!TryReadOptionValue(args, ref i, out var registryValue)) return 1;
+            registryPath = Path.GetFullPath(registryValue!);
             break;
-        default: positional.Add(args[i]); break;
+        default:
+            if (args[i].StartsWith("--", StringComparison.Ordinal))
+            {
+                Console.Error.WriteLine($"unknown option: {args[i]}");
+                return 1;
+            }
+            positional.Add(args[i]);
+            break;
     }
 }
 
@@ -161,6 +174,11 @@ switch (command)
             Console.Error.WriteLine("usage: navius-wpf add <name> --to <dir> --namespace <ns> [--root <repo>] [--registry <path>]");
             return 1;
         }
+        if (!Regex.IsMatch(ns, @"^[_\p{L}][\p{L}\p{Nd}_]*(?:\.[_\p{L}][\p{L}\p{Nd}_]*)*$"))
+        {
+            Console.Error.WriteLine($"invalid namespace: {ns}");
+            return 1;
+        }
         return Add(positional[1]);
 
     default:
@@ -198,7 +216,9 @@ int Add(string name)
 
     if (!Resolve(name)) return 1;
 
-    int copied = 0;
+    var destinationRoot = Path.GetFullPath(to!);
+    var pendingCopies = new List<(string Source, string Destination, string Target)>();
+    var destinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     int missing = 0;
     foreach (var n in resolved)
     {
@@ -209,8 +229,18 @@ int Add(string name)
             var srcRel = f.GetProperty("path").GetString()!;
             var tgtRel = f.GetProperty("target").GetString()!;
 
-            var src = ResolveSourcePath(srcRel);
-            var dst = Path.Combine(to!, tgtRel.Replace('/', Path.DirectorySeparatorChar));
+            string src;
+            string dst;
+            try
+            {
+                src = ResolveSourcePath(srcRel);
+                dst = ResolvePathUnder(destinationRoot, tgtRel, "target");
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.Error.WriteLine($"  ! {ex.Message}");
+                return 1;
+            }
 
             if (!File.Exists(src))
             {
@@ -219,27 +249,41 @@ int Add(string name)
                 continue;
             }
 
-            Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
-            var text = File.ReadAllText(src);
-            // Fix theme-dictionary pack URIs before the namespace rewrite: the pack URI regexes
-            // match the literal "Navius.Wpf.Primitives;component" / "Navius.Wpf.Ui;component"
-            // authority segment, which the namespace rewrite below would otherwise mangle first.
-            text = FixThemePackUris(text);
-            text = RewriteNamespace(text, ns!);
-            File.WriteAllText(dst, text);
-            Console.WriteLine($"  + {tgtRel}");
-            copied++;
+            if (!destinations.Add(dst))
+            {
+                Console.Error.WriteLine($"  ! duplicate target: {tgtRel}");
+                return 1;
+            }
+            pendingCopies.Add((src, dst, tgtRel));
         }
     }
 
-    Console.WriteLine($"\nAdded '{name}' - {resolved.Count} item(s), {copied} file(s) -> {to}");
-    return missing == 0 ? 0 : 1;
+    if (missing > 0)
+    {
+        Console.Error.WriteLine("No files were written because the registry closure is incomplete.");
+        return 1;
+    }
+
+    foreach (var copy in pendingCopies)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(copy.Destination)!);
+        var text = File.ReadAllText(copy.Source);
+        // Fix theme-dictionary pack URIs before the namespace rewrite: the pack URI regexes
+        // match the literal "Navius.Wpf.Primitives;component" / "Navius.Wpf.Ui;component"
+        // authority segment, which the namespace rewrite below would otherwise mangle first.
+        text = FixThemePackUris(text);
+        text = RewriteNamespace(text, ns!);
+        File.WriteAllText(copy.Destination, text);
+        Console.WriteLine($"  + {copy.Target}");
+    }
+
+    Console.WriteLine($"\nAdded '{name}' - {resolved.Count} item(s), {pendingCopies.Count} file(s) -> {to}");
+    return 0;
 }
 
 string ResolveSourcePath(string sourcePath)
 {
-    var normalized = sourcePath.Replace('/', Path.DirectorySeparatorChar);
-    var primaryPath = Path.GetFullPath(Path.Combine(root, normalized));
+    var primaryPath = ResolvePathUnder(root, sourcePath, "source");
 
     if (File.Exists(primaryPath) || rootExplicit)
     {
@@ -258,10 +302,40 @@ string? ResolveBundledSourcePath(string sourcePath)
     // registry.json (see the bundledRegistry path above). Everything else is a repo-root
     // relative source path (e.g. src/Navius.Wpf.Primitives/Controls/...) bundled under
     // registry-source/ with the same relative path (see the .csproj None/PackagePath entries).
-    var relative = sourcePath.Replace('/', Path.DirectorySeparatorChar);
-    return sourcePath.StartsWith("registry/", StringComparison.Ordinal)
-        ? Path.Combine(packageRoot, relative)
-        : Path.Combine(packageRoot, "registry-source", relative);
+    var normalized = sourcePath.Replace('\\', '/');
+    var bundledRoot = normalized.StartsWith("registry/", StringComparison.Ordinal)
+        ? packageRoot
+        : Path.Combine(packageRoot, "registry-source");
+    return ResolvePathUnder(bundledRoot, normalized, "source");
+}
+
+string ResolvePathUnder(string basePath, string relativePath, string label)
+{
+    if (string.IsNullOrWhiteSpace(relativePath) || Path.IsPathRooted(relativePath))
+    {
+        throw new InvalidOperationException($"invalid {label} path: {relativePath}");
+    }
+
+    var fullBase = Path.GetFullPath(basePath);
+    var fullPath = Path.GetFullPath(Path.Combine(fullBase, relativePath.Replace('/', Path.DirectorySeparatorChar)));
+    var relative = Path.GetRelativePath(fullBase, fullPath);
+    if (relative == ".." || relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) || Path.IsPathRooted(relative))
+    {
+        throw new InvalidOperationException($"{label} path escapes its root: {relativePath}");
+    }
+    return fullPath;
+}
+
+bool TryReadOptionValue(string[] arguments, ref int index, out string? value)
+{
+    if (index + 1 >= arguments.Length || arguments[index + 1].StartsWith("--", StringComparison.Ordinal))
+    {
+        Console.Error.WriteLine($"missing value for {arguments[index]}");
+        value = null;
+        return false;
+    }
+    value = arguments[++index];
+    return true;
 }
 
 // pack://application:,,,/Navius.Wpf.Primitives;component/Themes/X.xaml (or the shorthand

@@ -12,8 +12,9 @@ match the shape of the web chart surface (`Zits.Ui`'s `ZitsChart.cs` / `ZitsLine
 colour driven by a design token), and re-colour live when
 `Navius.Wpf.Primitives.Theming.ThemeManager` swaps the token dictionary (`Apply(theme, scope)`
 removes and re-adds the `Navius.Tokens.Theme`-marked `ResourceDictionary`). Reading
-`ThemeManager.cs`: it exposes no theme-changed event or signal, only `Current` and `Apply(...)`,
-so any re-themed consumer has to re-resolve tokens and re-apply them itself after a swap.
+At the time of the original spike, `ThemeManager.cs` exposed no theme-changed event or signal,
+only `Current` and `Apply(...)`, so a re-themed consumer had to re-resolve tokens itself after a
+swap. `ThemeChanged` was added later and the current consequence below reflects that contract.
 
 Two candidates were spiked: `LiveChartsCore.SkiaSharpView.WPF` (LiveCharts2) and `ScottPlot.WPF`.
 
@@ -46,11 +47,9 @@ Use `LiveChartsCore.SkiaSharpView.WPF` (LiveCharts2) as the chart engine behind
 
 ## Consequences
 
-- Re-theming stays push-based: `NaviusChart.RefreshTheme()` re-resolves the Navius tokens from
-  the control's resource scope and rebuilds series/axis paints. Consumers must call it after
-  `ThemeManager.Apply(...)` themselves (the control also re-resolves on `Loaded`) until/unless
-  `ThemeManager` grows a theme-changed signal, at which point `NaviusChart` should subscribe to
-  it instead.
+- Re-theming stays push-based: `NaviusChart` subscribes to `ThemeManager.ThemeChanged` while
+  loaded, re-resolves the Navius tokens from the control's resource scope, and rebuilds
+  series/axis paints. `RefreshTheme()` remains available for direct scoped-resource changes.
 - Negative-value bar emphasis (`Navius.Destructive`) relies on LiveCharts2's per-point
   `OnPointMeasured` callback, a LiveCharts2-specific mechanism; porting to a different chart
   engine later would need an equivalent per-point styling hook.

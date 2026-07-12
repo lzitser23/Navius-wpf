@@ -20,3 +20,13 @@ public sealed class CarouselDotConverter : IMultiValueConverter
     public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }
+
+/// <summary>Formats a zero-based slide index as a one-based accessible action name.</summary>
+public sealed class CarouselSlideNameConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is int index ? $"Slide {index + 1}" : "Slide";
+
+    public object ConvertBack(object value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}

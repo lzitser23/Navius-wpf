@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using Navius.Wpf.Ui.Internal;
 
 namespace Navius.Wpf.Ui.Carousel;
 
@@ -19,6 +20,11 @@ namespace Navius.Wpf.Ui.Carousel;
 /// </summary>
 public class NaviusCarousel : Selector
 {
+    private static readonly DependencyPropertyKey ShouldAnimatePropertyKey = DependencyProperty.RegisterReadOnly(
+        nameof(ShouldAnimate), typeof(bool), typeof(NaviusCarousel), new PropertyMetadata(true));
+
+    public static readonly DependencyProperty ShouldAnimateProperty = ShouldAnimatePropertyKey.DependencyProperty;
+
     public static readonly DependencyProperty LoopProperty = DependencyProperty.Register(
         nameof(Loop), typeof(bool), typeof(NaviusCarousel), new PropertyMetadata(true));
 
@@ -48,7 +54,11 @@ public class NaviusCarousel : Selector
     public NaviusCarousel()
     {
         Focusable = true;
+        SetValue(ShouldAnimatePropertyKey, ReducedMotion.AnimationsEnabled);
     }
+
+    /// <summary>Whether slide transitions should animate under the current system motion preference.</summary>
+    public bool ShouldAnimate => (bool)GetValue(ShouldAnimateProperty);
 
     /// <summary>Whether Next from the last slide wraps to the first (and Previous from the first wraps to the last). Default true.</summary>
     public bool Loop
@@ -86,11 +96,11 @@ public class NaviusCarousel : Selector
         switch (e.Key)
         {
             case Key.Left:
-                Move(this, -1);
+                Move(this, CarouselEngine.DirectionDelta(FlowDirection == FlowDirection.RightToLeft, towardRight: false));
                 e.Handled = true;
                 break;
             case Key.Right:
-                Move(this, +1);
+                Move(this, CarouselEngine.DirectionDelta(FlowDirection == FlowDirection.RightToLeft, towardRight: true));
                 e.Handled = true;
                 break;
         }

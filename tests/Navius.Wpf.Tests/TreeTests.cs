@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Controls;
@@ -765,6 +766,21 @@ public class TreeTests
         peer.AddToSelection();
         peer.RemoveFromSelection();
         peer.Select();
+    }
+
+    [StaFact]
+    public void ItemAutomationPeer_DisabledItemRefusesSelectionActions()
+    {
+        var item = new NaviusTreeItem
+        {
+            DataContext = new NaviusTreeNode("a", "A"),
+            IsEnabled = false,
+        };
+        var peer = (ISelectionItemProvider)new NaviusTreeItemAutomationPeer(item);
+
+        Assert.Throws<ElementNotEnabledException>(peer.AddToSelection);
+        Assert.Throws<ElementNotEnabledException>(peer.RemoveFromSelection);
+        Assert.Throws<ElementNotEnabledException>(peer.Select);
     }
 
     [StaFact]

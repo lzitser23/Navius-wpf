@@ -30,8 +30,9 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Root" Property="Background" Value="{DynamicResource Navius.Muted}" />
                         </Trigger>
-                        <Trigger Property="IsFocused" Value="True">
+                        <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Navius.Ring}" />
+                            <Setter TargetName="Root" Property="BorderThickness" Value="1" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Root" Property="Opacity" Value="0.4" />
@@ -85,7 +86,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type pagination:NaviusPagination}">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Style="{StaticResource Navius.Pagination.NavButton}" Command="{x:Static pagination:NaviusPagination.PreviousCommand}">
+                        <Button Style="{StaticResource Navius.Pagination.NavButton}" AutomationProperties.Name="Previous page" Command="{x:Static pagination:NaviusPagination.PreviousCommand}">
                             <Path Data="M 5,0 L 1,4 L 5,8" Stroke="{DynamicResource Navius.Foreground}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
                         </Button>
                         <ItemsControl ItemsSource="{TemplateBinding Pages}" ItemTemplate="{StaticResource Navius.Pagination.TokenTemplate}">
@@ -95,7 +96,7 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
-                        <Button Style="{StaticResource Navius.Pagination.NavButton}" Command="{x:Static pagination:NaviusPagination.NextCommand}">
+                        <Button Style="{StaticResource Navius.Pagination.NavButton}" AutomationProperties.Name="Next page" Command="{x:Static pagination:NaviusPagination.NextCommand}">
                             <Path Data="M 1,0 L 5,4 L 1,8" Stroke="{DynamicResource Navius.Foreground}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
                         </Button>
                     </StackPanel>

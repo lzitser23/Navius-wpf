@@ -7,6 +7,10 @@ namespace Navius.Wpf.Ui.Carousel;
 /// </summary>
 public static class CarouselEngine
 {
+    /// <summary>Maps a visual arrow direction to logical slide order, mirroring under RTL.</summary>
+    public static int DirectionDelta(bool rightToLeft, bool towardRight) =>
+        towardRight == rightToLeft ? -1 : 1;
+
     public static int MoveIndex(int current, int count, int delta, bool loop = true)
     {
         if (count <= 0)

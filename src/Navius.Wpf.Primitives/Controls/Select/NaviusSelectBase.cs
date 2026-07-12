@@ -797,11 +797,21 @@ internal sealed class NaviusSelectAutomationPeer : FrameworkElementAutomationPee
 
     public void Expand()
     {
-        if (Select.IsEnabled)
-        {
-            Select.IsOpen = true;
-        }
+        ThrowIfDisabled();
+        Select.IsOpen = true;
     }
 
-    public void Collapse() => Select.IsOpen = false;
+    public void Collapse()
+    {
+        ThrowIfDisabled();
+        Select.IsOpen = false;
+    }
+
+    private void ThrowIfDisabled()
+    {
+        if (!Select.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
+        }
+    }
 }

@@ -100,7 +100,9 @@ public class KeyboardMatrixSmoke
             var window = app.GetMainWindow(automation, TimeSpan.FromSeconds(15));
             Assert.NotNull(window);
 
-            var nav = window.FindFirstDescendant(cf => cf.ByAutomationId("Nav")).AsListBox();
+            var navElement = window.FindFirstDescendant(cf => cf.ByAutomationId("Nav"));
+            Assert.NotNull(navElement);
+            var nav = navElement.AsListBox();
             nav.Items.First(i => i.Name == navEntry).Select();
 
             body(window, automation);
