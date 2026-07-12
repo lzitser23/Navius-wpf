@@ -322,7 +322,34 @@ public abstract class NaviusSelectBase : ItemsControl
             return item.ToString() ?? string.Empty;
         }
 
-        return item.GetType().GetProperty(DisplayMemberPath)?.GetValue(item)?.ToString() ?? string.Empty;
+        // Dotted property paths ("Owner.Name") per WPF's DisplayMemberPath convention; indexers
+        // and attached properties are not supported (see docs/parity/select.md).
+        object? current = item;
+        foreach (var segment in DisplayMemberPath.Split('.'))
+        {
+            current = current?.GetType().GetProperty(segment)?.GetValue(current);
+        }
+
+        return current?.ToString() ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Re-resolves the label of every data-bound container (declared NaviusSelectItems own their
+    /// TextValue) and the trigger label, so a DisplayMemberPath change re-renders live.
+    /// </summary>
+    protected override void OnDisplayMemberPathChanged(string oldDisplayMemberPath, string newDisplayMemberPath)
+    {
+        base.OnDisplayMemberPathChanged(oldDisplayMemberPath, newDisplayMemberPath);
+        for (var index = 0; index < Items.Count; index++)
+        {
+            if (Items[index] is not NaviusSelectItem
+                && ItemContainerGenerator.ContainerFromIndex(index) is NaviusSelectItem container)
+            {
+                container.TextValue = ResolveDisplayText(Items[index]!);
+            }
+        }
+
+        UpdateDisplay();
     }
 
     private List<NaviusSelectItem> GetNavigableItems() =>

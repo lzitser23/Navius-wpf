@@ -388,3 +388,21 @@ or plausible disparities found.
 - **Expand/Collapse now guard against disabled (PR #3).** `IExpandCollapseProvider.Expand`/`Collapse`
   throw `ElementNotEnabledException` when `Disabled` or not `IsEnabled`; previously `Expand` opened
   the popup unconditionally, so a disabled combobox's popup could still be opened through UIA.
+
+## XAML-friendly root (2026-07-12)
+
+PR #13 added an object-typed `NaviusCombobox` root over `NaviusCombobox<object>` for plain-XAML
+use; this maintainer follow-up completes its data-binding contract:
+
+- **ItemsSource.** Any `IEnumerable`, snapshotted into the typed `Items` list.
+  `INotifyCollectionChanged` sources refresh live via `CollectionChangedEventManager` (weak
+  handlers, detached on source swap).
+- **DisplayMemberPath.** Backs the default `ItemToString`. Dotted property paths ("Owner.Name")
+  are supported per WPF's `DisplayMemberPath` convention; indexers and attached properties are
+  not. A path change re-syncs rows, chips, and the committed query label via the (now protected)
+  `SyncFromState`. The original handler re-assigned `ItemToString = FormatItem`, which is a no-op:
+  method-group delegates to the same target/method compare `Equals`-equal, so the DP never saw a
+  change and nothing re-rendered.
+- **ItemTemplate / ChipTemplate.** Unchanged: already exposed on `NaviusComboboxBase` as
+  `DataTemplate`s over `ComboboxRowVm`/`ComboboxChipVm` (see "Dropped parameters" above for why
+  they are swapped in code).

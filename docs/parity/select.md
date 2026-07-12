@@ -325,7 +325,7 @@ One extra wrinkle: `DefaultStyleKey` only routes the **theme** style (Generic.xa
 ### Part collapse (14 web parts -> 3 WPF types)
 
 - **Root + Trigger + Value + Icon + Portal + Positioner + Popup + Viewport** collapse onto `NaviusSelectBase` and its one `ControlTemplate`. The trigger is `PART_Trigger` (a `ToggleButton` whose `IsChecked` two-way-binds to `IsOpen`); `NaviusSelectValue` is the trigger's label `TextBlock` bound to a computed `DisplayText`; `NaviusSelectIcon` is the chevron `Path` (rotates 180 on open). `Portal` is a no-op (a WPF `Popup` already floats in its own window layer, nothing to teleport) and its `Container`/`KeepMounted` open questions are dropped. `Positioner` folds into `Side`/`Align`/`SideOffset`/`AlignOffset` directly on the control, forwarded to the shared `NaviusAnchoredPopup` (`PART_Popup`) exactly as Popover/Menu do. `Viewport` is a plain `ScrollViewer` around the `ItemsPresenter`.
-- **Item + ItemText + ItemIndicator** collapse onto `NaviusSelectItem : Control`. The label is `TextValue` (also the type-ahead/trigger-label text); the indicator is a check-glyph `Path` shown by a template trigger on `IsSelectedValue`. The three-way `Text > TextValue > raw-value` label chain (an open question above) is resolved to a simpler two-step convention: `DisplayText = TextValue ?? Value?.ToString()`. `ChildContent` (arbitrary item content) is dropped in favor of the string label, consistent with this repo dropping web-only surface (`Attributes`/`Class`).
+- **Item + ItemText + ItemIndicator** collapse onto `NaviusSelectItem : Control`. The label is `TextValue` (also the type-ahead/trigger-label text); the indicator is a check-glyph `Path` shown by a template trigger on `IsSelectedValue`. The three-way `Text > TextValue > raw-value` label chain (an open question above) is resolved to a simpler two-step convention: `DisplayText = TextValue ?? Value?.ToString()`. `ChildContent` (arbitrary item content) is dropped in favor of the string label, consistent with this repo dropping web-only surface (`Attributes`/`Class`). *(Superseded 2026-07-12: arbitrary row content is now available through `ItemTemplate`; see "XAML-friendly root + ItemTemplate" below. The string label remains the default and still powers the trigger label and type-ahead.)*
 - **Arrow** is not ported: the wave's hard rule is hairline borders / no shadows / no pointer triangle, and Popover.xaml's `DropShadowEffect` was deliberately **not** copied here. **ScrollUpButton / ScrollDownButton** are not ported: the `ScrollViewer` supplies a standard scrollbar, and the contract itself notes these buttons are decorative (`aria-hidden`) and keyboard users navigate by item roving, not by the buttons. **Group / Label / Separator** are out of scope for this listbox-of-strings port (no grouping in the demo); they can be added later as needed.
 
 ### Escape / dismiss strategy
@@ -369,3 +369,27 @@ Verified TRUE under adversarial check (the "Space is dead" hunt):
 - Space is genuinely wired in BOTH states. Closed trigger: Enter/Space/Down open landing on the FIRST option, Up opens landing on LAST (`HandlePreviewKeyDown` NaviusSelectBase.cs:485-502, proven by `ClosedTrigger_ArrowDownOpens_HighlightsFirst`/`ClosedTrigger_ArrowUpOpens_HighlightsLast`). Open listbox: Enter/Space call `_highlighted.RaiseSelectEvent()` -> commit (NaviusSelectBase.cs:522-525), proven by `OpenListbox_ArrowKeysMoveHighlight_ThenEnterCommits`. No dead key found.
 - Down/Up (clamp when `Loop=false`, the Select default), Home/End, Escape-close, and first-character type-ahead are all wired and each covered by a passing test. Multi-select toggle-and-stay-open and single-select commit-and-close, plus cancelable `PreventDefault`, all verified. `Loop` default false, `Align` default Start match the contract.
 - Root peer reports `AutomationControlType.ComboBox`, item peer `AutomationControlType.ListItem` with `DisplayText` as name - both returned from `OnCreateAutomationPeer` and tested.
+
+## XAML-friendly root + ItemTemplate (2026-07-12)
+
+PR #13 added an object-typed `NaviusSelect` root (no generic type argument, `Value`/`Values`
+object-typed) so plain XAML can declare a Select without generics; it shares `NaviusSelectBase`'s
+single style like every closed `NaviusSelect<T>`. This maintainer follow-up completes its
+data-binding contract:
+
+- **ItemsSource / live refresh.** Native `ItemsControl` machinery: an `INotifyCollectionChanged`
+  source regenerates containers on change, and `OnItemsChanged` re-stamps owners, selection state,
+  and the trigger label.
+- **DisplayMemberPath.** Resolved by reflection into each data-bound container's `TextValue` at
+  container preparation. Dotted property paths ("Owner.Name") are supported per WPF's
+  `DisplayMemberPath` convention; indexers and attached properties are not. A path change
+  re-resolves every data-bound container's label and the trigger label live
+  (`OnDisplayMemberPathChanged` override). Containers declared directly as `NaviusSelectItem`s own
+  their `TextValue` and are never re-stamped.
+- **ItemTemplate / ItemTemplateSelector.** `NaviusSelectItem` now derives from `ContentControl`, so
+  standard container preparation stamps `Content`/`ContentTemplate`/`ContentTemplateSelector` onto
+  data-bound rows, and the theme swaps the plain `DisplayText` label for a `ContentPresenter`
+  whenever a template or selector is present (a `MultiTrigger` on both being null shows the label).
+  `DisplayText` (`TextValue ?? Value?.ToString()`) still powers the trigger label and type-ahead
+  regardless of template, so templated rows keep working keyboards and readers. Setting both
+  `DisplayMemberPath` and `ItemTemplate` throws natively (`ItemsControl`'s own guard).

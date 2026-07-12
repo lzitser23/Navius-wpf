@@ -51,8 +51,12 @@ public class NaviusCombobox : NaviusCombobox<object>
         control.RefreshItems();
     }
 
+    // FormatItem reads DisplayMemberPath live on each call (ItemToString already points at it), so
+    // a path change only needs a presentation resync. Re-assigning ItemToString = FormatItem would
+    // be a no-op: method-group delegates to the same target/method compare Equals-equal, so the DP
+    // never sees a change and nothing re-renders.
     private static void OnDisplayMemberPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((NaviusCombobox)d).ItemToString = ((NaviusCombobox)d).FormatItem;
+        ((NaviusCombobox)d).SyncFromState();
 
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshItems();
 
@@ -66,7 +70,15 @@ public class NaviusCombobox : NaviusCombobox<object>
             return item?.ToString() ?? string.Empty;
         }
 
-        return item?.GetType().GetProperty(DisplayMemberPath)?.GetValue(item)?.ToString() ?? string.Empty;
+        // Dotted property paths ("Owner.Name") per WPF's DisplayMemberPath convention; indexers
+        // and attached properties are not supported (see docs/parity/combobox.md).
+        object? current = item;
+        foreach (var segment in DisplayMemberPath.Split('.'))
+        {
+            current = current?.GetType().GetProperty(segment)?.GetValue(current);
+        }
+
+        return current?.ToString() ?? string.Empty;
     }
 }
 
@@ -314,7 +326,8 @@ public class NaviusCombobox<TItem> : NaviusComboboxBase
             ? SafeValues.Any(v => Comparer.Equals(v, item))
             : Value is not null && Comparer.Equals(Value, item);
 
-    private void SyncFromState()
+    /// <summary>Resyncs the query label, chips/selection state, and rows from current state; protected so the object-typed root can re-run it when its presentation inputs (DisplayMemberPath) change.</summary>
+    protected void SyncFromState()
     {
         if (!Multiple && Value is not null)
         {
