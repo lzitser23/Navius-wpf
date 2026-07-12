@@ -73,6 +73,30 @@ public class FieldTests
         Assert.NotNull(System.Windows.Media.VisualTreeHelper.GetParent(input));
     }
 
+    private sealed class FixedTemplateSelector : DataTemplateSelector
+    {
+        public override DataTemplate? SelectTemplate(object? item, DependencyObject container) => null;
+    }
+
+    [StaFact]
+    public void FieldControl_ForwardsTheFullContentContract_ToItsPresenter()
+    {
+        var (field, _, fieldControl, _) = CreateField();
+        var selector = new FixedTemplateSelector();
+        fieldControl.Content = 42;
+        fieldControl.ContentTemplateSelector = selector;
+        fieldControl.ContentStringFormat = "#{0}";
+
+        field.Measure(new Size(500, 500));
+        field.Arrange(new Rect(0, 0, 500, 500));
+        field.UpdateLayout();
+
+        var presenter = Assert.IsType<ContentPresenter>(
+            System.Windows.Media.VisualTreeHelper.GetChild(fieldControl, 0));
+        Assert.Same(selector, presenter.ContentTemplateSelector);
+        Assert.Equal("#{0}", presenter.ContentStringFormat);
+    }
+
     [StaFact]
     public void Field_RegistersTheDefaultInput_AsItsControl()
     {

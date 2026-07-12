@@ -107,6 +107,10 @@ public class ComboboxTests : IDisposable
 {
     private sealed record NamedOption(string Name);
 
+    private sealed record WrappedOption(NamedOption Inner);
+
+    private sealed record DualOption(string Code, string Label);
+
     static ComboboxTests()
     {
         // pack://application URIs only resolve once an Application exists in the process. Guarded
@@ -229,6 +233,35 @@ public class ComboboxTests : IDisposable
         combobox.Value = options[1];
 
         Assert.Equal("Banana", combobox.Query);
+    }
+
+    [StaFact]
+    public void NonGenericCombobox_ResolvesDottedDisplayMemberPath()
+    {
+        var combobox = new NaviusCombobox { DisplayMemberPath = "Inner.Name" };
+        combobox.ItemsSource = new[] { new WrappedOption(new NamedOption("Apple")), new WrappedOption(new NamedOption("Banana")) };
+
+        Assert.Equal(new[] { "Apple", "Banana" }, combobox.FilteredRows!.Select(row => row.Text));
+    }
+
+    [StaFact]
+    public void NonGenericCombobox_RelabelsRowsAndQuery_WhenDisplayMemberPathChanges()
+    {
+        var options = new[] { new DualOption("A1", "Apple"), new DualOption("B1", "Banana") };
+        var combobox = new NaviusCombobox { DisplayMemberPath = nameof(DualOption.Code) };
+        combobox.ItemsSource = options;
+        Assert.Equal(new[] { "A1", "B1" }, combobox.FilteredRows!.Select(row => row.Text));
+
+        // No committed value yet: the empty query leaves all rows visible for the relabel check.
+        combobox.DisplayMemberPath = nameof(DualOption.Label);
+        Assert.Equal(new[] { "Apple", "Banana" }, combobox.FilteredRows!.Select(row => row.Text));
+
+        // A committed value writes its label into the query; a path change re-resolves it.
+        combobox.Value = options[1];
+        Assert.Equal("Banana", combobox.Query);
+
+        combobox.DisplayMemberPath = nameof(DualOption.Code);
+        Assert.Equal("B1", combobox.Query);
     }
 
     [StaFact]

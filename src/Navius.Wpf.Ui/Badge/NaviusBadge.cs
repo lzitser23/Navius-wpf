@@ -1,5 +1,8 @@
+using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace Navius.Wpf.Ui.Badge;
 
@@ -29,4 +32,20 @@ public class NaviusBadge : ContentControl
         get => (NaviusBadgeVariant)GetValue(VariantProperty);
         set => SetValue(VariantProperty, value);
     }
+}
+
+/// <summary>
+/// Halves a bound ActualHeight into a capsule CornerRadius, so the badge's rounded ends track its
+/// rendered size instead of a fixed pixel constant. Exactly half the height keeps the horizontal
+/// sides straight (WPF only normalizes a radius that EXCEEDS half a dimension into an ellipse).
+/// </summary>
+public sealed class NaviusPillRadiusConverter : IValueConverter
+{
+    public static NaviusPillRadiusConverter Instance { get; } = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is double height && height > 0 ? new CornerRadius(height / 2) : new CornerRadius(0);
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
 }

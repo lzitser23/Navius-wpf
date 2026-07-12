@@ -61,6 +61,35 @@ public class UiCollectionPickerTests
         Assert.False(picker.IsOwnContainer("theme"));
     }
 
+    private sealed class NullTemplateSelector : DataTemplateSelector
+    {
+        public override DataTemplate? SelectTemplate(object? item, DependencyObject container) => null;
+    }
+
+    [StaFact]
+    public void PickerItem_ForwardsTheFullContentContract_ToItsPresenter()
+    {
+        var resources = CreateResources(NaviusTheme.Light);
+        var selector = new NullTemplateSelector();
+        var item = new NaviusCollectionPickerItem
+        {
+            Resources = resources,
+            Style = (Style)resources[typeof(NaviusCollectionPickerItem)],
+            Content = 42,
+            ContentTemplateSelector = selector,
+            ContentStringFormat = "#{0}",
+        };
+
+        item.Measure(new Size(500, 500));
+        item.Arrange(new Rect(0, 0, 500, 500));
+        item.UpdateLayout();
+
+        var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(item, 0));
+        var presenter = Assert.IsType<ContentPresenter>(border.Child);
+        Assert.Same(selector, presenter.ContentTemplateSelector);
+        Assert.Equal("#{0}", presenter.ContentStringFormat);
+    }
+
     [StaFact]
     public void ItemsSourceAndSelectedItem_UseNativeListBoxContract()
     {

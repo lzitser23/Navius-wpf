@@ -19,6 +19,10 @@ public class SelectTests : IDisposable
 {
     private sealed record NamedOption(string Name);
 
+    private sealed record WrappedOption(NamedOption Inner);
+
+    private sealed record DualOption(string Code, string Label);
+
     static SelectTests()
     {
         // pack://application URIs only resolve once an Application exists in the process.
@@ -216,6 +220,160 @@ public class SelectTests : IDisposable
         {
             window.Close();
         }
+    }
+
+    [StaFact]
+    public void NonGenericSelect_RendersDataBoundRows_ThroughItemTemplate()
+    {
+        var select = Assert.IsType<NaviusSelect>(XamlReader.Parse(
+            "<select:NaviusSelect xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:select='clr-namespace:Navius.Wpf.Primitives.Controls.Select;assembly=Navius.Wpf.Primitives'>" +
+            "<select:NaviusSelect.ItemTemplate><DataTemplate><TextBlock Text='{Binding Name}' /></DataTemplate></select:NaviusSelect.ItemTemplate>" +
+            "</select:NaviusSelect>"));
+        var options = new[] { new NamedOption("Apple"), new NamedOption("Banana") };
+        select.Resources = CreateThemedScope();
+        select.Style = (Style)select.Resources[typeof(NaviusSelectBase)];
+        select.ItemsSource = options;
+        var window = new Window
+        {
+            Content = select,
+            Width = 300,
+            Height = 200,
+            Left = -10000,
+            Top = -10000,
+            ShowInTaskbar = false,
+        };
+        try
+        {
+            window.Show();
+            select.IsOpen = true;
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+            var option = Assert.IsType<NaviusSelectItem>(select.ItemContainerGenerator.ContainerFromIndex(1));
+
+            Assert.Same(select.ItemTemplate, option.ContentTemplate);
+            Assert.Same(options[1], option.Content);
+            Assert.NotNull(FindTextBlock(option, "Banana"));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private sealed class NameTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate? NameTemplate { get; set; }
+
+        public override DataTemplate? SelectTemplate(object? item, DependencyObject container) =>
+            item is NamedOption ? NameTemplate : null;
+    }
+
+    [StaFact]
+    public void NonGenericSelect_RendersDataBoundRows_ThroughItemTemplateSelector()
+    {
+        var template = (DataTemplate)XamlReader.Parse(
+            "<DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'><TextBlock Text='{Binding Name}' /></DataTemplate>");
+        var selector = new NameTemplateSelector { NameTemplate = template };
+        var select = Assert.IsType<NaviusSelect>(XamlReader.Parse(
+            "<select:NaviusSelect xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:select='clr-namespace:Navius.Wpf.Primitives.Controls.Select;assembly=Navius.Wpf.Primitives' />"));
+        var options = new[] { new NamedOption("Apple"), new NamedOption("Banana") };
+        select.Resources = CreateThemedScope();
+        select.Style = (Style)select.Resources[typeof(NaviusSelectBase)];
+        select.ItemTemplateSelector = selector;
+        select.ItemsSource = options;
+        var window = new Window
+        {
+            Content = select,
+            Width = 300,
+            Height = 200,
+            Left = -10000,
+            Top = -10000,
+            ShowInTaskbar = false,
+        };
+        try
+        {
+            window.Show();
+            select.IsOpen = true;
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+            var option = Assert.IsType<NaviusSelectItem>(select.ItemContainerGenerator.ContainerFromIndex(1));
+
+            Assert.Same(selector, option.ContentTemplateSelector);
+            Assert.Same(options[1], option.Content);
+            Assert.NotNull(FindTextBlock(option, "Banana"));
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [StaFact]
+    public void NonGenericSelect_ResolvesDottedDisplayMemberPath_ForTheTriggerLabel()
+    {
+        var options = new[] { new WrappedOption(new NamedOption("Apple")), new WrappedOption(new NamedOption("Banana")) };
+        var select = new NaviusSelect { DisplayMemberPath = "Inner.Name", ItemsSource = options };
+
+        select.Value = options[1];
+
+        Assert.Equal("Banana", select.DisplayText);
+    }
+
+    [StaFact]
+    public void NonGenericSelect_ReresolvesLabels_WhenDisplayMemberPathChanges()
+    {
+        var select = Assert.IsType<NaviusSelect>(XamlReader.Parse(
+            "<select:NaviusSelect xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:select='clr-namespace:Navius.Wpf.Primitives.Controls.Select;assembly=Navius.Wpf.Primitives' />"));
+        var options = new[] { new DualOption("A1", "Apple"), new DualOption("B1", "Banana") };
+        select.Resources = CreateThemedScope();
+        select.Style = (Style)select.Resources[typeof(NaviusSelectBase)];
+        select.DisplayMemberPath = nameof(DualOption.Code);
+        select.ItemsSource = options;
+        var window = new Window
+        {
+            Content = select,
+            Width = 300,
+            Height = 200,
+            Left = -10000,
+            Top = -10000,
+            ShowInTaskbar = false,
+        };
+        try
+        {
+            window.Show();
+            select.IsOpen = true;
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+            var option = Assert.IsType<NaviusSelectItem>(select.ItemContainerGenerator.ContainerFromIndex(1));
+            select.Value = options[1];
+            Assert.Equal("B1", option.DisplayText);
+            Assert.Equal("B1", select.DisplayText);
+
+            select.DisplayMemberPath = nameof(DualOption.Label);
+
+            Assert.Equal("Banana", option.DisplayText);
+            Assert.Equal("Banana", select.DisplayText);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private static TextBlock? FindTextBlock(DependencyObject root, string text)
+    {
+        for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is TextBlock textBlock && textBlock.Text == text)
+            {
+                return textBlock;
+            }
+
+            if (FindTextBlock(child, text) is { } match)
+            {
+                return match;
+            }
+        }
+
+        return null;
     }
 
     [StaFact]

@@ -7,7 +7,7 @@ namespace Navius.Wpf.Primitives.Controls.Select;
 
 /// <summary>
 /// A single option row inside a <see cref="NaviusSelectBase"/> listbox (contract's
-/// NaviusSelectItem, role="option"). Tier B: derives from the bare <see cref="Control"/> rather
+/// NaviusSelectItem, role="option"). Tier B: derives from <see cref="ContentControl"/> rather
 /// than ListBoxItem/ComboBoxItem, because the owning Select is not a WPF Selector and drives
 /// selection itself by walking its containers (mirroring NaviusRadioGroup.SyncCheckedFromValue),
 /// so <see cref="IsSelectedValue"/> is a plain owner-set property, not Selector.IsSelected.
@@ -18,8 +18,13 @@ namespace Navius.Wpf.Primitives.Controls.Select;
 /// roving-focus data-highlighted state is the owner-set <see cref="IsHighlightedValue"/> (WPF
 /// focus stays on the trigger, so highlight is visual-only rather than a real focus move; see
 /// docs/parity/select.md "WPF implementation notes").
+///
+/// ContentControl-derived so the owner's <see cref="ItemsControl.ItemTemplate"/> (stamped onto
+/// <see cref="ContentControl.ContentTemplate"/> by container preparation) renders arbitrary row
+/// visuals; without a template the row renders the plain <see cref="DisplayText"/> label, and
+/// <see cref="DisplayText"/> always powers the trigger label and type-ahead regardless.
 /// </summary>
-public class NaviusSelectItem : Control
+public class NaviusSelectItem : ContentControl
 {
     public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(
         nameof(Value), typeof(object), typeof(NaviusSelectItem),

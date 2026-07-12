@@ -186,18 +186,27 @@ public class UiDisplayItemsTests
     }
 
     [StaFact]
-    public void Badge_PillUsesFiniteCircularEndsInsteadOfAnEllipse()
+    public void Badge_PillRadiusTracksItsRenderedHeight_AtAnyFontSize()
     {
         var dictionary = MergeTheme("Badge.xaml");
         try
         {
-            var badge = new NaviusBadge { Content = "Live" };
-            ApplyStyleAndTemplate(badge, typeof(NaviusBadge));
-            badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            foreach (var fontSize in new[] { 11d, 24d })
+            {
+                var badge = new NaviusBadge { Content = "Live", FontSize = fontSize };
+                ApplyStyleAndTemplate(badge, typeof(NaviusBadge));
+                badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                badge.Arrange(new Rect(badge.DesiredSize));
+                badge.UpdateLayout();
 
-            var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(badge, 0));
-            Assert.Equal(new CornerRadius(8), border.CornerRadius);
-            Assert.True(badge.DesiredSize.Width > border.CornerRadius.TopLeft * 2);
+                var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(badge, 0));
+                // A capsule, not an ellipse: circular ends of exactly half the rendered height,
+                // with straight horizontal sides left between them.
+                Assert.True(border.ActualHeight > 0);
+                Assert.Equal(border.ActualHeight / 2, border.CornerRadius.TopLeft, 3);
+                Assert.Equal(border.CornerRadius.TopLeft, border.CornerRadius.BottomRight, 3);
+                Assert.True(border.ActualWidth > border.ActualHeight);
+            }
         }
         finally
         {
