@@ -4,6 +4,23 @@ using System.Windows.Controls;
 
 namespace Navius.Wpf.Primitives.Controls;
 
+public enum NaviusButtonVariant
+{
+    Default,
+    Secondary,
+    Outline,
+    Ghost,
+    Destructive,
+}
+
+public enum NaviusButtonSize
+{
+    Default,
+    Small,
+    Large,
+    Icon,
+}
+
 /// <summary>
 /// Tier A: derives from the native Button (inheriting its AutomationPeer and
 /// keyboard behavior) and supplies a token-driven default template.
@@ -18,6 +35,14 @@ namespace Navius.Wpf.Primitives.Controls;
 /// </summary>
 public class NaviusButton : Button
 {
+    public static readonly DependencyProperty VariantProperty = DependencyProperty.Register(
+        nameof(Variant), typeof(NaviusButtonVariant), typeof(NaviusButton),
+        new FrameworkPropertyMetadata(NaviusButtonVariant.Default));
+
+    public static readonly DependencyProperty SizeProperty = DependencyProperty.Register(
+        nameof(Size), typeof(NaviusButtonSize), typeof(NaviusButton),
+        new FrameworkPropertyMetadata(NaviusButtonSize.Default));
+
     public static readonly DependencyProperty DisabledProperty = DependencyProperty.Register(
         nameof(Disabled), typeof(bool), typeof(NaviusButton),
         new PropertyMetadata(false, OnDisabledOrFocusableWhenDisabledChanged));
@@ -36,6 +61,20 @@ public class NaviusButton : Button
         DefaultStyleKeyProperty.OverrideMetadata(
             typeof(NaviusButton),
             new FrameworkPropertyMetadata(typeof(NaviusButton)));
+    }
+
+    /// <summary>Token-backed visual treatment.</summary>
+    public NaviusButtonVariant Variant
+    {
+        get => (NaviusButtonVariant)GetValue(VariantProperty);
+        set => SetValue(VariantProperty, value);
+    }
+
+    /// <summary>Token-backed control density.</summary>
+    public NaviusButtonSize Size
+    {
+        get => (NaviusButtonSize)GetValue(SizeProperty);
+        set => SetValue(SizeProperty, value);
     }
 
     /// <summary>Logical disabled state. Combined with FocusableWhenDisabled to choose native IsEnabled=False vs. soft-disabled.</summary>
