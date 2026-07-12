@@ -8,9 +8,6 @@ namespace Navius.Wpf.Primitives.Controls.Select;
 /// <summary>XAML-friendly object-typed Select root. Use <see cref="ItemsControl.ItemsSource"/> and <see cref="ItemsControl.DisplayMemberPath"/> for data-bound items.</summary>
 public class NaviusSelect : NaviusSelectBase
 {
-    public static readonly DependencyProperty ValueProperty = RawValueProperty;
-    public static readonly DependencyProperty ValuesProperty = RawValuesProperty;
-
     static NaviusSelect()
     {
         DefaultStyleKeyProperty.OverrideMetadata(
@@ -23,17 +20,8 @@ public class NaviusSelect : NaviusSelectBase
         SetResourceReference(StyleProperty, typeof(NaviusSelectBase));
     }
 
-    public object? Value
-    {
-        get => RawValue;
-        set => RawValue = value;
-    }
-
-    public IReadOnlyList<object> Values
-    {
-        get => RawValues;
-        set => RawValues = value ?? Array.Empty<object>();
-    }
+    // Value/Values are object-typed here just like the base's, so this class inherits
+    // NaviusSelectBase.Value/Values (and ValueProperty/ValuesProperty) as-is.
 }
 
 /// <summary>
@@ -67,15 +55,17 @@ public class NaviusSelect<TItem> : NaviusSelectBase
         SetResourceReference(StyleProperty, typeof(NaviusSelectBase));
     }
 
-    /// <summary>Single-select value (contract's Value); wraps the base's object-typed RawValue.</summary>
-    public TItem? Value
+    /// <summary>Single-select value (contract's Value); wraps the base's object-typed RawValue. Hides
+    /// the base's object-typed Value (same DP, registered once on NaviusSelectBase -- see ValueProperty)
+    /// with a TItem-typed CLR accessor; bindings still resolve via the inherited DependencyProperty.</summary>
+    public new TItem? Value
     {
         get => RawValue is TItem value ? value : default;
         set => RawValue = value;
     }
 
-    /// <summary>Controlled multi-select set (contract's Values); wraps the base's object-typed RawValues.</summary>
-    public IReadOnlyList<TItem> Values
+    /// <summary>Controlled multi-select set (contract's Values); wraps the base's object-typed RawValues. See <see cref="Value"/> re: hiding.</summary>
+    public new IReadOnlyList<TItem> Values
     {
         get => SelectedValues;
         set => RawValues = value is null ? Array.Empty<object>() : value.Cast<object>().ToArray();

@@ -1,10 +1,12 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Markup;
@@ -15,6 +17,12 @@ using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
+// NaviusSelect<TItem> is a closed generic; XamlReader (like any XAML markup) needs a concrete
+// type name to instantiate, so binding-focused XAML tests below target this trivial subclass.
+public class StringSelect : NaviusSelect<string>
+{
+}
+
 public class SelectTests : IDisposable
 {
     private sealed record NamedOption(string Name);
@@ -22,6 +30,37 @@ public class SelectTests : IDisposable
     private sealed record WrappedOption(NamedOption Inner);
 
     private sealed record DualOption(string Code, string Label);
+
+    // Binding source for the Value/Values two-way tests. SelectedValues is object-typed to match
+    // ValuesProperty (registered as IReadOnlyList<object> -- see NaviusSelectBase.ValuesProperty),
+    // the same type RawValues already uses.
+    private sealed class BindableSource : INotifyPropertyChanged
+    {
+        private string? _selected;
+        private IReadOnlyList<object> _selectedValues = Array.Empty<object>();
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public string? Selected
+        {
+            get => _selected;
+            set
+            {
+                _selected = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Selected)));
+            }
+        }
+
+        public IReadOnlyList<object> SelectedValues
+        {
+            get => _selectedValues;
+            set
+            {
+                _selectedValues = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedValues)));
+            }
+        }
+    }
 
     static SelectTests()
     {
@@ -641,5 +680,99 @@ public class SelectTests : IDisposable
 
         provider.Collapse();
         Assert.False(select.IsOpen);
+    }
+
+    // ---- Value/Values as real DPs (issue #19: `Value="{Binding ..., Mode=TwoWay}"` threw because
+    // no DependencyProperty named "Value"/"Values" existed) -----------------------------------
+
+    [StaFact]
+    public void GenericSelect_ValueTwoWayBinding_LoadsFromXaml_WithoutThrowing()
+    {
+        var select = Assert.IsType<StringSelect>(XamlReader.Parse(
+            "<local:StringSelect xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' " +
+            "xmlns:local='clr-namespace:Navius.Wpf.Tests;assembly=Navius.Wpf.Tests' " +
+            "Value='{Binding Selected, Mode=TwoWay}' />"));
+
+        Assert.NotNull(select);
+    }
+
+    [StaFact]
+    public void NonGenericSelect_ValuesTwoWayBinding_LoadsFromXaml_WithoutThrowing()
+    {
+        var select = Assert.IsType<NaviusSelect>(XamlReader.Parse(
+            "<select:NaviusSelect xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' " +
+            "xmlns:select='clr-namespace:Navius.Wpf.Primitives.Controls.Select;assembly=Navius.Wpf.Primitives' " +
+            "Values='{Binding SelectedValues, Mode=TwoWay}' />"));
+
+        Assert.NotNull(select);
+    }
+
+    [StaFact]
+    public void GenericSelect_ValueBinding_PropagatesSourceToSelector_AndSelectorToSource()
+    {
+        var select = CreateSelect();
+        var source = new BindableSource();
+        BindingOperations.SetBinding(select, NaviusSelectBase.ValueProperty, new Binding(nameof(BindableSource.Selected))
+        {
+            Source = source,
+            Mode = BindingMode.TwoWay,
+        });
+
+        source.Selected = "banana"; // source -> selector
+        Assert.Equal("banana", select.Value);
+        Assert.True(ItemAt(select, 1).IsSelectedValue);
+        Assert.Equal("Banana", select.DisplayText);
+
+        ItemAt(select, 2).RaiseSelectEvent(); // selector -> source
+        Assert.Equal("cherry", source.Selected);
+    }
+
+    [StaFact]
+    public void GenericSelect_ValuesBinding_PropagatesSourceToSelector_AndSelectorToSource()
+    {
+        var select = CreateSelect(multiple: true);
+        var source = new BindableSource();
+        BindingOperations.SetBinding(select, NaviusSelectBase.ValuesProperty, new Binding(nameof(BindableSource.SelectedValues))
+        {
+            Source = source,
+            Mode = BindingMode.TwoWay,
+        });
+
+        source.SelectedValues = new object[] { "apple", "cherry" }; // source -> selector
+        Assert.True(ItemAt(select, 0).IsSelectedValue);
+        Assert.False(ItemAt(select, 1).IsSelectedValue);
+        Assert.True(ItemAt(select, 2).IsSelectedValue);
+
+        ItemAt(select, 1).RaiseSelectEvent(); // selector -> source (toggle banana on)
+        Assert.Equal(new object[] { "apple", "cherry", "banana" }, source.SelectedValues);
+    }
+
+    [StaFact]
+    public void RawValueBinding_StillPropagatesBothDirections()
+    {
+        var select = CreateSelect();
+        var source = new BindableSource();
+        BindingOperations.SetBinding(select, NaviusSelectBase.RawValueProperty, new Binding(nameof(BindableSource.Selected))
+        {
+            Source = source,
+            Mode = BindingMode.TwoWay,
+        });
+
+        source.Selected = "cherry"; // source -> selector
+        Assert.Equal("cherry", select.RawValue);
+        Assert.True(ItemAt(select, 2).IsSelectedValue);
+
+        ItemAt(select, 0).RaiseSelectEvent(); // selector -> source
+        Assert.Equal("apple", source.Selected);
+    }
+
+    [StaFact]
+    public void ValueAndValuesProperty_ResolveByDependencyPropertyDescriptor_OnGenericAndNonGenericSelect()
+    {
+        foreach (var type in new[] { typeof(StringSelect), typeof(NaviusSelect) })
+        {
+            Assert.NotNull(DependencyPropertyDescriptor.FromName("Value", type, type));
+            Assert.NotNull(DependencyPropertyDescriptor.FromName("Values", type, type));
+        }
     }
 }
