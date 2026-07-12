@@ -105,6 +105,42 @@ public class UiDisplayItemsTests
         }
     }
 
+    [StaFact]
+    public void Card_Padding_ReachesTemplateRootBorder()
+    {
+        var dictionary = MergeTheme("Card.xaml");
+        try
+        {
+            var card = new NaviusCard { Padding = new Thickness(16) };
+            ApplyStyleAndTemplate(card, typeof(NaviusCard));
+
+            var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(card, 0));
+            Assert.Equal(new Thickness(16), border.Padding);
+        }
+        finally
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+        }
+    }
+
+    [StaFact]
+    public void Card_DefaultPadding_IsZeroOnTemplateRootBorder()
+    {
+        var dictionary = MergeTheme("Card.xaml");
+        try
+        {
+            var card = new NaviusCard();
+            ApplyStyleAndTemplate(card, typeof(NaviusCard));
+
+            var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(card, 0));
+            Assert.Equal(new Thickness(0), border.Padding);
+        }
+        finally
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+        }
+    }
+
     // --- Alert ---
 
     [StaFact]
