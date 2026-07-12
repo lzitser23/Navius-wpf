@@ -240,6 +240,16 @@ public abstract class NaviusSelectBase : ItemsControl
         if (element is NaviusSelectItem container)
         {
             container.OwnerSelect = this;
+            if (item is not NaviusSelectItem)
+            {
+                container.Value = item;
+                container.TextValue = ResolveDisplayText(item);
+            }
+
+            container.IsSelectedValue = Multiple
+                ? RawValues.Any(value => Equals(value, container.Value))
+                : Equals(RawValue, container.Value);
+            UpdateDisplay();
         }
     }
 
@@ -289,8 +299,31 @@ public abstract class NaviusSelectBase : ItemsControl
         }
     }
 
-    private List<NaviusSelectItem> GetItems() =>
-        Items.OfType<NaviusSelectItem>().ToList();
+    private List<NaviusSelectItem> GetItems()
+    {
+        var result = new List<NaviusSelectItem>(Items.Count);
+        for (var index = 0; index < Items.Count; index++)
+        {
+            var item = Items[index] as NaviusSelectItem
+                ?? ItemContainerGenerator.ContainerFromIndex(index) as NaviusSelectItem;
+            if (item is not null)
+            {
+                result.Add(item);
+            }
+        }
+
+        return result;
+    }
+
+    private string ResolveDisplayText(object item)
+    {
+        if (string.IsNullOrWhiteSpace(DisplayMemberPath))
+        {
+            return item.ToString() ?? string.Empty;
+        }
+
+        return item.GetType().GetProperty(DisplayMemberPath)?.GetValue(item)?.ToString() ?? string.Empty;
+    }
 
     private List<NaviusSelectItem> GetNavigableItems() =>
         GetItems().Where(i => i.IsNavigable).ToList();
@@ -386,14 +419,17 @@ public abstract class NaviusSelectBase : ItemsControl
         if (Multiple)
         {
             var selected = GetItems().Where(i => i.IsSelectedValue).ToList();
-            hasSelection = selected.Count > 0;
-            text = hasSelection ? string.Join(", ", selected.Select(i => i.DisplayText)) : Placeholder;
+            hasSelection = RawValues.Count > 0;
+            text = hasSelection
+                ? string.Join(", ", RawValues.Select(value =>
+                    selected.FirstOrDefault(item => Equals(item.Value, value))?.DisplayText ?? ResolveDisplayText(value)))
+                : Placeholder;
         }
         else
         {
             var selected = GetItems().FirstOrDefault(i => Equals(RawValue, i.Value));
             hasSelection = RawValue is not null;
-            text = selected?.DisplayText ?? (hasSelection ? RawValue?.ToString() : Placeholder);
+            text = selected?.DisplayText ?? (hasSelection ? ResolveDisplayText(RawValue!) : Placeholder);
         }
 
         SetValue(DisplayTextPropertyKey, text);

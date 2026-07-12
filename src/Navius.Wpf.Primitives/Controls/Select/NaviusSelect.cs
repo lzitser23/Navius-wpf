@@ -5,6 +5,37 @@ using System.Windows;
 
 namespace Navius.Wpf.Primitives.Controls.Select;
 
+/// <summary>XAML-friendly object-typed Select root. Use <see cref="ItemsControl.ItemsSource"/> and <see cref="ItemsControl.DisplayMemberPath"/> for data-bound items.</summary>
+public class NaviusSelect : NaviusSelectBase
+{
+    public static readonly DependencyProperty ValueProperty = RawValueProperty;
+    public static readonly DependencyProperty ValuesProperty = RawValuesProperty;
+
+    static NaviusSelect()
+    {
+        DefaultStyleKeyProperty.OverrideMetadata(
+            typeof(NaviusSelect),
+            new FrameworkPropertyMetadata(typeof(NaviusSelectBase)));
+    }
+
+    public NaviusSelect()
+    {
+        SetResourceReference(StyleProperty, typeof(NaviusSelectBase));
+    }
+
+    public object? Value
+    {
+        get => RawValue;
+        set => RawValue = value;
+    }
+
+    public IReadOnlyList<object> Values
+    {
+        get => RawValues;
+        set => RawValues = value ?? Array.Empty<object>();
+    }
+}
+
 /// <summary>
 /// The public, strongly-typed Select control (contract's NaviusSelect). Generic over the value
 /// type so <see cref="Value"/>/<see cref="SelectedValues"/> and the typed change events are

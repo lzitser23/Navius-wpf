@@ -1,9 +1,74 @@
 using System;
+using System.Collections;
+using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 
 namespace Navius.Wpf.Primitives.Controls.Combobox;
+
+/// <summary>XAML-friendly object-typed Combobox root over the existing generic state machine.</summary>
+public class NaviusCombobox : NaviusCombobox<object>
+{
+    public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
+        nameof(ItemsSource), typeof(IEnumerable), typeof(NaviusCombobox),
+        new PropertyMetadata(null, OnItemsSourceChanged));
+
+    public static readonly DependencyProperty DisplayMemberPathProperty = DependencyProperty.Register(
+        nameof(DisplayMemberPath), typeof(string), typeof(NaviusCombobox),
+        new PropertyMetadata(string.Empty, OnDisplayMemberPathChanged));
+
+    public NaviusCombobox()
+    {
+        ItemToString = FormatItem;
+    }
+
+    public IEnumerable? ItemsSource
+    {
+        get => (IEnumerable?)GetValue(ItemsSourceProperty);
+        set => SetValue(ItemsSourceProperty, value);
+    }
+
+    public string DisplayMemberPath
+    {
+        get => (string)GetValue(DisplayMemberPathProperty);
+        set => SetValue(DisplayMemberPathProperty, value);
+    }
+
+    private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (NaviusCombobox)d;
+        if (e.OldValue is INotifyCollectionChanged oldCollection)
+        {
+            CollectionChangedEventManager.RemoveHandler(oldCollection, control.OnCollectionChanged);
+        }
+
+        if (e.NewValue is INotifyCollectionChanged newCollection)
+        {
+            CollectionChangedEventManager.AddHandler(newCollection, control.OnCollectionChanged);
+        }
+
+        control.RefreshItems();
+    }
+
+    private static void OnDisplayMemberPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((NaviusCombobox)d).ItemToString = ((NaviusCombobox)d).FormatItem;
+
+    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshItems();
+
+    private void RefreshItems() =>
+        Items = ItemsSource?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+    private string FormatItem(object item)
+    {
+        if (string.IsNullOrWhiteSpace(DisplayMemberPath))
+        {
+            return item?.ToString() ?? string.Empty;
+        }
+
+        return item?.GetType().GetProperty(DisplayMemberPath)?.GetValue(item)?.ToString() ?? string.Empty;
+    }
+}
 
 /// <summary>
 /// Generic Combobox root. Owns the typed API (Items / Value / Values / ItemToString / Filter) and
