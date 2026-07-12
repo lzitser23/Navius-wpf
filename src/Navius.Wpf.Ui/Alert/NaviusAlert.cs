@@ -3,19 +3,18 @@ using System.Windows.Controls;
 
 namespace Navius.Wpf.Ui.Alert;
 
-/// <summary>Default | Destructive. The only two severities with dedicated brand tokens; see docs comment on NaviusAlert.Variant.</summary>
+/// <summary>Default | Warning | Destructive.</summary>
 public enum NaviusAlertVariant
 {
     Default,
+    Warning,
     Destructive,
 }
 
 /// <summary>
 /// A callout for user attention. Compositional: nest NaviusAlertTitle/NaviusAlertDescription
 /// (and any icon) inside a StackPanel as the single Content, mirroring the web contract's
-/// child-content model. Only Default/Destructive variants ship: the token set has no
-/// Warning/Success/Info brushes, and inventing untokenized colors would break the one-ink
-/// discipline, so severity is limited to what the palette actually supports.
+/// child-content model. Warning and Destructive map to dedicated semantic theme tokens.
 /// </summary>
 public class NaviusAlert : ContentControl
 {

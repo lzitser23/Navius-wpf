@@ -145,6 +145,26 @@ public class UiDisplayItemsTests
         }
     }
 
+    [StaFact]
+    public void Alert_WarningVariant_SwitchesBorderAndForegroundToWarning()
+    {
+        var dictionary = MergeTheme("Alert.xaml");
+        try
+        {
+            var alert = new NaviusAlert { Variant = NaviusAlertVariant.Warning };
+            ApplyStyleAndTemplate(alert, typeof(NaviusAlert));
+
+            var borderBrush = Assert.IsType<SolidColorBrush>(alert.BorderBrush);
+            var foreground = Assert.IsType<SolidColorBrush>(alert.Foreground);
+            Assert.Equal((Color)ColorConverter.ConvertFromString("#9A6700"), borderBrush.Color);
+            Assert.Equal((Color)ColorConverter.ConvertFromString("#9A6700"), foreground.Color);
+        }
+        finally
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+        }
+    }
+
     // --- Badge ---
 
     [StaFact]
