@@ -42,6 +42,48 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="Variant" Value="Secondary">
+                <Setter Property="Background" Value="{DynamicResource Navius.Secondary}" />
+                <Setter Property="Foreground" Value="{DynamicResource Navius.SecondaryForeground}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Navius.Secondary}" />
+            </Trigger>
+            <Trigger Property="Variant" Value="Outline">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Navius.Border}" />
+            </Trigger>
+            <Trigger Property="Variant" Value="Ghost">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+            </Trigger>
+            <Trigger Property="Variant" Value="Destructive">
+                <Setter Property="Background" Value="{DynamicResource Navius.Destructive}" />
+                <Setter Property="Foreground" Value="{DynamicResource Navius.DestructiveForeground}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource Navius.Destructive}" />
+            </Trigger>
+            <Trigger Property="Size" Value="Small">
+                <Setter Property="Padding" Value="10,5" />
+                <Setter Property="FontSize" Value="12" />
+            </Trigger>
+            <Trigger Property="Size" Value="Large">
+                <Setter Property="Padding" Value="18,9" />
+                <Setter Property="FontSize" Value="15" />
+            </Trigger>
+            <Trigger Property="Size" Value="Icon">
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="Padding" Value="0" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="Variant" Value="Ghost" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource Navius.Muted}" />
+            </MultiTrigger>
+        </Style.Triggers>
     </Style>
 
 </ResourceDictionary>
