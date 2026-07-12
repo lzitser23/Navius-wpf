@@ -61,6 +61,19 @@ public class FieldTests
     }
 
     [StaFact]
+    public void FieldControl_RendersItsContent()
+    {
+        var (field, _, fieldControl, _) = CreateField();
+        var input = Assert.IsType<NaviusInput>(fieldControl.Content);
+
+        field.Measure(new Size(500, 500));
+        field.Arrange(new Rect(0, 0, 500, 500));
+        field.UpdateLayout();
+
+        Assert.NotNull(System.Windows.Media.VisualTreeHelper.GetParent(input));
+    }
+
+    [StaFact]
     public void Field_RegistersTheDefaultInput_AsItsControl()
     {
         var (field, _, fieldControl, _) = CreateField();
