@@ -1,5 +1,7 @@
 using System.Windows;
+using System.Windows.Controls;
 using Navius.Wpf.Primitives.Controls.Drawer;
+using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
@@ -32,7 +34,31 @@ public class DrawerTests
         Assert.True(drawer.Modal);
         Assert.True(drawer.CloseOnOutsideClick);
         Assert.Equal(NaviusDrawerSide.Bottom, drawer.Side);
+        Assert.Equal(360, drawer.PanelWidth);
+        Assert.Equal(280, drawer.PanelHeight);
         Assert.Equal(Visibility.Collapsed, drawer.Visibility);
+    }
+
+    [StaFact]
+    public void PanelDimensions_DriveTheDefaultTemplate()
+    {
+        var scope = new ResourceDictionary();
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        scope.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Drawer.xaml"),
+        });
+        var drawer = new NaviusDrawer
+        {
+            Resources = scope,
+            Side = NaviusDrawerSide.Right,
+            PanelWidth = 324,
+        };
+
+        Assert.True(drawer.ApplyTemplate());
+        var panel = Assert.IsType<Border>(drawer.Template.FindName("PART_Panel", drawer));
+        Assert.Equal(324, panel.Width);
+        Assert.True(double.IsNaN(panel.Height));
     }
 
     [StaFact]

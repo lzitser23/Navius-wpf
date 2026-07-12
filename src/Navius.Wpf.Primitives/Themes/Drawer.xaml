@@ -26,8 +26,8 @@
                             stay "PART_Panel") to drive the slide-in/out TranslateTransform.
                         -->
                         <Border x:Name="PART_Panel"
-                                Width="Auto"
-                                Height="280"
+                                Width="{TemplateBinding PanelWidth}"
+                                Height="{TemplateBinding PanelHeight}"
                                 Padding="24"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Bottom"
@@ -63,26 +63,22 @@
                             <Setter TargetName="DescriptionText" Property="Visibility" Value="Collapsed" />
                         </Trigger>
                         <Trigger Property="Side" Value="Left">
-                            <Setter TargetName="PART_Panel" Property="Width" Value="360" />
                             <Setter TargetName="PART_Panel" Property="Height" Value="Auto" />
                             <Setter TargetName="PART_Panel" Property="HorizontalAlignment" Value="Left" />
                             <Setter TargetName="PART_Panel" Property="VerticalAlignment" Value="Stretch" />
                         </Trigger>
                         <Trigger Property="Side" Value="Right">
-                            <Setter TargetName="PART_Panel" Property="Width" Value="360" />
                             <Setter TargetName="PART_Panel" Property="Height" Value="Auto" />
                             <Setter TargetName="PART_Panel" Property="HorizontalAlignment" Value="Right" />
                             <Setter TargetName="PART_Panel" Property="VerticalAlignment" Value="Stretch" />
                         </Trigger>
                         <Trigger Property="Side" Value="Top">
                             <Setter TargetName="PART_Panel" Property="Width" Value="Auto" />
-                            <Setter TargetName="PART_Panel" Property="Height" Value="280" />
                             <Setter TargetName="PART_Panel" Property="HorizontalAlignment" Value="Stretch" />
                             <Setter TargetName="PART_Panel" Property="VerticalAlignment" Value="Top" />
                         </Trigger>
                         <Trigger Property="Side" Value="Bottom">
                             <Setter TargetName="PART_Panel" Property="Width" Value="Auto" />
-                            <Setter TargetName="PART_Panel" Property="Height" Value="280" />
                             <Setter TargetName="PART_Panel" Property="HorizontalAlignment" Value="Stretch" />
                             <Setter TargetName="PART_Panel" Property="VerticalAlignment" Value="Bottom" />
                         </Trigger>
