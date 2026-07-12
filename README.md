@@ -24,7 +24,7 @@
 ![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%2010.0-171614)
 ![Platform](https://img.shields.io/badge/platform-WPF%2C%20no%20WebView-737270)
 ![Families](https://img.shields.io/badge/families-58-737270)
-![Tests](https://img.shields.io/badge/tests-1281-737270)
+![Tests](https://img.shields.io/badge/tests-1373-737270)
 
 </div>
 
@@ -69,15 +69,16 @@ live in [`docs/parity/`](docs/parity/), one document per family.
 - **A native motion engine, `Navius.Wpf.Motion`**: the closed-form spring solver
   shared with the web port, baked to `DoubleAnimationUsingKeyFrames` for
   zero-interruption playback or driven live by a retargetable `SpringTicker`, plus
-  named enter/exit and micro-interaction presets.
+  named enter/exit and micro-interaction presets. `MotionPolicy.System` follows the
+  Windows animation preference and reduces both execution paths without a render loop.
 - **Charts, `Navius.Wpf.Charts`**: a thin themed wrapper over LiveCharts2 that follows
   the token themes at runtime ([ADR-0004](docs/adr/0004-chart-library.md)).
 - **Copy-paste vendoring.** The `navius-wpf` dotnet tool copies any registry item's
   source (79 items: 58 primitive, 20 styled, 1 core) into your project with
   transitive dependency closure and namespace rewriting; a CI-style gate builds the
   vendored output to prove the closure compiles.
-- **Test-verified.** 1336 tests across five projects: 1265 unit (STA, real windows),
-  38 motion, 23 charts, 4 vendoring-closure, and 6 FlaUI-driven UIA end-to-end tests.
+- **Test-verified.** 1373 tests across five projects: 1290 unit (STA, real windows),
+  45 motion, 23 charts, 8 CLI/vendoring, and 7 FlaUI-driven UIA end-to-end tests.
   Every family also carries a recorded adversarial audit in its parity doc.
 - **RTL and DPI hardening** ([ADR-0006](docs/adr/0006-rtl-dpi-hardening.md)):
   flow-direction-aware keyboarding and layout with pixel-verified segment behavior,
@@ -227,7 +228,7 @@ apps/
 tools/
   Navius.Wpf.Cli/          # registry vendoring tool (list / add / registry-sync)
   Navius.Wpf.Captures/     # theme-sweep screenshot harness for the Gallery
-tests/                     # five test projects, 1336 tests
+tests/                     # five test projects, 1373 tests
 docs/
   parity/                  # one contract + port-notes + audit doc per family
   adr/                     # architecture decision records

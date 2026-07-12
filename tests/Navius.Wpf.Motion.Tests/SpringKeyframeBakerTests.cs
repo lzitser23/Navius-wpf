@@ -5,6 +5,20 @@ namespace Navius.Wpf.Motion.Tests;
 public class SpringKeyframeBakerTests
 {
     [StaFact]
+    public void Reduced_motion_emits_only_the_final_value_at_zero()
+    {
+        var animation = SpringKeyframeBaker.Bake(
+            Spring.Bouncy,
+            from: 0,
+            to: 100,
+            motionPolicy: new MotionPolicy(() => false));
+
+        var keyframe = Assert.Single(animation.KeyFrames.Cast<DoubleKeyFrame>());
+        Assert.Equal(100, keyframe.Value);
+        Assert.Equal(TimeSpan.Zero, keyframe.KeyTime.TimeSpan);
+    }
+
+    [StaFact]
     public void Keyframe_times_are_strictly_increasing()
     {
         var animation = SpringKeyframeBaker.Bake(Spring.Bouncy, 0, 1);

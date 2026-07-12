@@ -9,6 +9,47 @@ namespace Navius.Wpf.Motion.Tests;
 public class SpringTickerTests
 {
     [StaFact]
+    public void Reduced_motion_completes_synchronously_without_starting_a_render_loop()
+    {
+        var values = new List<double>();
+
+        using var ticker = new SpringTicker(
+            Spring.Default,
+            from: 0,
+            to: 10,
+            values.Add,
+            new MotionPolicy(() => false));
+
+        Assert.False(ticker.IsRunning);
+        Assert.True(ticker.IsAtRest);
+        Assert.Equal(10, ticker.Value);
+        Assert.Equal(0, ticker.Velocity);
+        Assert.Equal([10d], values);
+    }
+
+    [StaFact]
+    public void Preference_switch_to_reduced_motion_completes_the_active_run()
+    {
+        var enabled = true;
+        var values = new List<double>();
+        using var ticker = new SpringTicker(
+            Spring.Default,
+            from: 0,
+            to: 10,
+            values.Add,
+            new MotionPolicy(() => enabled));
+
+        ticker.Step(0.05);
+        enabled = false;
+        ticker.Step(0.05);
+
+        Assert.False(ticker.IsRunning);
+        Assert.True(ticker.IsAtRest);
+        Assert.Equal(10, ticker.Value);
+        Assert.Equal(10, values[^1]);
+    }
+
+    [StaFact]
     public void Converges_to_the_target_as_steps_accumulate()
     {
         var values = new List<double>();
