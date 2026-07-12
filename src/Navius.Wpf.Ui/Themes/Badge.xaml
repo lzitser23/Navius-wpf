@@ -3,8 +3,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:badge="clr-namespace:Navius.Wpf.Ui.Badge">
 
-    <!-- Corner radius is a fixed pill (999), not a Navius.Radius token: no "full round" token
-         exists, and a badge's identity as a pill is independent of the control-radius scale. -->
+    <!-- Keep the radius finite. WPF can normalize an oversized CornerRadius independently on
+         each axis, turning the entire border into an ellipse instead of a capsule with straight
+         horizontal sides. Eight pixels rounds the ends at the badge's default line height. -->
 
     <Style TargetType="{x:Type badge:NaviusBadge}">
         <Setter Property="Background" Value="{DynamicResource Navius.Primary}" />
@@ -23,7 +24,7 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="999"
+                        CornerRadius="8"
                         Padding="{TemplateBinding Padding}">
                         <ContentPresenter
                             HorizontalAlignment="Center"
