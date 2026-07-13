@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -94,6 +95,8 @@ public class NaviusSidebar : ItemsControl
         get => GetValue(FooterContentProperty);
         set => SetValue(FooterContentProperty, value);
     }
+
+    protected override AutomationPeer OnCreateAutomationPeer() => new NaviusSidebarAutomationPeer(this);
 
     public override void OnApplyTemplate()
     {
@@ -193,4 +196,24 @@ public class NaviusSidebar : ItemsControl
             CollectItemsRecursive(child, items);
         }
     }
+}
+
+/// <summary>
+/// An ItemsControl gets ItemsControlAutomationPeer by default, whose GetChildrenCore returns only
+/// item peers for the Items collection -- template chrome never enters the UIA tree. For
+/// NaviusSidebar that silently dropped the HeaderContent/FooterContent ContentPresenters' descendants
+/// and the built-in collapse Button, so assistive tech had no way to reach them at all (issue #28).
+/// Deriving FrameworkElementAutomationPeer instead restores the default visual-tree child walk, the
+/// same fix NaviusSidebarItem's peer applies for a different symptom of the same "wrong peer base
+/// type" class of bug. Reported as Group rather than a nav-landmark type because UIA has no
+/// navigation-landmark AutomationControlType; Group is the closest fit for a chrome container that
+/// isn't itself interactive.
+/// </summary>
+internal sealed class NaviusSidebarAutomationPeer : FrameworkElementAutomationPeer
+{
+    public NaviusSidebarAutomationPeer(NaviusSidebar owner) : base(owner) { }
+
+    protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Group;
+
+    protected override string GetClassNameCore() => nameof(NaviusSidebar);
 }

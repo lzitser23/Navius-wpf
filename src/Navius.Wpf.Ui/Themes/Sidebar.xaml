@@ -34,6 +34,33 @@
                                         HorizontalContentAlignment="Left"
                                         Padding="8,7"
                                         Cursor="Hand">
+                                    <!--
+                                        The visible "Collapse" TextBlock is hidden when IsCollapsed (see the
+                                        ToggleLabel DataTrigger below), so the button would otherwise have no
+                                        accessible name once collapsed. AutomationProperties.Name flips with
+                                        state so assistive tech always announces the action this press performs
+                                        (issue #28).
+
+                                        Binds to the NaviusSidebar ancestor's own IsCollapsed property directly
+                                        (AncestorType), rather than reading the attached-property-style
+                                        "(sidebar:NaviusSidebar.IsCollapsed)" path the ToggleLabel DataTrigger
+                                        below uses: IsCollapsedProperty is registered with DependencyProperty.Register
+                                        (not RegisterAttached), so its Inherits metadata only resolves on NaviusSidebar
+                                        itself and its subclasses; GetValue on an unrelated type like this Button falls
+                                        back to plain (non-inheriting) PropertyMetadata and never observes the
+                                        ancestor's value. Binding straight to the ancestor's CLR property sidesteps
+                                        that gap entirely.
+                                    -->
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="AutomationProperties.Name" Value="Collapse sidebar" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType={x:Type sidebar:NaviusSidebar}}}" Value="True">
+                                                    <Setter Property="AutomationProperties.Name" Value="Expand sidebar" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="ToggleBg" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource Navius.Radius.Control}">
