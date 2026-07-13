@@ -68,6 +68,7 @@
                                 <Button
                                     Style="{StaticResource Navius.Carousel.NavButton}"
                                     AutomationProperties.Name="Previous slide"
+                                    AutomationProperties.AutomationId="CarouselPreviousButton"
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Center"
                                     Margin="10,0"
@@ -78,6 +79,7 @@
                                 <Button
                                     Style="{StaticResource Navius.Carousel.NavButton}"
                                     AutomationProperties.Name="Next slide"
+                                    AutomationProperties.AutomationId="CarouselNextButton"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center"
                                     Margin="10,0"
@@ -160,31 +162,42 @@
             <Setter.Value>
                 <Style TargetType="FrameworkElement">
                     <Setter Property="Opacity" Value="0" />
+                    <Setter Property="Visibility" Value="Collapsed" />
                     <Setter Property="IsHitTestVisible" Value="False" />
                     <Setter Property="Focusable" Value="False" />
                     <Style.Triggers>
-                        <Trigger Property="Selector.IsSelected" Value="True">
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=(Selector.IsSelected)}" Value="True" />
+                                <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type carousel:NaviusCarousel}}, Path=ShouldAnimate}" Value="True" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible" />
                             <Setter Property="IsHitTestVisible" Value="True" />
-                            <Trigger.EnterActions>
+                            <MultiDataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
+                            </MultiDataTrigger.EnterActions>
+                            <MultiDataTrigger.ExitActions>
                                 <BeginStoryboard>
-                                    <Storyboard>
+                                    <Storyboard FillBehavior="Stop">
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15" />
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}" />
+                                        </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
+                            </MultiDataTrigger.ExitActions>
+                        </MultiDataTrigger>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=(Selector.IsSelected)}" Value="True" />
                                 <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type carousel:NaviusCarousel}}, Path=ShouldAnimate}" Value="False" />
                             </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Setter Property="IsHitTestVisible" Value="True" />
                             <Setter Property="Opacity" Value="1" />
                         </MultiDataTrigger>
                     </Style.Triggers>

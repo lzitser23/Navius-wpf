@@ -6,7 +6,8 @@ namespace Navius.Wpf.Motion;
 /// Bakes a solved <see cref="Spring"/> run into a WPF
 /// <see cref="DoubleAnimationUsingKeyFrames"/> for the zero-interruption timeline tier
 /// (storyboards, triggers). For interruptible runtime motion (retargeting mid-flight)
-/// use <see cref="SpringTicker"/> instead.
+/// use <see cref="SpringTicker"/> instead. Both execution tiers use <see cref="MotionPolicy"/>
+/// and complete immediately when Windows' animation preference disables motion.
 /// </summary>
 public static class SpringKeyframeBaker
 {
@@ -27,10 +28,24 @@ public static class SpringKeyframeBaker
     /// <paramref name="to"/> into a keyframe animation. The first keyframe is at t = 0
     /// with value <paramref name="from"/>; the last keyframe lands exactly at
     /// <paramref name="to"/> at the solver's settle duration. Sample spacing is adaptive:
-    /// dense while the spring is moving fast, sparse in the settled tail.
+    /// dense while the spring is moving fast, sparse in the settled tail. When
+    /// <paramref name="motionPolicy"/> disables motion, the result contains one target keyframe
+    /// at t = 0 instead of a spring curve.
     /// </summary>
-    public static DoubleAnimationUsingKeyFrames Bake(Spring spring, double from, double to, double initialVelocity = 0)
+    public static DoubleAnimationUsingKeyFrames Bake(
+        Spring spring,
+        double from,
+        double to,
+        double initialVelocity = 0,
+        MotionPolicy? motionPolicy = null)
     {
+        if (!(motionPolicy ?? MotionPolicy.System).AnimationsEnabled)
+        {
+            var reducedAnimation = new DoubleAnimationUsingKeyFrames();
+            reducedAnimation.KeyFrames.Add(new DiscreteDoubleKeyFrame(to, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+            return reducedAnimation;
+        }
+
         var effectiveSpring = spring.WithInitialVelocity(initialVelocity);
         var solver = new SpringSolver(effectiveSpring, from, to);
         var duration = solver.SettleDuration;

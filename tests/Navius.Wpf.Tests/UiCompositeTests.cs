@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Threading;
 using Navius.Wpf.Ui.ButtonGroup;
 using Navius.Wpf.Ui.Carousel;
 using Navius.Wpf.Ui.InputGroup;
@@ -263,6 +264,54 @@ public class UiCompositeTests
         }
         finally
         {
+            ReducedMotion.SetTestOverride(null);
+        }
+    }
+
+    [StaFact]
+    public void Carousel_ReducedMotion_CollapsesInactiveSlideImmediately()
+    {
+        ReducedMotion.SetTestOverride(() => false);
+        Window? window = null;
+        try
+        {
+            EnsureApplication();
+            var scope = new ResourceDictionary();
+            ThemeManager.Apply(NaviusTheme.Light, scope);
+            scope.MergedDictionaries.Add(new ResourceDictionary
+            {
+                Source = new Uri("pack://application:,,,/Navius.Wpf.Ui;component/Themes/Carousel.xaml"),
+            });
+
+            var first = new Border();
+            var second = new Border();
+            var carousel = new NaviusCarousel
+            {
+                Resources = scope,
+                Style = (Style)scope[typeof(NaviusCarousel)],
+            };
+            carousel.Items.Add(first);
+            carousel.Items.Add(second);
+
+            window = new Window { Content = carousel, Width = 400, Height = 240, ShowInTaskbar = false };
+            window.Show();
+            carousel.ApplyTemplate();
+            carousel.UpdateLayout();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+
+            Assert.Equal(Visibility.Visible, first.Visibility);
+            Assert.Equal(Visibility.Collapsed, second.Visibility);
+
+            carousel.SelectedIndex = 1;
+            carousel.UpdateLayout();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+
+            Assert.Equal(Visibility.Collapsed, first.Visibility);
+            Assert.Equal(Visibility.Visible, second.Visibility);
+        }
+        finally
+        {
+            window?.Close();
             ReducedMotion.SetTestOverride(null);
         }
     }

@@ -52,13 +52,12 @@ Token discipline clean (nav-button and dot brushes via `DynamicResource`; `Backg
 on the dot button is idiomatic). Bindings: `SelectedIndex`/`AlternationIndex` feed a `DataTrigger`
 MultiBinding and a `CommandParameter` (`Carousel.xaml:110,130,131`), all inherently OneWay, so no
 pagination-class bug.
-Residual (plausible, not fixed): the slide crossfade storyboards (`Carousel.xaml:163-176`, two 0.15s
-opacity `DoubleAnimation`s in the container `EnterActions`/`ExitActions`) have no reduced-motion
-guard. Gating them would require adding a new `ShouldAnimate` dependency property to `NaviusCarousel`
-and rewiring the triggers, which exceeds a surgical change; the animation is a one-shot 150ms
-crossfade rather than one of the endless loops the `ReducedMotion` seam was built for
-(`Internal/ReducedMotion.cs:6-11`), and no doc comment falsely claims the fade respects reduced
-motion. Recorded for a follow-up if the discipline is tightened to cover transient transitions.
+Follow-up completed: `NaviusCarousel.ShouldAnimate` snapshots the shared reduced-motion seam and
+the container style now has separate animated and immediate trigger paths. Animated selection
+keeps the outgoing slide visible only for its 150ms fade, then falls back to
+`Visibility.Collapsed`; reduced-motion selection swaps visibility immediately. Collapsing the
+inactive container also removes its descendants from the UIA Control/Content tree, covered by a
+real Gallery/FlaUI regression test.
 
 ### CommandPalette (`Themes/CommandPalette.xaml`, NaviusCommandPalette + engine/item)
 Clean. Declares `PART_Input` and `PART_List`; C# looks up `PART_Input`

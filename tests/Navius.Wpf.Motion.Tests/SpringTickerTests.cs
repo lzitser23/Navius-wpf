@@ -8,11 +8,54 @@ namespace Navius.Wpf.Motion.Tests;
 /// </summary>
 public class SpringTickerTests
 {
+    private static readonly MotionPolicy FullMotion = new(() => true);
+
+    [StaFact]
+    public void Reduced_motion_completes_synchronously_without_starting_a_render_loop()
+    {
+        var values = new List<double>();
+
+        using var ticker = new SpringTicker(
+            Spring.Default,
+            from: 0,
+            to: 10,
+            values.Add,
+            new MotionPolicy(() => false));
+
+        Assert.False(ticker.IsRunning);
+        Assert.True(ticker.IsAtRest);
+        Assert.Equal(10, ticker.Value);
+        Assert.Equal(0, ticker.Velocity);
+        Assert.Equal([10d], values);
+    }
+
+    [StaFact]
+    public void Preference_switch_to_reduced_motion_completes_the_active_run()
+    {
+        var enabled = true;
+        var values = new List<double>();
+        using var ticker = new SpringTicker(
+            Spring.Default,
+            from: 0,
+            to: 10,
+            values.Add,
+            new MotionPolicy(() => enabled));
+
+        ticker.Step(0.05);
+        enabled = false;
+        ticker.Step(0.05);
+
+        Assert.False(ticker.IsRunning);
+        Assert.True(ticker.IsAtRest);
+        Assert.Equal(10, ticker.Value);
+        Assert.Equal(10, values[^1]);
+    }
+
     [StaFact]
     public void Converges_to_the_target_as_steps_accumulate()
     {
         var values = new List<double>();
-        using var ticker = new SpringTicker(Spring.Snappy, 0, 1, values.Add);
+        using var ticker = new SpringTicker(Spring.Snappy, 0, 1, values.Add, FullMotion);
 
         // Drive well past the settle duration in small, evenly spaced steps.
         var solver = new SpringSolver(Spring.Snappy, 0, 1);
@@ -33,7 +76,7 @@ public class SpringTickerTests
     [StaFact]
     public void Retarget_keeps_the_value_continuous()
     {
-        using var ticker = new SpringTicker(Spring.Default, 0, 1, _ => { });
+        using var ticker = new SpringTicker(Spring.Default, 0, 1, _ => { }, FullMotion);
 
         // Run partway through the first solve, not to completion.
         ticker.Step(0.05);
@@ -50,7 +93,7 @@ public class SpringTickerTests
     [StaFact]
     public void Retarget_carries_velocity_into_the_first_post_retarget_step()
     {
-        using var ticker = new SpringTicker(Spring.Default, 0, 1, _ => { });
+        using var ticker = new SpringTicker(Spring.Default, 0, 1, _ => { }, FullMotion);
 
         // Run partway through so the ticker has picked up nonzero velocity.
         ticker.Step(0.05);
@@ -72,7 +115,7 @@ public class SpringTickerTests
     [StaFact]
     public void Stop_detaches_the_rendering_hook_and_freezes_the_value()
     {
-        using var ticker = new SpringTicker(Spring.Default, 0, 1, _ => { });
+        using var ticker = new SpringTicker(Spring.Default, 0, 1, _ => { }, FullMotion);
         ticker.Step(0.05);
         var valueBeforeStop = ticker.Value;
 
