@@ -40,22 +40,15 @@
                                         accessible name once collapsed. AutomationProperties.Name flips with
                                         state so assistive tech always announces the action this press performs
                                         (issue #28).
-
-                                        Binds to the NaviusSidebar ancestor's own IsCollapsed property directly
-                                        (AncestorType), rather than reading the attached-property-style
-                                        "(sidebar:NaviusSidebar.IsCollapsed)" path the ToggleLabel DataTrigger
-                                        below uses: IsCollapsedProperty is registered with DependencyProperty.Register
-                                        (not RegisterAttached), so its Inherits metadata only resolves on NaviusSidebar
-                                        itself and its subclasses; GetValue on an unrelated type like this Button falls
-                                        back to plain (non-inheriting) PropertyMetadata and never observes the
-                                        ancestor's value. Binding straight to the ancestor's CLR property sidesteps
-                                        that gap entirely.
                                     -->
                                     <Button.Style>
                                         <Style TargetType="Button">
                                             <Setter Property="AutomationProperties.Name" Value="Collapse sidebar" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType={x:Type sidebar:NaviusSidebar}}}" Value="True">
+                                                <DataTrigger Value="True">
+                                                    <DataTrigger.Binding>
+                                                        <Binding RelativeSource="{RelativeSource Self}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
+                                                    </DataTrigger.Binding>
                                                     <Setter Property="AutomationProperties.Name" Value="Expand sidebar" />
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -125,9 +118,11 @@
                         <ItemsPresenter />
                     </StackPanel>
                     <ControlTemplate.Triggers>
+                        <!-- Self, not TemplatedParent: same null-templated-parent trap as the
+                             NaviusSidebarItem label trigger below (issue #28 follow-up). -->
                         <DataTrigger Value="True">
                             <DataTrigger.Binding>
-                                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
+                                <Binding RelativeSource="{RelativeSource Self}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
                             </DataTrigger.Binding>
                             <Setter TargetName="HeaderPresenter" Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
@@ -193,9 +188,16 @@
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="Root" Property="Background" Value="{DynamicResource Navius.Muted}" />
                         </Trigger>
+                        <!--
+                            Self, not TemplatedParent: for a template-trigger condition the binding's
+                            anchor is the templated control itself, so TemplatedParent resolved the
+                            ITEM's templated parent (null for directly-authored items) and this
+                            trigger never fired. Self reads the item's own inherited IsCollapsed
+                            (issue #28 follow-up).
+                        -->
                         <DataTrigger Value="True">
                             <DataTrigger.Binding>
-                                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
+                                <Binding RelativeSource="{RelativeSource Self}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
                             </DataTrigger.Binding>
                             <Setter TargetName="LabelPresenter" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="IconPresenter" Property="HorizontalAlignment" Value="Center" />

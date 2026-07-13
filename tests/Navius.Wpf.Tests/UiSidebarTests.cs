@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Navius.Wpf.Primitives.Theming;
@@ -211,6 +212,33 @@ public class UiSidebarTests
         collapseButton = descendants.Single(IsCollapseButtonPeer);
 
         Assert.Equal("Expand sidebar", collapseButton.GetName());
+    }
+
+    [StaFact]
+    public void NaviusSidebar_IsCollapsed_InheritsToDescendantsAndCollapsesItemLabels()
+    {
+        var sidebar = CreateThemedSidebarWithFooter();
+        var footerItem = (NaviusSidebarItem)sidebar.FooterContent!;
+        var item = (NaviusSidebarItem)sidebar.Items[0]!;
+        var label = (ContentPresenter)item.Template.FindName("LabelPresenter", item)!;
+
+        Assert.False(NaviusSidebar.GetIsCollapsed(footerItem));
+        Assert.Equal(Visibility.Visible, label.Visibility);
+
+        sidebar.IsCollapsed = true;
+        sidebar.UpdateLayout();
+
+        // Regression (issue #28 follow-up): IsCollapsed was registered with Register rather than
+        // RegisterAttached, so its Inherits metadata never left NaviusSidebar itself -- descendants
+        // always read the false default and the template's collapse triggers never fired.
+        Assert.True(NaviusSidebar.GetIsCollapsed(footerItem));
+        Assert.Equal(Visibility.Collapsed, label.Visibility);
+
+        sidebar.IsCollapsed = false;
+        sidebar.UpdateLayout();
+
+        Assert.False(NaviusSidebar.GetIsCollapsed(footerItem));
+        Assert.Equal(Visibility.Visible, label.Visibility);
     }
 
     /// <summary>
