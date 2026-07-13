@@ -9,7 +9,7 @@
 
   <PropertyGroup>
     <PackageId>Navius.Wpf.Ui</PackageId>
-    <Version>1.0.0-preview.4</Version>
+    <Version>1.0.0-preview.5</Version>
     <Authors>Navius contributors</Authors>
     <Description>Styled, themeable WPF components built on Navius.Wpf.Primitives.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -13,10 +14,13 @@ namespace Navius.Wpf.Ui.Sidebar;
 /// Collapsible nav rail: a flat ItemsControl of <see cref="NaviusSidebarSection"/> and/or bare
 /// <see cref="NaviusSidebarItem"/> children (same manual-composition anatomy as
 /// Navius.Wpf.Ui.Breadcrumb.NaviusBreadcrumb), plus optional header/footer slots and a built-in
-/// collapse toggle. <see cref="IsCollapsed"/> is registered with
-/// <see cref="FrameworkPropertyMetadataOptions.Inherits"/> so every descendant (section headers,
-/// item labels) can react to it via a plain trigger without any manual state push-down, the same
-/// technique NaviusButtonGroup uses for Orientation.
+/// collapse toggle. <see cref="IsCollapsed"/> is registered via
+/// DependencyProperty.RegisterAttached with <see cref="FrameworkPropertyMetadataOptions.Inherits"/>
+/// so every descendant (section headers, item labels, the collapse toggle) can react to it via a
+/// plain trigger without any manual state push-down. RegisterAttached matters: Register-applied
+/// Inherits metadata only resolves on the owner type and never propagates to other element types,
+/// so a plain registration left the template's "(sidebar:NaviusSidebar.IsCollapsed)" triggers
+/// silently reading the false default forever (follow-up half of issue #28).
 ///
 /// Roving keyboard focus (ArrowUp/Down/Home/End) walks the realized visual tree for
 /// <see cref="NaviusSidebarItem"/> instances in visual order -- this flattens across section
@@ -29,7 +33,7 @@ public class NaviusSidebar : ItemsControl
 {
     private const string PartRoot = "PART_Root";
 
-    public static readonly DependencyProperty IsCollapsedProperty = DependencyProperty.Register(
+    public static readonly DependencyProperty IsCollapsedProperty = DependencyProperty.RegisterAttached(
         nameof(IsCollapsed), typeof(bool), typeof(NaviusSidebar),
         new FrameworkPropertyMetadata(
             false,
@@ -69,6 +73,12 @@ public class NaviusSidebar : ItemsControl
         set => SetValue(IsCollapsedProperty, value);
     }
 
+    /// <summary>Attached-property accessor: the inherited collapse state on any descendant.</summary>
+    public static bool GetIsCollapsed(DependencyObject element) => (bool)element.GetValue(IsCollapsedProperty);
+
+    /// <summary>Attached-property accessor; on the sidebar itself prefer <see cref="IsCollapsed"/>.</summary>
+    public static void SetIsCollapsed(DependencyObject element, bool value) => element.SetValue(IsCollapsedProperty, value);
+
     public double ExpandedWidth
     {
         get => (double)GetValue(ExpandedWidthProperty);
@@ -95,6 +105,8 @@ public class NaviusSidebar : ItemsControl
         set => SetValue(FooterContentProperty, value);
     }
 
+    protected override AutomationPeer OnCreateAutomationPeer() => new NaviusSidebarAutomationPeer(this);
+
     public override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
@@ -114,8 +126,15 @@ public class NaviusSidebar : ItemsControl
         }
     }
 
-    private static void OnIsCollapsedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((NaviusSidebar)d).AnimateWidth((bool)e.NewValue);
+    private static void OnIsCollapsedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        // With RegisterAttached + Inherits this callback fires on every descendant the value
+        // propagates to, not just the sidebar; only the sidebar itself animates its width.
+        if (d is NaviusSidebar sidebar)
+        {
+            sidebar.AnimateWidth((bool)e.NewValue);
+        }
+    }
 
     private void AnimateWidth(bool isCollapsed)
     {
@@ -193,4 +212,24 @@ public class NaviusSidebar : ItemsControl
             CollectItemsRecursive(child, items);
         }
     }
+}
+
+/// <summary>
+/// An ItemsControl gets ItemsControlAutomationPeer by default, whose GetChildrenCore returns only
+/// item peers for the Items collection -- template chrome never enters the UIA tree. For
+/// NaviusSidebar that silently dropped the HeaderContent/FooterContent ContentPresenters' descendants
+/// and the built-in collapse Button, so assistive tech had no way to reach them at all (issue #28).
+/// Deriving FrameworkElementAutomationPeer instead restores the default visual-tree child walk, the
+/// same fix NaviusSidebarItem's peer applies for a different symptom of the same "wrong peer base
+/// type" class of bug. Reported as Group rather than a nav-landmark type because UIA has no
+/// navigation-landmark AutomationControlType; Group is the closest fit for a chrome container that
+/// isn't itself interactive.
+/// </summary>
+internal sealed class NaviusSidebarAutomationPeer : FrameworkElementAutomationPeer
+{
+    public NaviusSidebarAutomationPeer(NaviusSidebar owner) : base(owner) { }
+
+    protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Group;
+
+    protected override string GetClassNameCore() => nameof(NaviusSidebar);
 }

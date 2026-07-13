@@ -1,9 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Navius.Wpf.Primitives.Theming;
 using Navius.Wpf.Ui.Sidebar;
 using Xunit;
 
@@ -11,6 +16,24 @@ namespace Navius.Wpf.Tests;
 
 public class UiSidebarTests
 {
+    static UiSidebarTests()
+    {
+        // pack://application URIs only resolve once an Application exists in the process.
+        // Guarded try/catch (rather than a bare null-check) because xunit runs test classes in
+        // parallel on separate STA threads: another test class's static ctor can win the race.
+        if (Application.Current is null)
+        {
+            try
+            {
+                _ = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            }
+            catch (InvalidOperationException)
+            {
+                // Another test class's static ctor already created the process-wide Application.
+            }
+        }
+    }
+
     [Theory]
     [InlineData(-1, 5, Key.Down, 0)]
     [InlineData(0, 5, Key.Down, 1)]
@@ -148,6 +171,122 @@ public class UiSidebarTests
         Assert.Equal(1, executions);
         Assert.Same(parameter, received);
         Assert.Equal(1, clicks);
+    }
+
+    [StaFact]
+    public void NaviusSidebar_AutomationPeer_ExposesFooterAndCollapseDescendants()
+    {
+        var sidebar = CreateThemedSidebarWithFooter();
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(sidebar);
+        var descendants = new List<AutomationPeer>();
+        CollectDescendants(peer, descendants);
+
+        // Regression for issue #28: with the default ItemsControlAutomationPeer, neither of these
+        // ever showed up at all -- only the sidebar's own Items peers did.
+        Assert.Contains(descendants, p => p.GetClassName() == nameof(NaviusSidebarItem) && p.GetName() == "Settings");
+
+        var collapseButton = descendants.Single(IsCollapseButtonPeer);
+        Assert.NotNull(collapseButton.GetPattern(PatternInterface.Invoke));
+    }
+
+    [StaFact]
+    public void NaviusSidebar_CollapseButton_AccessibleNameReflectsState()
+    {
+        var sidebar = CreateThemedSidebarWithFooter();
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(sidebar);
+        var descendants = new List<AutomationPeer>();
+        CollectDescendants(peer, descendants);
+        var collapseButton = descendants.Single(IsCollapseButtonPeer);
+
+        Assert.Equal("Collapse sidebar", collapseButton.GetName());
+
+        sidebar.IsCollapsed = true;
+        // IsCollapsed drives the toggle button's Style.Triggers DataTrigger asynchronously via the
+        // property system; pump the same way the Invoke tests above do before re-reading the name.
+        PumpDispatcher();
+
+        descendants.Clear();
+        CollectDescendants(peer, descendants);
+        collapseButton = descendants.Single(IsCollapseButtonPeer);
+
+        Assert.Equal("Expand sidebar", collapseButton.GetName());
+    }
+
+    [StaFact]
+    public void NaviusSidebar_IsCollapsed_InheritsToDescendantsAndCollapsesItemLabels()
+    {
+        var sidebar = CreateThemedSidebarWithFooter();
+        var footerItem = (NaviusSidebarItem)sidebar.FooterContent!;
+        var item = (NaviusSidebarItem)sidebar.Items[0]!;
+        var label = (ContentPresenter)item.Template.FindName("LabelPresenter", item)!;
+
+        Assert.False(NaviusSidebar.GetIsCollapsed(footerItem));
+        Assert.Equal(Visibility.Visible, label.Visibility);
+
+        sidebar.IsCollapsed = true;
+        sidebar.UpdateLayout();
+
+        // Regression (issue #28 follow-up): IsCollapsed was registered with Register rather than
+        // RegisterAttached, so its Inherits metadata never left NaviusSidebar itself -- descendants
+        // always read the false default and the template's collapse triggers never fired.
+        Assert.True(NaviusSidebar.GetIsCollapsed(footerItem));
+        Assert.Equal(Visibility.Collapsed, label.Visibility);
+
+        sidebar.IsCollapsed = false;
+        sidebar.UpdateLayout();
+
+        Assert.False(NaviusSidebar.GetIsCollapsed(footerItem));
+        Assert.Equal(Visibility.Visible, label.Visibility);
+    }
+
+    /// <summary>
+    /// A sidebar with one regular item and one FooterContent item, themed and laid out so the
+    /// template's ContentPresenters have actually realized their content -- peer children come from
+    /// the realized visual tree, not the logical Items/FooterContent values themselves.
+    /// </summary>
+    private static NaviusSidebar CreateThemedSidebarWithFooter()
+    {
+        var scope = new ResourceDictionary();
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        scope.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Ui;component/Themes/Sidebar.xaml"),
+        });
+
+        var sidebar = new NaviusSidebar
+        {
+            Resources = scope,
+            Style = (Style)scope[typeof(NaviusSidebar)],
+            FooterContent = new NaviusSidebarItem { Content = "Settings" },
+        };
+        sidebar.Items.Add(new NaviusSidebarItem { Content = "Home" });
+
+        sidebar.ApplyTemplate();
+        sidebar.Measure(new Size(300, 600));
+        sidebar.Arrange(new Rect(0, 0, 300, 600));
+        sidebar.UpdateLayout();
+
+        return sidebar;
+    }
+
+    private static bool IsCollapseButtonPeer(AutomationPeer peer) =>
+        peer.GetAutomationControlType() == AutomationControlType.Button && peer.GetClassName() == "Button";
+
+    private static void CollectDescendants(AutomationPeer? peer, List<AutomationPeer> result)
+    {
+        var children = peer?.GetChildren();
+        if (children is null)
+        {
+            return;
+        }
+
+        foreach (var child in children)
+        {
+            result.Add(child);
+            CollectDescendants(child, result);
+        }
     }
 
     private static void PumpDispatcher() =>

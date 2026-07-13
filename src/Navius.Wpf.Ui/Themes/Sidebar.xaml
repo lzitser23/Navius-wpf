@@ -34,6 +34,26 @@
                                         HorizontalContentAlignment="Left"
                                         Padding="8,7"
                                         Cursor="Hand">
+                                    <!--
+                                        The visible "Collapse" TextBlock is hidden when IsCollapsed (see the
+                                        ToggleLabel DataTrigger below), so the button would otherwise have no
+                                        accessible name once collapsed. AutomationProperties.Name flips with
+                                        state so assistive tech always announces the action this press performs
+                                        (issue #28).
+                                    -->
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="AutomationProperties.Name" Value="Collapse sidebar" />
+                                            <Style.Triggers>
+                                                <DataTrigger Value="True">
+                                                    <DataTrigger.Binding>
+                                                        <Binding RelativeSource="{RelativeSource Self}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
+                                                    </DataTrigger.Binding>
+                                                    <Setter Property="AutomationProperties.Name" Value="Expand sidebar" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="ToggleBg" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource Navius.Radius.Control}">
@@ -98,9 +118,11 @@
                         <ItemsPresenter />
                     </StackPanel>
                     <ControlTemplate.Triggers>
+                        <!-- Self, not TemplatedParent: same null-templated-parent trap as the
+                             NaviusSidebarItem label trigger below (issue #28 follow-up). -->
                         <DataTrigger Value="True">
                             <DataTrigger.Binding>
-                                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
+                                <Binding RelativeSource="{RelativeSource Self}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
                             </DataTrigger.Binding>
                             <Setter TargetName="HeaderPresenter" Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
@@ -166,9 +188,16 @@
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="Root" Property="Background" Value="{DynamicResource Navius.Muted}" />
                         </Trigger>
+                        <!--
+                            Self, not TemplatedParent: for a template-trigger condition the binding's
+                            anchor is the templated control itself, so TemplatedParent resolved the
+                            ITEM's templated parent (null for directly-authored items) and this
+                            trigger never fired. Self reads the item's own inherited IsCollapsed
+                            (issue #28 follow-up).
+                        -->
                         <DataTrigger Value="True">
                             <DataTrigger.Binding>
-                                <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
+                                <Binding RelativeSource="{RelativeSource Self}" Path="(sidebar:NaviusSidebar.IsCollapsed)" />
                             </DataTrigger.Binding>
                             <Setter TargetName="LabelPresenter" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="IconPresenter" Property="HorizontalAlignment" Value="Center" />
