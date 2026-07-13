@@ -46,8 +46,22 @@ public class NaviusLabel : Label
         set => SetValue(ForProperty, value);
     }
 
-    private static void OnForChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((NaviusLabel)d).ResolveAndWireTarget();
+    private static void OnForChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var label = (NaviusLabel)d;
+        label.UnwireTarget();
+        label.ResolveAndWireTarget();
+    }
+
+    private void UnwireTarget()
+    {
+        if (Target is FrameworkElement oldTarget && ReferenceEquals(AutomationProperties.GetLabeledBy(oldTarget), this))
+        {
+            AutomationProperties.SetLabeledBy(oldTarget, null);
+        }
+
+        Target = null;
+    }
 
     private void ResolveAndWireTarget()
     {

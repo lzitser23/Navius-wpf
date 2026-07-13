@@ -17,7 +17,7 @@
 
   <PropertyGroup>
     <PackageId>Navius.Wpf.Charts</PackageId>
-    <Version>1.0.0-preview.1</Version>
+    <Version>1.0.0-preview.4</Version>
     <Authors>Navius contributors</Authors>
     <Description>Themed chart wrapper over LiveCharts2 for the Navius.Wpf component suite, following the Navius token themes at runtime.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -38,6 +38,8 @@
 
   <ItemGroup>
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.5" />
+    <!-- OpenTK 3.3.1 references this assembly but does not declare it for modern .NET. -->
+    <PackageReference Include="System.IO.Ports" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

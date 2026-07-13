@@ -4,7 +4,9 @@ using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using Navius.Wpf.Primitives.Controls;
+using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
 
@@ -35,6 +37,45 @@ public class ButtonTests
         Assert.False(button.FocusableWhenDisabled);
         Assert.False(button.IsSoftDisabled);
         Assert.True(button.IsEnabled);
+        Assert.Equal(NaviusButtonVariant.Default, button.Variant);
+        Assert.Equal(NaviusButtonSize.Default, button.Size);
+    }
+
+    [StaFact]
+    public void VariantAndSize_ApplyTokenBackedStyle()
+    {
+        var scope = new ResourceDictionary();
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        scope.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Button.xaml"),
+        });
+        var button = new NaviusButton
+        {
+            Resources = scope,
+            Variant = NaviusButtonVariant.Secondary,
+            Size = NaviusButtonSize.Small,
+        };
+
+        Assert.True(button.ApplyTemplate());
+        Assert.Equal((Color)ColorConverter.ConvertFromString("#E3E3E2"), Assert.IsType<SolidColorBrush>(button.Background).Color);
+        Assert.Equal(new Thickness(10, 5, 10, 5), button.Padding);
+        Assert.Equal(12, button.FontSize);
+    }
+
+    [StaFact]
+    public void IconSize_IsSquareAndUnpadded()
+    {
+        var button = new NaviusButton { Size = NaviusButtonSize.Icon };
+        button.Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Button.xaml"),
+        });
+
+        Assert.True(button.ApplyTemplate());
+        Assert.Equal(36, button.Width);
+        Assert.Equal(36, button.Height);
+        Assert.Equal(new Thickness(0), button.Padding);
     }
 
     [StaFact]

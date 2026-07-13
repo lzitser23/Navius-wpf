@@ -45,6 +45,20 @@ public class NaviusDrawer : NaviusOverlaySurfaceBase
         typeof(NaviusDrawer),
         new PropertyMetadata(NaviusDrawerSide.Bottom));
 
+    public static readonly DependencyProperty PanelWidthProperty = DependencyProperty.Register(
+        nameof(PanelWidth),
+        typeof(double),
+        typeof(NaviusDrawer),
+        new FrameworkPropertyMetadata(360d),
+        IsValidPanelExtent);
+
+    public static readonly DependencyProperty PanelHeightProperty = DependencyProperty.Register(
+        nameof(PanelHeight),
+        typeof(double),
+        typeof(NaviusDrawer),
+        new FrameworkPropertyMetadata(280d),
+        IsValidPanelExtent);
+
     private FrameworkElement? _panel;
     private TranslateTransform? _panelTransform;
 
@@ -71,6 +85,18 @@ public class NaviusDrawer : NaviusOverlaySurfaceBase
     {
         get => (NaviusDrawerSide)GetValue(SideProperty);
         set => SetValue(SideProperty, value);
+    }
+
+    public double PanelWidth
+    {
+        get => (double)GetValue(PanelWidthProperty);
+        set => SetValue(PanelWidthProperty, value);
+    }
+
+    public double PanelHeight
+    {
+        get => (double)GetValue(PanelHeightProperty);
+        set => SetValue(PanelHeightProperty, value);
     }
 
     protected override bool ModalEffective => Modal;
@@ -142,6 +168,9 @@ public class NaviusDrawer : NaviusOverlaySurfaceBase
 
     private static double ResolveExtent(double explicitValue) =>
         double.IsNaN(explicitValue) || explicitValue <= 0 ? DefaultExtent : explicitValue;
+
+    private static bool IsValidPanelExtent(object value) =>
+        value is double extent && extent > 0 && !double.IsInfinity(extent);
 }
 
 /// <summary>

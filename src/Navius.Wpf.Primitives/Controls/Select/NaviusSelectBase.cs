@@ -98,6 +98,22 @@ public abstract class NaviusSelectBase : ItemsControl
         nameof(RawValues), typeof(IReadOnlyList<object>), typeof(NaviusSelectBase),
         new FrameworkPropertyMetadata(Array.Empty<object>(), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnSelectionChanged));
 
+    // Real DPs registered under the names "Value"/"Values" -- RawValue/RawValues are registered
+    // under the DP names "RawValue"/"RawValues", so a `Value="{Binding ...}"` XAML attribute has no
+    // DependencyProperty to resolve to and WPF throws at load. These mirror RawValue/RawValues
+    // (kept in sync below, both directions guarded against re-entry) purely so XAML/TypeDescriptor
+    // lookups for "Value"/"Values" succeed; RawValue/RawValues remain the storage CommitItem writes.
+    // Registered once here (owner NaviusSelectBase) rather than per closed generic so every
+    // subclass -- the non-generic NaviusSelect and every NaviusSelect&lt;TItem&gt; instantiation --
+    // picks them up via the inherited DependencyProperty name lookup.
+    public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(
+        "Value", typeof(object), typeof(NaviusSelectBase),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnValuePropertyChanged));
+
+    public static readonly DependencyProperty ValuesProperty = DependencyProperty.Register(
+        "Values", typeof(IReadOnlyList<object>), typeof(NaviusSelectBase),
+        new FrameworkPropertyMetadata(Array.Empty<object>(), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnValuesPropertyChanged));
+
     private static readonly DependencyPropertyKey DisplayTextPropertyKey = DependencyProperty.RegisterReadOnly(
         nameof(DisplayText), typeof(string), typeof(NaviusSelectBase),
         new PropertyMetadata(null));
@@ -123,6 +139,8 @@ public abstract class NaviusSelectBase : ItemsControl
     private OverlaySession? _session;
     private NaviusSelectItem? _highlighted;
     private bool _syncing;
+    private bool _syncingValue;
+    private bool _syncingValues;
 
     protected NaviusSelectBase()
     {
@@ -204,6 +222,20 @@ public abstract class NaviusSelectBase : ItemsControl
         set => SetValue(RawValuesProperty, value);
     }
 
+    /// <summary>XAML-bindable mirror of <see cref="RawValue"/>; see <see cref="ValueProperty"/>. The generic subclass hides this with a TItem-typed wrapper.</summary>
+    public object? Value
+    {
+        get => GetValue(ValueProperty);
+        set => SetValue(ValueProperty, value);
+    }
+
+    /// <summary>XAML-bindable mirror of <see cref="RawValues"/>; see <see cref="ValueProperty"/>. The generic subclass hides this with an IReadOnlyList&lt;TItem&gt;-typed wrapper.</summary>
+    public IReadOnlyList<object> Values
+    {
+        get => (IReadOnlyList<object>)GetValue(ValuesProperty);
+        set => SetValue(ValuesProperty, value ?? Array.Empty<object>());
+    }
+
     /// <summary>Resolved trigger label: the selected item's text, joined for multi-select, or the placeholder.</summary>
     public string? DisplayText => (string?)GetValue(DisplayTextProperty);
 
@@ -240,6 +272,16 @@ public abstract class NaviusSelectBase : ItemsControl
         if (element is NaviusSelectItem container)
         {
             container.OwnerSelect = this;
+            if (item is not NaviusSelectItem)
+            {
+                container.Value = item;
+                container.TextValue = ResolveDisplayText(item);
+            }
+
+            container.IsSelectedValue = Multiple
+                ? RawValues.Any(value => Equals(value, container.Value))
+                : Equals(RawValue, container.Value);
+            UpdateDisplay();
         }
     }
 
@@ -289,8 +331,58 @@ public abstract class NaviusSelectBase : ItemsControl
         }
     }
 
-    private List<NaviusSelectItem> GetItems() =>
-        Items.OfType<NaviusSelectItem>().ToList();
+    private List<NaviusSelectItem> GetItems()
+    {
+        var result = new List<NaviusSelectItem>(Items.Count);
+        for (var index = 0; index < Items.Count; index++)
+        {
+            var item = Items[index] as NaviusSelectItem
+                ?? ItemContainerGenerator.ContainerFromIndex(index) as NaviusSelectItem;
+            if (item is not null)
+            {
+                result.Add(item);
+            }
+        }
+
+        return result;
+    }
+
+    private string ResolveDisplayText(object item)
+    {
+        if (string.IsNullOrWhiteSpace(DisplayMemberPath))
+        {
+            return item.ToString() ?? string.Empty;
+        }
+
+        // Dotted property paths ("Owner.Name") per WPF's DisplayMemberPath convention; indexers
+        // and attached properties are not supported (see docs/parity/select.md).
+        object? current = item;
+        foreach (var segment in DisplayMemberPath.Split('.'))
+        {
+            current = current?.GetType().GetProperty(segment)?.GetValue(current);
+        }
+
+        return current?.ToString() ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Re-resolves the label of every data-bound container (declared NaviusSelectItems own their
+    /// TextValue) and the trigger label, so a DisplayMemberPath change re-renders live.
+    /// </summary>
+    protected override void OnDisplayMemberPathChanged(string oldDisplayMemberPath, string newDisplayMemberPath)
+    {
+        base.OnDisplayMemberPathChanged(oldDisplayMemberPath, newDisplayMemberPath);
+        for (var index = 0; index < Items.Count; index++)
+        {
+            if (Items[index] is not NaviusSelectItem
+                && ItemContainerGenerator.ContainerFromIndex(index) is NaviusSelectItem container)
+            {
+                container.TextValue = ResolveDisplayText(Items[index]!);
+            }
+        }
+
+        UpdateDisplay();
+    }
 
     private List<NaviusSelectItem> GetNavigableItems() =>
         GetItems().Where(i => i.IsNavigable).ToList();
@@ -321,6 +413,8 @@ public abstract class NaviusSelectBase : ItemsControl
     private static void OnSelectionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (NaviusSelectBase)d;
+        control.SyncMirroredProperty(e.Property, e.NewValue);
+
         if (control._syncing)
         {
             return;
@@ -328,6 +422,52 @@ public abstract class NaviusSelectBase : ItemsControl
 
         control.SyncSelectionStates();
         control.UpdateDisplay();
+    }
+
+    // Pushes a RawValue/RawValues change into its Value/Values mirror (see ValueProperty). Runs
+    // unconditionally -- unlike the _syncing-guarded block above -- so CommitItem's direct
+    // RawValue/RawValues writes (which set _syncing to suppress a redundant SyncSelectionStates
+    // call) still propagate out to a two-way bound Value/Values source.
+    private void SyncMirroredProperty(DependencyProperty changed, object? newValue)
+    {
+        if (changed == RawValueProperty && !_syncingValue)
+        {
+            _syncingValue = true;
+            SetValue(ValueProperty, newValue);
+            _syncingValue = false;
+        }
+        else if (changed == RawValuesProperty && !_syncingValues)
+        {
+            _syncingValues = true;
+            SetValue(ValuesProperty, newValue ?? Array.Empty<object>());
+            _syncingValues = false;
+        }
+    }
+
+    private static void OnValuePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (NaviusSelectBase)d;
+        if (control._syncingValue)
+        {
+            return;
+        }
+
+        control._syncingValue = true;
+        control.RawValue = e.NewValue;
+        control._syncingValue = false;
+    }
+
+    private static void OnValuesPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (NaviusSelectBase)d;
+        if (control._syncingValues)
+        {
+            return;
+        }
+
+        control._syncingValues = true;
+        control.RawValues = (IReadOnlyList<object>)e.NewValue ?? Array.Empty<object>();
+        control._syncingValues = false;
     }
 
     /// <summary>
@@ -386,14 +526,17 @@ public abstract class NaviusSelectBase : ItemsControl
         if (Multiple)
         {
             var selected = GetItems().Where(i => i.IsSelectedValue).ToList();
-            hasSelection = selected.Count > 0;
-            text = hasSelection ? string.Join(", ", selected.Select(i => i.DisplayText)) : Placeholder;
+            hasSelection = RawValues.Count > 0;
+            text = hasSelection
+                ? string.Join(", ", RawValues.Select(value =>
+                    selected.FirstOrDefault(item => Equals(item.Value, value))?.DisplayText ?? ResolveDisplayText(value)))
+                : Placeholder;
         }
         else
         {
             var selected = GetItems().FirstOrDefault(i => Equals(RawValue, i.Value));
             hasSelection = RawValue is not null;
-            text = selected?.DisplayText ?? (hasSelection ? RawValue?.ToString() : Placeholder);
+            text = selected?.DisplayText ?? (hasSelection ? ResolveDisplayText(RawValue!) : Placeholder);
         }
 
         SetValue(DisplayTextPropertyKey, text);
@@ -654,11 +797,21 @@ internal sealed class NaviusSelectAutomationPeer : FrameworkElementAutomationPee
 
     public void Expand()
     {
-        if (Select.IsEnabled)
-        {
-            Select.IsOpen = true;
-        }
+        ThrowIfDisabled();
+        Select.IsOpen = true;
     }
 
-    public void Collapse() => Select.IsOpen = false;
+    public void Collapse()
+    {
+        ThrowIfDisabled();
+        Select.IsOpen = false;
+    }
+
+    private void ThrowIfDisabled()
+    {
+        if (!Select.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
+        }
+    }
 }

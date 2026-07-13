@@ -22,12 +22,12 @@
                                          HorizontalAlignment="Stretch"
                                          Click="OnToggleTheme" />
                 </StackPanel>
-                <StackPanel>
-                    <TextBlock Text="Navius.Wpf"
-                               FontSize="16" FontWeight="SemiBold"
-                               Foreground="{DynamicResource Navius.Foreground}"
-                               Margin="4,0,0,12" />
-                    <ListBox x:Name="Nav"
+                <TextBlock DockPanel.Dock="Top"
+                           Text="Navius.Wpf"
+                           FontSize="16" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Navius.Foreground}"
+                           Margin="4,0,0,12" />
+                <ListBox x:Name="Nav"
                              AutomationProperties.AutomationId="Nav"
                              SelectionChanged="OnNavChanged"
                              Background="Transparent" BorderThickness="0"
@@ -86,14 +86,14 @@
                         <ListBoxItem Content="Avatar" />
                         <ListBoxItem Content="AspectRatio" />
                         <ListBoxItem Content="ColorPicker" />
+                        <ListBoxItem Content="CollectionPicker" />
                         <ListBoxItem Content="Charts" />
                         <ListBoxItem Content="UiDisplay" />
                         <ListBoxItem Content="UiComposite" />
                         <ListBoxItem Content="Toolbar" />
                         <ListBoxItem Content="Rtl" />
                         <ListBoxItem Content="HighContrast" />
-                    </ListBox>
-                </StackPanel>
+                </ListBox>
             </DockPanel>
         </Border>
         <ContentControl x:Name="Host" Margin="8" />

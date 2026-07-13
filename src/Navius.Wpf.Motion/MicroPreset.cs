@@ -4,8 +4,8 @@ namespace Navius.Wpf.Motion;
 /// <summary>
 /// One micro-interaction preset defined as data: a named keyframe animation plus its
 /// timing, whether it loops, and how it behaves under reduced motion. This single
-/// definition feeds both the CSS generator and the WAAPI runtime in the web repo, which
-/// is what keeps the zero-JS tier and the programmatic tier in agreement.
+/// definition feeds both web executors and <see cref="MotionPolicy.Resolve"/> on WPF, which
+/// keeps reduced-motion behavior attached to the preset instead of reimplemented by consumers.
 /// </summary>
 public sealed record MicroPreset(
     string Name,

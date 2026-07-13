@@ -264,6 +264,17 @@ public class DateRangePickerTests : IDisposable
     }
 
     [StaFact]
+    public void ExpandCollapsePattern_DisabledPickerRefusesActions()
+    {
+        var picker = new NaviusDateRangePicker { IsEnabled = false, IsOpen = true };
+        var expand = (IExpandCollapseProvider)CreatePeer(picker).GetPattern(PatternInterface.ExpandCollapse)!;
+
+        Assert.Throws<ElementNotEnabledException>(expand.Expand);
+        Assert.Throws<ElementNotEnabledException>(expand.Collapse);
+        Assert.True(picker.IsOpen);
+    }
+
+    [StaFact]
     public void ApplyTemplate_WithThemeLoaded_Succeeds()
     {
         var scope = new ResourceDictionary();

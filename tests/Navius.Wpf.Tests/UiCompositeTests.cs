@@ -1,10 +1,13 @@
 using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Threading;
 using Navius.Wpf.Ui.ButtonGroup;
 using Navius.Wpf.Ui.Carousel;
 using Navius.Wpf.Ui.InputGroup;
+using Navius.Wpf.Ui.Internal;
 using Navius.Wpf.Ui.Resizable;
 using Navius.Wpf.Ui.SplitButton;
 using Navius.Wpf.Primitives.Theming;
@@ -211,6 +214,24 @@ public class UiCompositeTests
         Assert.Equal(-1, CarouselEngine.MoveIndex(0, 0, +1));
     }
 
+    [Theory]
+    [InlineData(false, false, -1)]
+    [InlineData(false, true, 1)]
+    [InlineData(true, false, 1)]
+    [InlineData(true, true, -1)]
+    public void CarouselEngine_DirectionDelta_MirrorsUnderRtl(bool rightToLeft, bool towardRight, int expected)
+    {
+        Assert.Equal(expected, CarouselEngine.DirectionDelta(rightToLeft, towardRight));
+    }
+
+    [Fact]
+    public void CarouselSlideNameConverter_UsesOneBasedAccessibleName()
+    {
+        var converter = new CarouselSlideNameConverter();
+
+        Assert.Equal("Slide 1", converter.Convert(0, typeof(string), null, CultureInfo.InvariantCulture));
+    }
+
     [StaFact]
     public void Carousel_Defaults_LoopsByDefault()
     {
@@ -229,6 +250,70 @@ public class UiCompositeTests
         carousel.Items.Add(new Border());
 
         Assert.Equal(0, carousel.SelectedIndex);
+    }
+
+    [StaFact]
+    public void Carousel_ReducedMotion_DisablesSlideAnimation()
+    {
+        ReducedMotion.SetTestOverride(() => false);
+        try
+        {
+            var carousel = new NaviusCarousel();
+
+            Assert.False(carousel.ShouldAnimate);
+        }
+        finally
+        {
+            ReducedMotion.SetTestOverride(null);
+        }
+    }
+
+    [StaFact]
+    public void Carousel_ReducedMotion_CollapsesInactiveSlideImmediately()
+    {
+        ReducedMotion.SetTestOverride(() => false);
+        Window? window = null;
+        try
+        {
+            EnsureApplication();
+            var scope = new ResourceDictionary();
+            ThemeManager.Apply(NaviusTheme.Light, scope);
+            scope.MergedDictionaries.Add(new ResourceDictionary
+            {
+                Source = new Uri("pack://application:,,,/Navius.Wpf.Ui;component/Themes/Carousel.xaml"),
+            });
+
+            var first = new Border();
+            var second = new Border();
+            var carousel = new NaviusCarousel
+            {
+                Resources = scope,
+                Style = (Style)scope[typeof(NaviusCarousel)],
+            };
+            carousel.Items.Add(first);
+            carousel.Items.Add(second);
+
+            window = new Window { Content = carousel, Width = 400, Height = 240, ShowInTaskbar = false };
+            window.Show();
+            carousel.ApplyTemplate();
+            carousel.UpdateLayout();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+
+            Assert.Equal(Visibility.Visible, first.Visibility);
+            Assert.Equal(Visibility.Collapsed, second.Visibility);
+
+            carousel.SelectedIndex = 1;
+            carousel.UpdateLayout();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+
+            Assert.Equal(Visibility.Collapsed, first.Visibility);
+            Assert.Equal(Visibility.Visible, second.Visibility);
+        }
+        finally
+        {
+            window?.Close();
+            ReducedMotion.SetTestOverride(null);
+        }
     }
 
     [StaFact]

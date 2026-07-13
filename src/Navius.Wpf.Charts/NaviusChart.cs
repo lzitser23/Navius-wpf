@@ -69,9 +69,9 @@ public sealed class NaviusChart : Grid
 
     /// <summary>
     /// Re-resolves the Navius tokens from this control's resource scope and rebuilds the chart
-    /// with the refreshed palette. <c>ThemeManager</c> has no theme-changed signal today, so
-    /// call this after <c>ThemeManager.Apply(...)</c> to re-theme an already-built chart; it is
-    /// also called automatically once on <see cref="FrameworkElement.Loaded"/>.
+    /// with the refreshed palette. Theme changes raised by <c>ThemeManager</c> are handled
+    /// automatically while the control is loaded; call this only after changing scoped resources
+    /// directly or when an immediate manual refresh is useful.
     /// </summary>
     public void RefreshTheme() => Rebuild();
 

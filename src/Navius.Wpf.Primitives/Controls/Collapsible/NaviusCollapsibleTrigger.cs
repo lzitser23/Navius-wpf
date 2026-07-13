@@ -1,9 +1,10 @@
+using System;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
+using System.Windows.Threading;
 
 namespace Navius.Wpf.Primitives.Controls.Collapsible;
 
@@ -41,6 +42,14 @@ public class NaviusCollapsibleTrigger : Button
 
     protected override AutomationPeer OnCreateAutomationPeer() =>
         new NaviusCollapsibleTriggerAutomationPeer(this);
+
+    /// <summary>
+    /// Routes a UIA activation through ButtonBase.OnClick so it both raises Click (the bubbled
+    /// ButtonBase.ClickEvent the ancestor NaviusCollapsible listens for to toggle the panel) and
+    /// executes the bound Command. A bare RaiseEvent(ClickEvent) raises Click but skips the command
+    /// execution that lives in OnClick, so the Command would never run from UIA. Called by the peer.
+    /// </summary>
+    internal void AutomationInvoke() => OnClick();
 }
 
 /// <summary>
@@ -73,7 +82,7 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
     void IInvokeProvider.Invoke()
     {
         ThrowIfDisabled();
-        RaiseClick();
+        QueueInvoke();
     }
 
     void IExpandCollapseProvider.Expand()
@@ -81,7 +90,7 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
         ThrowIfDisabled();
         if (!_owner.IsPanelOpen)
         {
-            RaiseClick();
+            _owner.AutomationInvoke();
         }
     }
 
@@ -90,13 +99,14 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
         ThrowIfDisabled();
         if (_owner.IsPanelOpen)
         {
-            RaiseClick();
+            _owner.AutomationInvoke();
         }
     }
 
     // A disabled trigger must not be operable through UIA, matching NaviusNumberFieldAutomationPeer,
     // which throws when its owner is not enabled. IsEnabledCore already reports the disabled state
-    // (inherited IsEnabled), but the pattern providers must also refuse to act on it.
+    // (inherited IsEnabled), but the pattern providers must also refuse to act on it. The guard stays
+    // synchronous, as does the IsPanelOpen state check above, so a no-op Expand/Collapse queues nothing.
     private void ThrowIfDisabled()
     {
         if (!_owner.IsEnabled)
@@ -105,5 +115,10 @@ internal sealed class NaviusCollapsibleTriggerAutomationPeer
         }
     }
 
-    private void RaiseClick() => _owner.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, _owner));
+    // UIA Invoke must return immediately, so queue activation onto the owner's dispatcher, matching
+    // WPF's native peers. Expand/Collapse are deliberately synchronous: their provider contract requires
+    // the requested state to be reached before they return. Both paths route through OnClick so the bound
+    // Command executes (a bare RaiseEvent would not).
+    private void QueueInvoke() =>
+        _owner.Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(_owner.AutomationInvoke));
 }

@@ -35,6 +35,24 @@ public class ThemeManagerTests
     }
 
     [StaFact]
+    public void WarningTokens_RethemeBetweenLightAndDark()
+    {
+        var scope = new ResourceDictionary();
+
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        var light = Assert.IsType<SolidColorBrush>(scope["Navius.Warning"]);
+        var lightForeground = Assert.IsType<SolidColorBrush>(scope["Navius.WarningForeground"]);
+        Assert.Equal((Color)ColorConverter.ConvertFromString("#9A6700"), light.Color);
+        Assert.Equal((Color)ColorConverter.ConvertFromString("#FFFFFF"), lightForeground.Color);
+
+        ThemeManager.Apply(NaviusTheme.Dark, scope);
+        var dark = Assert.IsType<SolidColorBrush>(scope["Navius.Warning"]);
+        var darkForeground = Assert.IsType<SolidColorBrush>(scope["Navius.WarningForeground"]);
+        Assert.Equal((Color)ColorConverter.ConvertFromString("#D7A653"), dark.Color);
+        Assert.Equal((Color)ColorConverter.ConvertFromString("#161513"), darkForeground.Color);
+    }
+
+    [StaFact]
     public void Apply_SwapsInsteadOfStacking()
     {
         var scope = new ResourceDictionary();

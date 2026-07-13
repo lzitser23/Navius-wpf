@@ -5,6 +5,8 @@ using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Threading;
 using Navius.Wpf.Primitives.Controls.Collapsible;
 using Navius.Wpf.Primitives.Theming;
 
@@ -141,6 +143,8 @@ public class CollapsibleTests
         Assert.Equal(ExpandCollapseState.Collapsed, expandCollapse!.ExpandCollapseState);
 
         invoke!.Invoke();
+        // Invoke queues activation on the dispatcher per the UIA contract, so pump before asserting.
+        PumpDispatcher();
 
         Assert.True(root.Open);
         Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
@@ -168,5 +172,114 @@ public class CollapsibleTests
 
         Assert.False(root.Open);
         Assert.False(trigger.IsPanelOpen);
+    }
+
+    [StaFact]
+    public void TriggerAutomationPeer_Invoke_ExecutesBoundCommandOnceAndRaisesClickOnce()
+    {
+        // Regression: the peer previously raised ClickEvent with a bare RaiseEvent, which fires Click
+        // but skips ButtonBase.OnClick, so a bound Command never executed from UIA. Routing through
+        // OnClick executes the command exactly once and raises Click exactly once.
+        var executions = 0;
+        var clicks = 0;
+        var command = new RelayCommand(_ => executions++);
+        var trigger = new NaviusCollapsibleTrigger { Command = command };
+        trigger.Click += (_, _) => clicks++;
+
+        var invoke = (IInvokeProvider)PeerFor(trigger).GetPattern(PatternInterface.Invoke)!;
+        invoke.Invoke();
+        PumpDispatcher();
+
+        Assert.Equal(1, executions);
+        Assert.Equal(1, clicks);
+    }
+
+    [StaFact]
+    public void TriggerAutomationPeer_Invoke_IsAsync_DoesNotActivateBeforePump()
+    {
+        // Regression: Invoke previously ran inline, violating the UIA contract that it return
+        // immediately. The activation must be queued on the dispatcher, so nothing happens until
+        // the queue is pumped. (Before the fix, this assert-without-pump would already see the click.)
+        var clicks = 0;
+        var trigger = new NaviusCollapsibleTrigger();
+        trigger.Click += (_, _) => clicks++;
+
+        var invoke = (IInvokeProvider)PeerFor(trigger).GetPattern(PatternInterface.Invoke)!;
+        invoke.Invoke();
+
+        Assert.Equal(0, clicks);
+
+        PumpDispatcher();
+
+        Assert.Equal(1, clicks);
+    }
+
+    [StaFact]
+    public void TriggerAutomationPeer_ExpandAndCollapse_AreBlockingAndExecuteCommand()
+    {
+        var (root, trigger, _) = CreateCollapsible();
+        var clicks = 0;
+        var commandExecutions = 0;
+        trigger.Command = new RelayCommand(_ => commandExecutions++);
+        trigger.Click += (_, _) => clicks++;
+        var expandCollapse = (IExpandCollapseProvider)PeerFor(trigger).GetPattern(PatternInterface.ExpandCollapse)!;
+
+        expandCollapse.Expand();
+
+        Assert.True(root.Open);
+        Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
+        Assert.Equal(1, clicks);
+        Assert.Equal(1, commandExecutions);
+
+        expandCollapse.Collapse();
+
+        Assert.False(root.Open);
+        Assert.Equal(ExpandCollapseState.Collapsed, expandCollapse.ExpandCollapseState);
+        Assert.Equal(2, clicks);
+        Assert.Equal(2, commandExecutions);
+    }
+
+    [StaFact]
+    public void TriggerAutomationPeer_RepeatedExpandAndCollapse_AreIdempotent()
+    {
+        var (root, trigger, _) = CreateCollapsible();
+        var clicks = 0;
+        trigger.Click += (_, _) => clicks++;
+        var expandCollapse = (IExpandCollapseProvider)PeerFor(trigger).GetPattern(PatternInterface.ExpandCollapse)!;
+
+        expandCollapse.Expand();
+        expandCollapse.Expand();
+
+        Assert.True(root.Open);
+        Assert.Equal(ExpandCollapseState.Expanded, expandCollapse.ExpandCollapseState);
+        Assert.Equal(1, clicks);
+
+        expandCollapse.Collapse();
+        expandCollapse.Collapse();
+
+        Assert.False(root.Open);
+        Assert.Equal(ExpandCollapseState.Collapsed, expandCollapse.ExpandCollapseState);
+        Assert.Equal(2, clicks);
+    }
+
+    private static AutomationPeer PeerFor(NaviusCollapsibleTrigger trigger) =>
+        (AutomationPeer)trigger.GetType()
+            .GetMethod("OnCreateAutomationPeer", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(trigger, null)!;
+
+    private static void PumpDispatcher() =>
+        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
+
+    private sealed class RelayCommand : ICommand
+    {
+        private readonly Action<object?> _execute;
+
+        public RelayCommand(Action<object?> execute) => _execute = execute;
+
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
+
+        public bool CanExecute(object? parameter) => true;
+
+        public void Execute(object? parameter) => _execute(parameter);
     }
 }

@@ -13,8 +13,13 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ThemeManager.ThemeChanged += OnThemeChanged;
+        Closed += (_, _) => ThemeManager.ThemeChanged -= OnThemeChanged;
+        ThemeLabel.Text = ThemeManager.Current.ToString();
         Nav.SelectedIndex = 0;
     }
+
+    private void OnThemeChanged(object? sender, NaviusTheme theme) => ThemeLabel.Text = theme.ToString();
 
     private void OnNavChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -79,6 +84,7 @@ public partial class MainWindow : Window
             "Avatar" => new AvatarPage(),
             "AspectRatio" => new AspectRatioPage(),
             "ColorPicker" => new ColorPickerPage(),
+            "CollectionPicker" => new CollectionPickerPage(),
             "Charts" => new ChartsPage(),
             "UiDisplay" => new UiDisplayPage(),
             "UiComposite" => new UiCompositePage(),
@@ -93,6 +99,5 @@ public partial class MainWindow : Window
     {
         var next = ThemeManager.Current == NaviusTheme.Light ? NaviusTheme.Dark : NaviusTheme.Light;
         ThemeManager.Apply(next);
-        ThemeLabel.Text = next.ToString();
     }
 }

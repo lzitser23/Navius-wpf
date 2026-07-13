@@ -47,9 +47,11 @@ public class UiDisplayItemsTests
         // a Style applied. Guarded on a known key rather than nesting inside the block above:
         // whichever test class's static ctor runs first still needs to merge tokens even when it
         // lost the Application-creation race.
-        if (!Application.Current.Resources.Contains("Navius.Border"))
+        var application = Application.Current
+            ?? throw new InvalidOperationException("A WPF Application is required for UI display tests.");
+        if (!application.Resources.Contains("Navius.Border"))
         {
-            Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary
+            application.Resources.MergedDictionaries.Add(new ResourceDictionary
             {
                 Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Tokens.Light.xaml", UriKind.Absolute),
             });
@@ -105,6 +107,42 @@ public class UiDisplayItemsTests
         }
     }
 
+    [StaFact]
+    public void Card_Padding_ReachesTemplateRootBorder()
+    {
+        var dictionary = MergeTheme("Card.xaml");
+        try
+        {
+            var card = new NaviusCard { Padding = new Thickness(16) };
+            ApplyStyleAndTemplate(card, typeof(NaviusCard));
+
+            var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(card, 0));
+            Assert.Equal(new Thickness(16), border.Padding);
+        }
+        finally
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+        }
+    }
+
+    [StaFact]
+    public void Card_DefaultPadding_IsZeroOnTemplateRootBorder()
+    {
+        var dictionary = MergeTheme("Card.xaml");
+        try
+        {
+            var card = new NaviusCard();
+            ApplyStyleAndTemplate(card, typeof(NaviusCard));
+
+            var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(card, 0));
+            Assert.Equal(new Thickness(0), border.Padding);
+        }
+        finally
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+        }
+    }
+
     // --- Alert ---
 
     [StaFact]
@@ -145,6 +183,26 @@ public class UiDisplayItemsTests
         }
     }
 
+    [StaFact]
+    public void Alert_WarningVariant_SwitchesBorderAndForegroundToWarning()
+    {
+        var dictionary = MergeTheme("Alert.xaml");
+        try
+        {
+            var alert = new NaviusAlert { Variant = NaviusAlertVariant.Warning };
+            ApplyStyleAndTemplate(alert, typeof(NaviusAlert));
+
+            var borderBrush = Assert.IsType<SolidColorBrush>(alert.BorderBrush);
+            var foreground = Assert.IsType<SolidColorBrush>(alert.Foreground);
+            Assert.Equal((Color)ColorConverter.ConvertFromString("#9A6700"), borderBrush.Color);
+            Assert.Equal((Color)ColorConverter.ConvertFromString("#9A6700"), foreground.Color);
+        }
+        finally
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+        }
+    }
+
     // --- Badge ---
 
     [StaFact]
@@ -158,6 +216,35 @@ public class UiDisplayItemsTests
 
             var background = Assert.IsType<SolidColorBrush>(badge.Background);
             Assert.Equal((Color)ColorConverter.ConvertFromString("#171614"), background.Color);
+        }
+        finally
+        {
+            Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+        }
+    }
+
+    [StaFact]
+    public void Badge_PillRadiusTracksItsRenderedHeight_AtAnyFontSize()
+    {
+        var dictionary = MergeTheme("Badge.xaml");
+        try
+        {
+            foreach (var fontSize in new[] { 11d, 24d })
+            {
+                var badge = new NaviusBadge { Content = "Live", FontSize = fontSize };
+                ApplyStyleAndTemplate(badge, typeof(NaviusBadge));
+                badge.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                badge.Arrange(new Rect(badge.DesiredSize));
+                badge.UpdateLayout();
+
+                var border = Assert.IsType<Border>(VisualTreeHelper.GetChild(badge, 0));
+                // A capsule, not an ellipse: circular ends of exactly half the rendered height,
+                // with straight horizontal sides left between them.
+                Assert.True(border.ActualHeight > 0);
+                Assert.Equal(border.ActualHeight / 2, border.CornerRadius.TopLeft, 3);
+                Assert.Equal(border.CornerRadius.TopLeft, border.CornerRadius.BottomRight, 3);
+                Assert.True(border.ActualWidth > border.ActualHeight);
+            }
         }
         finally
         {

@@ -1,0 +1,50 @@
+<UserControl x:Class="Navius.Wpf.Gallery.Pages.CollectionPickerPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:picker="clr-namespace:Navius.Wpf.Ui.CollectionPicker;assembly=Navius.Wpf.Ui"
+             AutomationProperties.AutomationId="CollectionPickerDemo"
+             Background="{DynamicResource Navius.Background}">
+    <UserControl.Resources>
+        <ResourceDictionary Source="pack://application:,,,/Navius.Wpf.Ui;component/Themes/CollectionPicker.xaml" />
+    </UserControl.Resources>
+
+    <StackPanel Margin="32" MaxWidth="720" HorizontalAlignment="Left">
+        <TextBlock Text="CollectionPicker" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Navius.Foreground}" />
+        <TextBlock Margin="0,4,0,24"
+                   Text="A wrap-layout selector for visual options such as themes, templates, or presets."
+                   Foreground="{DynamicResource Navius.MutedForeground}" TextWrapping="Wrap" />
+
+        <picker:NaviusCollectionPicker
+            AutomationProperties.AutomationId="ThemeCollectionPicker"
+            SelectedIndex="0">
+            <picker:NaviusCollectionPickerItem Width="176" AutomationProperties.Name="Light theme">
+                <StackPanel>
+                    <Border Height="64" Background="#F4F3F0" BorderBrush="#E6E4DE" BorderThickness="1" CornerRadius="4" />
+                    <TextBlock Margin="0,10,0,0" Text="Light" FontWeight="SemiBold" />
+                    <TextBlock Text="Warm and bright" Foreground="{DynamicResource Navius.MutedForeground}" FontSize="12" />
+                </StackPanel>
+            </picker:NaviusCollectionPickerItem>
+            <picker:NaviusCollectionPickerItem Width="176" AutomationProperties.Name="Dark theme">
+                <StackPanel>
+                    <Border Height="64" Background="#161513" BorderBrush="#2D2B27" BorderThickness="1" CornerRadius="4" />
+                    <TextBlock Margin="0,10,0,0" Text="Dark" FontWeight="SemiBold" />
+                    <TextBlock Text="Warm and subdued" Foreground="{DynamicResource Navius.MutedForeground}" FontSize="12" />
+                </StackPanel>
+            </picker:NaviusCollectionPickerItem>
+            <picker:NaviusCollectionPickerItem Width="176" AutomationProperties.Name="System theme">
+                <StackPanel>
+                    <Grid Height="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Border Background="#F4F3F0" CornerRadius="4,0,0,4" />
+                        <Border Grid.Column="1" Background="#161513" CornerRadius="0,4,4,0" />
+                    </Grid>
+                    <TextBlock Margin="0,10,0,0" Text="System" FontWeight="SemiBold" />
+                    <TextBlock Text="Follow Windows" Foreground="{DynamicResource Navius.MutedForeground}" FontSize="12" />
+                </StackPanel>
+            </picker:NaviusCollectionPickerItem>
+        </picker:NaviusCollectionPicker>
+    </StackPanel>
+</UserControl>

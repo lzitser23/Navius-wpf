@@ -9,12 +9,15 @@ namespace Navius.Wpf.Motion;
 /// interruption semantics (navius-motion.js). Construct it with the starting spring,
 /// origin, and target; it starts running immediately and calls <paramref name="onValue"/>
 /// once per frame (plus once synchronously at construction) with the current position.
-/// Call <see cref="Stop"/> or <see cref="Dispose"/> to detach the rendering hook.
+/// Call <see cref="Stop"/> or <see cref="Dispose"/> to detach the rendering hook. The optional
+/// <see cref="MotionPolicy"/> defaults to Windows' animation preference; when motion is disabled,
+/// the ticker reports its target synchronously and never attaches the rendering hook.
 /// </summary>
 public sealed class SpringTicker : IDisposable
 {
     private readonly Spring _springTemplate;
     private readonly Action<double> _onValue;
+    private readonly MotionPolicy _motionPolicy;
     private SpringSolver _solver;
     private double _elapsed;
     private double _value;
@@ -23,14 +26,30 @@ public sealed class SpringTicker : IDisposable
     private bool _disposed;
     private TimeSpan? _lastRenderingTime;
 
-    /// <summary>Create and immediately start a ticker running <paramref name="spring"/> from <paramref name="from"/> to <paramref name="to"/>.</summary>
-    public SpringTicker(Spring spring, double from, double to, Action<double> onValue)
+    /// <summary>
+    /// Create a ticker running <paramref name="spring"/> from <paramref name="from"/> to
+    /// <paramref name="to"/>. It starts immediately unless <paramref name="motionPolicy"/>
+    /// disables motion, in which case it completes synchronously at the target.
+    /// </summary>
+    public SpringTicker(
+        Spring spring,
+        double from,
+        double to,
+        Action<double> onValue,
+        MotionPolicy? motionPolicy = null)
     {
         _springTemplate = spring;
         _onValue = onValue;
+        _motionPolicy = motionPolicy ?? MotionPolicy.System;
         _solver = new SpringSolver(spring, from, to);
         _value = from;
         _velocity = spring.InitialVelocity;
+
+        if (!_motionPolicy.AnimationsEnabled)
+        {
+            CompleteAtTarget(notify: true);
+            return;
+        }
 
         _onValue(_value);
 
@@ -63,6 +82,12 @@ public sealed class SpringTicker : IDisposable
         var spring = _springTemplate.WithInitialVelocity(_velocity);
         _solver = new SpringSolver(spring, _value, newTarget);
         _elapsed = 0;
+        _lastRenderingTime = null;
+
+        if (!_motionPolicy.AnimationsEnabled)
+        {
+            CompleteAtTarget(notify: true);
+        }
     }
 
     /// <summary>Detach the rendering hook. Safe to call multiple times.</summary>
@@ -115,9 +140,29 @@ public sealed class SpringTicker : IDisposable
     /// </summary>
     internal void Step(double elapsedSeconds)
     {
+        if (!_motionPolicy.AnimationsEnabled)
+        {
+            CompleteAtTarget(notify: false);
+            return;
+        }
+
         _elapsed += elapsedSeconds;
         _value = _solver.Position(_elapsed);
         _velocity = _solver.Velocity(_elapsed);
         _onValue(_value);
+    }
+
+    private void CompleteAtTarget(bool notify)
+    {
+        var changed = _value != _solver.Target || _velocity != 0;
+        _value = _solver.Target;
+        _velocity = 0;
+        _elapsed = 0;
+        _lastRenderingTime = null;
+        if (notify || changed)
+        {
+            _onValue(_value);
+        }
+        Stop();
     }
 }

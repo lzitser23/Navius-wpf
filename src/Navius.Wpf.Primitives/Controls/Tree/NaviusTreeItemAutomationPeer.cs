@@ -43,6 +43,7 @@ public class NaviusTreeItemAutomationPeer : TreeViewItemAutomationPeer, ISelecti
 
     void ISelectionItemProvider.AddToSelection()
     {
+        ThrowIfDisabled();
         if (_owner.Node is { } node && TreeVisualHelpers.FindAncestor<NaviusTree>(_owner) is { } tree)
         {
             tree.AddNodeToSelection(node);
@@ -51,6 +52,7 @@ public class NaviusTreeItemAutomationPeer : TreeViewItemAutomationPeer, ISelecti
 
     void ISelectionItemProvider.RemoveFromSelection()
     {
+        ThrowIfDisabled();
         if (_owner.Node is { } node && TreeVisualHelpers.FindAncestor<NaviusTree>(_owner) is { } tree)
         {
             tree.RemoveNodeFromSelection(node);
@@ -59,9 +61,18 @@ public class NaviusTreeItemAutomationPeer : TreeViewItemAutomationPeer, ISelecti
 
     void ISelectionItemProvider.Select()
     {
+        ThrowIfDisabled();
         if (_owner.Node is { } node && TreeVisualHelpers.FindAncestor<NaviusTree>(_owner) is { } tree)
         {
             tree.SelectNodeExclusive(node);
+        }
+    }
+
+    private void ThrowIfDisabled()
+    {
+        if (!_owner.IsEnabled)
+        {
+            throw new ElementNotEnabledException();
         }
     }
 

@@ -8,7 +8,7 @@
     <AssemblyName>navius-wpf</AssemblyName>
     <RootNamespace>Navius.Wpf.Cli</RootNamespace>
     <PackageId>navius-wpf</PackageId>
-    <Version>1.0.0-preview.1</Version>
+    <Version>1.0.0-preview.4</Version>
     <Authors>Navius contributors</Authors>
     <Description>Copy-paste component registry CLI for Navius.Wpf.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -23,6 +23,8 @@
     <!-- web token is oklch(0.704 0.191 22.216); sRGB equivalent -->
     <SolidColorBrush x:Key="Navius.Destructive" Color="#FF6467" />
     <SolidColorBrush x:Key="Navius.DestructiveForeground" Color="#161513" />
+    <SolidColorBrush x:Key="Navius.Warning" Color="#D7A653" />
+    <SolidColorBrush x:Key="Navius.WarningForeground" Color="#161513" />
     <SolidColorBrush x:Key="Navius.Border" Color="#2D2B27" />
     <SolidColorBrush x:Key="Navius.Input" Color="#3B3935" />
     <SolidColorBrush x:Key="Navius.Ring" Color="#F0EFEC" />

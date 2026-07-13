@@ -51,13 +51,32 @@
                                 StrokeLineJoin="Round"
                                 Visibility="Collapsed" />
 
+                            <!-- Templated row content (owner's ItemTemplate/ItemTemplateSelector,
+                                 stamped by container preparation); swapped with the plain label
+                                 below by the template-presence MultiTrigger. -->
+                            <ContentPresenter
+                                x:Name="TemplatedContent"
+                                Grid.Column="1"
+                                VerticalAlignment="Center" />
+
                             <TextBlock
+                                x:Name="Text"
                                 Grid.Column="1"
                                 VerticalAlignment="Center"
+                                Visibility="Collapsed"
                                 Text="{TemplateBinding DisplayText}" />
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- No custom template: render the resolved DisplayText label. -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ContentTemplate" Value="{x:Null}" />
+                                <Condition Property="ContentTemplateSelector" Value="{x:Null}" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="TemplatedContent" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="Text" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
                         <Trigger Property="IsSelectedValue" Value="True">
                             <Setter TargetName="Check" Property="Visibility" Value="Visible" />
                         </Trigger>

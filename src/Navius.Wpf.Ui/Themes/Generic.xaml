@@ -24,6 +24,7 @@
         <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Resizable.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/Carousel.xaml" />
         <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/CommandPalette.xaml" />
+        <ResourceDictionary Source="/Navius.Wpf.Ui;component/Themes/CollectionPicker.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

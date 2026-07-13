@@ -5,6 +5,25 @@ using System.Windows;
 
 namespace Navius.Wpf.Primitives.Controls.Select;
 
+/// <summary>XAML-friendly object-typed Select root. Use <see cref="ItemsControl.ItemsSource"/> and <see cref="ItemsControl.DisplayMemberPath"/> for data-bound items.</summary>
+public class NaviusSelect : NaviusSelectBase
+{
+    static NaviusSelect()
+    {
+        DefaultStyleKeyProperty.OverrideMetadata(
+            typeof(NaviusSelect),
+            new FrameworkPropertyMetadata(typeof(NaviusSelectBase)));
+    }
+
+    public NaviusSelect()
+    {
+        SetResourceReference(StyleProperty, typeof(NaviusSelectBase));
+    }
+
+    // Value/Values are object-typed here just like the base's, so this class inherits
+    // NaviusSelectBase.Value/Values (and ValueProperty/ValuesProperty) as-is.
+}
+
 /// <summary>
 /// The public, strongly-typed Select control (contract's NaviusSelect). Generic over the value
 /// type so <see cref="Value"/>/<see cref="SelectedValues"/> and the typed change events are
@@ -36,15 +55,17 @@ public class NaviusSelect<TItem> : NaviusSelectBase
         SetResourceReference(StyleProperty, typeof(NaviusSelectBase));
     }
 
-    /// <summary>Single-select value (contract's Value); wraps the base's object-typed RawValue.</summary>
-    public TItem? Value
+    /// <summary>Single-select value (contract's Value); wraps the base's object-typed RawValue. Hides
+    /// the base's object-typed Value (same DP, registered once on NaviusSelectBase -- see ValueProperty)
+    /// with a TItem-typed CLR accessor; bindings still resolve via the inherited DependencyProperty.</summary>
+    public new TItem? Value
     {
         get => RawValue is TItem value ? value : default;
         set => RawValue = value;
     }
 
-    /// <summary>Controlled multi-select set (contract's Values); wraps the base's object-typed RawValues.</summary>
-    public IReadOnlyList<TItem> Values
+    /// <summary>Controlled multi-select set (contract's Values); wraps the base's object-typed RawValues. See <see cref="Value"/> re: hiding.</summary>
+    public new IReadOnlyList<TItem> Values
     {
         get => SelectedValues;
         set => RawValues = value is null ? Array.Empty<object>() : value.Cast<object>().ToArray();

@@ -24,6 +24,10 @@
             </Setter.Value>
         </Setter>
         <Style.Triggers>
+            <Trigger Property="Variant" Value="Warning">
+                <Setter Property="BorderBrush" Value="{DynamicResource Navius.Warning}" />
+                <Setter Property="Foreground" Value="{DynamicResource Navius.Warning}" />
+            </Trigger>
             <Trigger Property="Variant" Value="Destructive">
                 <Setter Property="BorderBrush" Value="{DynamicResource Navius.Destructive}" />
                 <Setter Property="Foreground" Value="{DynamicResource Navius.Destructive}" />

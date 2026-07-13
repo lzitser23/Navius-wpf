@@ -1,9 +1,86 @@
 using System;
+using System.Collections;
+using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 
 namespace Navius.Wpf.Primitives.Controls.Combobox;
+
+/// <summary>XAML-friendly object-typed Combobox root over the existing generic state machine.</summary>
+public class NaviusCombobox : NaviusCombobox<object>
+{
+    public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
+        nameof(ItemsSource), typeof(IEnumerable), typeof(NaviusCombobox),
+        new PropertyMetadata(null, OnItemsSourceChanged));
+
+    public static readonly DependencyProperty DisplayMemberPathProperty = DependencyProperty.Register(
+        nameof(DisplayMemberPath), typeof(string), typeof(NaviusCombobox),
+        new PropertyMetadata(string.Empty, OnDisplayMemberPathChanged));
+
+    public NaviusCombobox()
+    {
+        ItemToString = FormatItem;
+    }
+
+    public IEnumerable? ItemsSource
+    {
+        get => (IEnumerable?)GetValue(ItemsSourceProperty);
+        set => SetValue(ItemsSourceProperty, value);
+    }
+
+    public string DisplayMemberPath
+    {
+        get => (string)GetValue(DisplayMemberPathProperty);
+        set => SetValue(DisplayMemberPathProperty, value);
+    }
+
+    private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (NaviusCombobox)d;
+        if (e.OldValue is INotifyCollectionChanged oldCollection)
+        {
+            CollectionChangedEventManager.RemoveHandler(oldCollection, control.OnCollectionChanged);
+        }
+
+        if (e.NewValue is INotifyCollectionChanged newCollection)
+        {
+            CollectionChangedEventManager.AddHandler(newCollection, control.OnCollectionChanged);
+        }
+
+        control.RefreshItems();
+    }
+
+    // FormatItem reads DisplayMemberPath live on each call (ItemToString already points at it), so
+    // a path change only needs a presentation resync. Re-assigning ItemToString = FormatItem would
+    // be a no-op: method-group delegates to the same target/method compare Equals-equal, so the DP
+    // never sees a change and nothing re-renders.
+    private static void OnDisplayMemberPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((NaviusCombobox)d).SyncFromState();
+
+    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshItems();
+
+    private void RefreshItems() =>
+        Items = ItemsSource?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+    private string FormatItem(object item)
+    {
+        if (string.IsNullOrWhiteSpace(DisplayMemberPath))
+        {
+            return item?.ToString() ?? string.Empty;
+        }
+
+        // Dotted property paths ("Owner.Name") per WPF's DisplayMemberPath convention; indexers
+        // and attached properties are not supported (see docs/parity/combobox.md).
+        object? current = item;
+        foreach (var segment in DisplayMemberPath.Split('.'))
+        {
+            current = current?.GetType().GetProperty(segment)?.GetValue(current);
+        }
+
+        return current?.ToString() ?? string.Empty;
+    }
+}
 
 /// <summary>
 /// Generic Combobox root. Owns the typed API (Items / Value / Values / ItemToString / Filter) and
@@ -249,7 +326,8 @@ public class NaviusCombobox<TItem> : NaviusComboboxBase
             ? SafeValues.Any(v => Comparer.Equals(v, item))
             : Value is not null && Comparer.Equals(Value, item);
 
-    private void SyncFromState()
+    /// <summary>Resyncs the query label, chips/selection state, and rows from current state; protected so the object-typed root can re-run it when its presentation inputs (DisplayMemberPath) change.</summary>
+    protected void SyncFromState()
     {
         if (!Multiple && Value is not null)
         {

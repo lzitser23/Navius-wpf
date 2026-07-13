@@ -6,9 +6,8 @@ namespace Navius.Wpf.Charts.Theming;
 /// <summary>
 /// The current Navius token colours (see Navius.Wpf.Primitives <c>Themes/Tokens.*.xaml</c>),
 /// resolved from a control's resource scope for use by <see cref="NaviusChart"/>.
-/// <c>Navius.Wpf.Primitives.Theming.ThemeManager</c> has no theme-changed event today - it only
-/// swaps the token <c>ResourceDictionary</c> in <c>Apply(theme, scope)</c> - so callers must
-/// re-resolve after a swap; <see cref="NaviusChart.RefreshTheme"/> does that.
+/// <see cref="NaviusChart"/> re-resolves this snapshot when the theme manager raises its
+/// theme-changed event; <see cref="NaviusChart.RefreshTheme"/> also supports manual refreshes.
 /// </summary>
 public sealed class NaviusChartTheme
 {
