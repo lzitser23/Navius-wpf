@@ -28,11 +28,11 @@
                                 Content="{TemplateBinding HeaderContent}" />
 
                             <StackPanel DockPanel.Dock="Bottom" Margin="8">
-                                <ContentPresenter Margin="4,0,4,8" Content="{TemplateBinding FooterContent}" />
-                                <Button Command="{x:Static sidebar:NaviusSidebar.ToggleCollapsedCommand}"
+                                <ContentPresenter Margin="0,0,0,8" Content="{TemplateBinding FooterContent}" />
+                                <Button x:Name="CollapseButton"
+                                        Command="{x:Static sidebar:NaviusSidebar.ToggleCollapsedCommand}"
                                         Background="Transparent" BorderThickness="0"
-                                        HorizontalContentAlignment="Left"
-                                        Padding="8,7"
+                                        Padding="10,7"
                                         Cursor="Hand">
                                     <!--
                                         The visible "Collapse" TextBlock is hidden when IsCollapsed (see the
@@ -57,16 +57,24 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="ToggleBg" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource Navius.Radius.Control}">
-                                                <StackPanel Orientation="Horizontal" Margin="{TemplateBinding Padding}">
-                                                    <Path x:Name="Chevron"
-                                                          Data="M 6,0 L 0,4 L 6,8"
-                                                          VerticalAlignment="Center"
-                                                          Stroke="{DynamicResource Navius.MutedForeground}"
-                                                          StrokeThickness="1.4"
-                                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
-                                                    <TextBlock x:Name="ToggleLabel" Margin="10,0,0,0" VerticalAlignment="Center"
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="3" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid Grid.Column="1" Width="20" Height="20" Margin="{TemplateBinding Padding}">
+                                                        <Path x:Name="Chevron"
+                                                              Data="M 6,0 L 0,4 L 6,8"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"
+                                                              Stroke="{DynamicResource Navius.MutedForeground}"
+                                                              StrokeThickness="1.4"
+                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+                                                    </Grid>
+                                                    <TextBlock x:Name="ToggleLabel" Grid.Column="2" Margin="0,7,10,7" VerticalAlignment="Center"
                                                                Text="Collapse" Foreground="{DynamicResource Navius.MutedForeground}" FontSize="13" />
-                                                </StackPanel>
+                                                </Grid>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">

@@ -215,6 +215,27 @@ public class UiSidebarTests
     }
 
     [StaFact]
+    public void NaviusSidebar_CollapseButton_AlignsWithItemIconSlots()
+    {
+        var sidebar = CreateThemedSidebarWithFooter();
+        var item = (NaviusSidebarItem)sidebar.Items[0]!;
+        var footerItem = (NaviusSidebarItem)sidebar.FooterContent!;
+        var itemIcon = Assert.IsAssignableFrom<FrameworkElement>(item.Template.FindName("IconPresenter", item));
+        var footerIcon = Assert.IsAssignableFrom<FrameworkElement>(footerItem.Template.FindName("IconPresenter", footerItem));
+        var collapseButton = Assert.IsType<Button>(sidebar.Template.FindName("CollapseButton", sidebar));
+        var chevron = Assert.IsAssignableFrom<FrameworkElement>(collapseButton.Template.FindName("Chevron", collapseButton));
+
+        Assert.Equal(CenterX(itemIcon, sidebar), CenterX(footerIcon, sidebar), 3);
+        Assert.Equal(CenterX(itemIcon, sidebar), CenterX(chevron, sidebar), 3);
+
+        sidebar.IsCollapsed = true;
+        sidebar.UpdateLayout();
+
+        Assert.Equal(CenterX(itemIcon, sidebar), CenterX(footerIcon, sidebar), 3);
+        Assert.Equal(CenterX(itemIcon, sidebar), CenterX(chevron, sidebar), 3);
+    }
+
+    [StaFact]
     public void NaviusSidebar_IsCollapsed_InheritsToDescendantsAndCollapsesItemLabels()
     {
         var sidebar = CreateThemedSidebarWithFooter();
@@ -273,6 +294,9 @@ public class UiSidebarTests
 
     private static bool IsCollapseButtonPeer(AutomationPeer peer) =>
         peer.GetAutomationControlType() == AutomationControlType.Button && peer.GetClassName() == "Button";
+
+    private static double CenterX(FrameworkElement element, UIElement relativeTo) =>
+        element.TranslatePoint(new Point(element.ActualWidth / 2, 0), relativeTo).X;
 
     private static void CollectDescendants(AutomationPeer? peer, List<AutomationPeer> result)
     {
