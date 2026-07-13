@@ -101,7 +101,7 @@
     <!-- The Select shell: trigger (role="combobox") + anchored listbox popup (role="listbox"). -->
     <Style TargetType="{x:Type select:NaviusSelectBase}">
         <Setter Property="MinWidth" Value="200" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="MinHeight" Value="36" />
         <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Top" />
@@ -124,7 +124,7 @@
                                         BorderThickness="1"
                                         CornerRadius="{DynamicResource Navius.Radius.Control}">
                                         <ContentPresenter
-                                            Margin="12,8"
+                                            Margin="12,6"
                                             HorizontalAlignment="Stretch"
                                             VerticalAlignment="Center" />
                                     </Border>

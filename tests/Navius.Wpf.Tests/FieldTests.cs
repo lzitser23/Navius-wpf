@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using Navius.Wpf.Primitives.Controls.Field;
+using Navius.Wpf.Primitives.Controls.Select;
 using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
@@ -50,6 +51,23 @@ public class FieldTests
     {
         var (field, _, _, _) = CreateField();
         Assert.True(field.ApplyTemplate());
+    }
+
+    [StaFact]
+    public void InputAndSelect_HaveMatchingCollapsedHeight()
+    {
+        var resources = CreateThemedScope();
+        resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Select.xaml"),
+        });
+        var input = new NaviusInput { Resources = resources, Text = "Name", FontSize = 14 };
+        var select = new NaviusSelect<string> { Resources = resources, FontSize = 14, Placeholder = "Variant" };
+
+        input.Measure(new Size(300, 100));
+        select.Measure(new Size(300, 100));
+
+        Assert.Equal(input.DesiredSize.Height, select.DesiredSize.Height);
     }
 
     [StaFact]

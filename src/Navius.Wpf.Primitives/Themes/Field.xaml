@@ -68,6 +68,7 @@
     </Style>
 
     <Style TargetType="{x:Type controls:NaviusInput}">
+        <Setter Property="MinHeight" Value="36" />
         <Setter Property="Padding" Value="8,6" />
         <Setter Property="Background" Value="{DynamicResource Navius.Background}" />
         <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
