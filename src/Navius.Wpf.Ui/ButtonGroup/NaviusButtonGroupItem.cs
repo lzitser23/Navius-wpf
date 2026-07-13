@@ -10,10 +10,11 @@ namespace Navius.Wpf.Ui.ButtonGroup;
 
 /// <summary>
 /// A single segment of a <see cref="NaviusButtonGroup"/>. Derives from ButtonBase directly (not
-/// Navius.Wpf.Primitives' NaviusButton) because it needs its own bindable CornerRadius, which the
-/// primitive's template hardcodes to the full token radius; see Themes/ButtonGroup.xaml for how
-/// <see cref="NaviusButtonGroup.IsFirstItemProperty"/>/<see cref="NaviusButtonGroup.IsLastItemProperty"/>
-/// mask that radius down to just the group's outer edge on each item.
+/// Navius.Wpf.Primitives' NaviusButton, whose template hardcodes the full token radius) because a
+/// segment stays a plain square: the rounded silhouette is masked in by the clip on the group's own
+/// container, and the only per-item variation is the hairline BorderThickness that the
+/// <see cref="NaviusButtonGroup.IsLastItemProperty"/>/Orientation style triggers in
+/// Themes/ButtonGroup.xaml drive.
 /// </summary>
 public class NaviusButtonGroupItem : ButtonBase
 {
