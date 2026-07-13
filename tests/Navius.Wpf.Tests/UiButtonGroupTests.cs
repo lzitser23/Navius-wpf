@@ -1,9 +1,12 @@
 using System;
+using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using Navius.Wpf.Primitives.Theming;
 using Navius.Wpf.Ui.ButtonGroup;
 using Xunit;
 
@@ -11,6 +14,24 @@ namespace Navius.Wpf.Tests;
 
 public class UiButtonGroupTests
 {
+    static UiButtonGroupTests()
+    {
+        // pack://application URIs only resolve once an Application exists in the process.
+        // Guarded try/catch (rather than a bare null-check) because xunit runs test classes in
+        // parallel on separate STA threads: another test class's static ctor can win the race.
+        if (Application.Current is null)
+        {
+            try
+            {
+                _ = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            }
+            catch (InvalidOperationException)
+            {
+                // Another test class's static ctor already created the process-wide Application.
+            }
+        }
+    }
+
     [StaFact]
     public void NaviusButtonGroupItem_AutomationPeer_ReportsButtonControlType()
     {
@@ -80,6 +101,79 @@ public class UiButtonGroupTests
         Assert.Equal(1, executions);
         Assert.Same(parameter, received);
         Assert.Equal(1, clicks);
+    }
+
+    [StaFact]
+    public void NaviusButtonGroup_Orientation_InheritsToRealizedItems()
+    {
+        var (group, first, _) = CreateThemedGroup();
+
+        Assert.Equal(Orientation.Horizontal, NaviusButtonGroup.GetOrientation(first));
+
+        group.Orientation = Orientation.Vertical;
+
+        // Regression: Orientation was registered with Register rather than RegisterAttached, so
+        // its Inherits metadata never left NaviusButtonGroup itself -- items always read the
+        // Horizontal default and the vertical divider trigger below never fired.
+        Assert.Equal(Orientation.Vertical, NaviusButtonGroup.GetOrientation(first));
+    }
+
+    [StaFact]
+    public void NaviusButtonGroup_VerticalOrientation_MovesNonLastItemDividerToBottomEdge()
+    {
+        var (group, first, last) = CreateThemedGroup();
+
+        // Horizontal default: a non-last item's open trailing (right) edge is the shared divider
+        // with its next sibling; the last item closes the run with a full border.
+        Assert.Equal(new Thickness(1, 1, 0, 1), first.BorderThickness);
+        Assert.Equal(new Thickness(1), last.BorderThickness);
+
+        group.Orientation = Orientation.Vertical;
+        group.UpdateLayout();
+
+        // Vertical: the open edge moves to the bottom; the last item still keeps its full border.
+        Assert.Equal(new Thickness(1, 1, 1, 0), first.BorderThickness);
+        Assert.Equal(new Thickness(1), last.BorderThickness);
+
+        group.Orientation = Orientation.Horizontal;
+        group.UpdateLayout();
+
+        Assert.Equal(new Thickness(1, 1, 0, 1), first.BorderThickness);
+    }
+
+    /// <summary>
+    /// A themed two-item group, laid out so the items are realized containers with the implicit
+    /// item style applied (the Style.Triggers under test set BorderThickness on the item itself).
+    /// </summary>
+    private static (NaviusButtonGroup Group, NaviusButtonGroupItem First, NaviusButtonGroupItem Last) CreateThemedGroup()
+    {
+        var scope = new ResourceDictionary();
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        scope.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Ui;component/Themes/ButtonGroup.xaml"),
+        });
+
+        var group = new NaviusButtonGroup
+        {
+            Resources = scope,
+            Style = (Style)scope[typeof(NaviusButtonGroup)],
+        };
+        var first = new NaviusButtonGroupItem { Content = "One" };
+        var last = new NaviusButtonGroupItem { Content = "Two" };
+        group.Items.Add(first);
+        group.Items.Add(last);
+
+        group.ApplyTemplate();
+        group.Measure(new Size(300, 100));
+        group.Arrange(new Rect(0, 0, 300, 100));
+        group.UpdateLayout();
+
+        // IsLastItem (re)stamping defers to Loaded priority in OnItemsChanged; flush it so the
+        // last item's full-border trigger state is settled before assertions.
+        PumpDispatcher();
+
+        return (group, first, last);
     }
 
     private static void PumpDispatcher() =>

@@ -17,7 +17,15 @@ namespace Navius.Wpf.Ui.ButtonGroup;
 /// </summary>
 public class NaviusButtonGroup : ItemsControl
 {
-    public static readonly DependencyProperty OrientationProperty = DependencyProperty.Register(
+    /// <summary>
+    /// Registered via RegisterAttached, not Register: Register-applied Inherits metadata only
+    /// resolves on the owner type and never propagates to other element types, so the item
+    /// template's "(buttonGroup:NaviusButtonGroup.Orientation)" trigger read the Horizontal
+    /// default forever (same gap fixed for NaviusSidebar.IsCollapsed). Attached registration
+    /// makes the inheriting metadata the default for every element type, which is what lets each
+    /// item read the group's value.
+    /// </summary>
+    public static readonly DependencyProperty OrientationProperty = DependencyProperty.RegisterAttached(
         nameof(Orientation), typeof(Orientation), typeof(NaviusButtonGroup),
         new FrameworkPropertyMetadata(Orientation.Horizontal, FrameworkPropertyMetadataOptions.Inherits));
 
@@ -38,6 +46,12 @@ public class NaviusButtonGroup : ItemsControl
         get => (Orientation)GetValue(OrientationProperty);
         set => SetValue(OrientationProperty, value);
     }
+
+    /// <summary>Attached-property accessor: the inherited orientation on any descendant.</summary>
+    public static Orientation GetOrientation(DependencyObject element) => (Orientation)element.GetValue(OrientationProperty);
+
+    /// <summary>Attached-property accessor; on the group itself prefer <see cref="Orientation"/>.</summary>
+    public static void SetOrientation(DependencyObject element, Orientation value) => element.SetValue(OrientationProperty, value);
 
     public static bool GetIsLastItem(DependencyObject obj) => (bool)obj.GetValue(IsLastItemProperty);
 
