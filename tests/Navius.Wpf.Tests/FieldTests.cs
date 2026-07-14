@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using Navius.Wpf.Primitives.Controls.Field;
+using Navius.Wpf.Primitives.Controls.Select;
 using Navius.Wpf.Primitives.Theming;
 
 namespace Navius.Wpf.Tests;
@@ -50,6 +51,30 @@ public class FieldTests
     {
         var (field, _, _, _) = CreateField();
         Assert.True(field.ApplyTemplate());
+    }
+
+    [StaFact]
+    public void InputAndSelect_HaveMatchingCollapsedHeight()
+    {
+        var resources = CreateThemedScope();
+        resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Select.xaml"),
+        });
+        var input = new NaviusInput { Resources = resources, Text = "Name" };
+        var select = new NaviusSelect<string> { Resources = resources, Placeholder = "Variant" };
+        select.Style = (Style)resources[typeof(NaviusSelectBase)];
+        Assert.True(select.ApplyTemplate());
+
+        input.Measure(new Size(300, 100));
+        select.Measure(new Size(300, 100));
+        select.Arrange(new Rect(select.DesiredSize));
+        var trigger = Assert.IsType<ToggleButton>(select.Template.FindName("PART_Trigger", select));
+
+        Assert.Equal(input.DesiredSize.Height, select.DesiredSize.Height);
+        Assert.Equal(14, input.FontSize);
+        Assert.Equal(14, select.FontSize);
+        Assert.Equal(select.ActualHeight, trigger.ActualHeight);
     }
 
     [StaFact]

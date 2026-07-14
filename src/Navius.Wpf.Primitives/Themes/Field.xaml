@@ -68,6 +68,8 @@
     </Style>
 
     <Style TargetType="{x:Type controls:NaviusInput}">
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="Padding" Value="8,6" />
         <Setter Property="Background" Value="{DynamicResource Navius.Background}" />
         <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
@@ -83,7 +85,7 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{DynamicResource Navius.Radius.Control}"
                         SnapsToDevicePixels="True">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+                        <ScrollViewer x:Name="PART_ContentHost" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
