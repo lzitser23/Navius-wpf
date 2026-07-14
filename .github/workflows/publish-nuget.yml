@@ -1,5 +1,16 @@
 name: publish-nuget
 
+# Publishes in two ways, sharing one workflow file so the nuget.org trusted
+# publishing policy (which pins this filename) covers both:
+#   - workflow_dispatch: publish one named package on demand.
+#   - push to main touching a package csproj: publish every package whose
+#     <Version> is not yet on nuget.org. The check is against the live
+#     flat-container index, not the diff, so a bump that slipped through
+#     unpublished is picked up by the next qualifying push, and re-runs are
+#     harmless (`dotnet nuget push --skip-duplicate`).
+# The push path reads the nuget.org account from the NUGET_USER repository
+# variable; dispatch runs take it as an input.
+
 on:
   workflow_dispatch:
     inputs:
@@ -17,14 +28,84 @@ on:
         description: nuget.org username or organization with the trusted publishing policy
         required: true
         type: string
+  push:
+    branches:
+      - main
+    paths:
+      - src/Navius.Wpf.Primitives/Navius.Wpf.Primitives.csproj
+      - src/Navius.Wpf.Ui/Navius.Wpf.Ui.csproj
+      - src/Navius.Wpf.Motion/Navius.Wpf.Motion.csproj
+      - src/Navius.Wpf.Charts/Navius.Wpf.Charts.csproj
+      - tools/Navius.Wpf.Cli/Navius.Wpf.Cli.csproj
+      # The workflow itself: merging a change to it reconciles any pending,
+      # not-yet-published version bumps.
+      - .github/workflows/publish-nuget.yml
 
 permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: publish-nuget
+  cancel-in-progress: false
+
 jobs:
-  publish:
+  detect:
     if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.detect.outputs.packages }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect packages to publish
+        id: detect
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo 'packages=["${{ inputs.package }}"]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Dependency order: Primitives before its dependents, the CLI last.
+          names=(Navius.Wpf.Primitives Navius.Wpf.Ui Navius.Wpf.Motion Navius.Wpf.Charts navius-wpf)
+          paths=(src/Navius.Wpf.Primitives/Navius.Wpf.Primitives.csproj
+                 src/Navius.Wpf.Ui/Navius.Wpf.Ui.csproj
+                 src/Navius.Wpf.Motion/Navius.Wpf.Motion.csproj
+                 src/Navius.Wpf.Charts/Navius.Wpf.Charts.csproj
+                 tools/Navius.Wpf.Cli/Navius.Wpf.Cli.csproj)
+          ids=(navius.wpf.primitives navius.wpf.ui navius.wpf.motion navius.wpf.charts navius-wpf)
+
+          pending=()
+          for i in "${!names[@]}"; do
+            # tr strips the \r a CRLF checkout would leave on the captured group.
+            version=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' "${paths[$i]}" | tr -d '\r')
+            if [ -z "$version" ]; then
+              echo "No <Version> found in ${paths[$i]}" >&2
+              exit 1
+            fi
+            # A curl failure (404 for a never-published id, or a transient
+            # error) falls through to "publish"; --skip-duplicate makes a
+            # false positive a no-op.
+            published=$(curl -sf "https://api.nuget.org/v3-flatcontainer/${ids[$i]}/index.json" || echo '{"versions":[]}')
+            if echo "$published" | grep -q "\"$version\""; then
+              echo "${names[$i]} $version is already on nuget.org"
+            else
+              echo "${names[$i]} $version is not on nuget.org: queueing publish"
+              pending+=("\"${names[$i]}\"")
+            fi
+          done
+
+          list=$(IFS=,; echo "${pending[*]}")
+          echo "packages=[$list]" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: detect
+    if: needs.detect.outputs.packages != '[]'
+    strategy:
+      max-parallel: 1
+      matrix:
+        package: ${{ fromJSON(needs.detect.outputs.packages) }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +121,7 @@ jobs:
         id: select
         shell: bash
         run: |
-          case "${{ inputs.package }}" in
+          case "${{ matrix.package }}" in
             Navius.Wpf.Primitives)
               echo "project=src/Navius.Wpf.Primitives/Navius.Wpf.Primitives.csproj" >> "$GITHUB_OUTPUT"
               ;;
@@ -57,7 +138,7 @@ jobs:
               echo "project=tools/Navius.Wpf.Cli/Navius.Wpf.Cli.csproj" >> "$GITHUB_OUTPUT"
               ;;
             *)
-              echo "Unknown package: ${{ inputs.package }}" >&2
+              echo "Unknown package: ${{ matrix.package }}" >&2
               exit 1
               ;;
           esac
@@ -66,26 +147,26 @@ jobs:
         run: dotnet build "${{ steps.select.outputs.project }}" -c Release
 
       - name: Run unit tests
-        if: inputs.package == 'Navius.Wpf.Primitives' || inputs.package == 'Navius.Wpf.Ui'
+        if: matrix.package == 'Navius.Wpf.Primitives' || matrix.package == 'Navius.Wpf.Ui'
         run: dotnet test tests/Navius.Wpf.Tests -c Release
 
       - name: Run Motion tests
-        if: inputs.package == 'Navius.Wpf.Motion'
+        if: matrix.package == 'Navius.Wpf.Motion'
         run: dotnet test tests/Navius.Wpf.Motion.Tests -c Release
 
       - name: Run Charts tests
-        if: inputs.package == 'Navius.Wpf.Charts'
+        if: matrix.package == 'Navius.Wpf.Charts'
         run: dotnet test tests/Navius.Wpf.Charts.Tests -c Release
 
       # The Gallery consumes every family, so a green Gallery build is the
       # consumer gate for the library packages.
       - name: Build Gallery against the packages
-        if: inputs.package != 'navius-wpf'
+        if: matrix.package != 'navius-wpf'
         run: dotnet build apps/Navius.Wpf.Gallery -c Release
 
       # The CLI's own gate: vendor real items into a temp project and build them.
       - name: Run vendoring closure gate
-        if: inputs.package == 'navius-wpf'
+        if: matrix.package == 'navius-wpf'
         run: dotnet test tests/Navius.Wpf.Cli.Tests -c Release
 
       - name: Pack package
@@ -95,7 +176,7 @@ jobs:
         uses: NuGet/login@v1
         id: login
         with:
-          user: ${{ inputs.nuget_user }}
+          user: ${{ inputs.nuget_user || vars.NUGET_USER }}
 
       - name: Publish package
         working-directory: ${{ runner.temp }}/nupkgs
