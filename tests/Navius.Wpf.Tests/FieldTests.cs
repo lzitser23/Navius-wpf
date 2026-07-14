@@ -61,13 +61,20 @@ public class FieldTests
         {
             Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Select.xaml"),
         });
-        var input = new NaviusInput { Resources = resources, Text = "Name", FontSize = 14 };
-        var select = new NaviusSelect<string> { Resources = resources, FontSize = 14, Placeholder = "Variant" };
+        var input = new NaviusInput { Resources = resources, Text = "Name" };
+        var select = new NaviusSelect<string> { Resources = resources, Placeholder = "Variant" };
+        select.Style = (Style)resources[typeof(NaviusSelectBase)];
+        Assert.True(select.ApplyTemplate());
 
         input.Measure(new Size(300, 100));
         select.Measure(new Size(300, 100));
+        select.Arrange(new Rect(select.DesiredSize));
+        var trigger = Assert.IsType<ToggleButton>(select.Template.FindName("PART_Trigger", select));
 
         Assert.Equal(input.DesiredSize.Height, select.DesiredSize.Height);
+        Assert.Equal(14, input.FontSize);
+        Assert.Equal(14, select.FontSize);
+        Assert.Equal(select.ActualHeight, trigger.ActualHeight);
     }
 
     [StaFact]

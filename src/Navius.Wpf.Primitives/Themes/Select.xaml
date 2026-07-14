@@ -102,6 +102,7 @@
     <Style TargetType="{x:Type select:NaviusSelectBase}">
         <Setter Property="MinWidth" Value="200" />
         <Setter Property="MinHeight" Value="36" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Top" />
