@@ -17,7 +17,9 @@
                 <ControlTemplate TargetType="{x:Type controls:NaviusTooltip}">
                     <Grid>
                         <Border x:Name="PART_Trigger" Background="Transparent">
-                            <ContentPresenter />
+                            <ContentPresenter
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
 
                         <controls:NaviusAnchoredPopup
