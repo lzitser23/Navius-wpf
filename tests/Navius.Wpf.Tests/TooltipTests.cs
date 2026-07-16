@@ -109,6 +109,26 @@ public class TooltipTests : IDisposable
     }
 
     [StaFact]
+    public void DefaultContentAlignment_PreservesStretchLayout()
+    {
+        var content = new Border();
+        var tooltip = new NaviusTooltip
+        {
+            Resources = CreateThemedScope(),
+            Content = content,
+            Width = 240,
+            Height = 80
+        };
+
+        tooltip.ApplyTemplate();
+        tooltip.Measure(new Size(240, 80));
+        tooltip.Arrange(new Rect(0, 0, 240, 80));
+
+        Assert.Equal(240, content.ActualWidth);
+        Assert.Equal(80, content.ActualHeight);
+    }
+
+    [StaFact]
     public void GotKeyboardFocus_OpensImmediatelyAndMarksInstant()
     {
         var tooltip = CreateAppliedTooltip();
