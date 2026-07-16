@@ -12,12 +12,16 @@
     <Style TargetType="{x:Type controls:NaviusTooltip}">
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:NaviusTooltip}">
                     <Grid>
                         <Border x:Name="PART_Trigger" Background="Transparent">
-                            <ContentPresenter />
+                            <ContentPresenter
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
 
                         <controls:NaviusAnchoredPopup
