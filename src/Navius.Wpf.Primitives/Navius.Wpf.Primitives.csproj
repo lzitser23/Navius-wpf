@@ -9,7 +9,7 @@
 
   <PropertyGroup>
     <PackageId>Navius.Wpf.Primitives</PackageId>
-    <Version>1.0.0-preview.6</Version>
+    <Version>1.0.0-preview.7</Version>
     <Authors>Navius contributors</Authors>
     <Description>Headless, accessible WPF component primitives - the Navius.Wpf brain layer, ported from the Blazor Navius.Primitives library.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
