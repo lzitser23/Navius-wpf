@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using Navius.Wpf.Primitives.Controls;
@@ -76,6 +77,53 @@ public class ButtonTests
         Assert.Equal(36, button.Width);
         Assert.Equal(36, button.Height);
         Assert.Equal(new Thickness(0), button.Padding);
+    }
+
+    [StaFact]
+    public void ContentAlignment_Default_CentersContent()
+    {
+        var content = new Border { Width = 20, Height = 10 };
+        var button = new NaviusButton { Content = content, Padding = new Thickness(0), Width = 200, Height = 40 };
+        button.Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Button.xaml"),
+        });
+
+        button.ApplyTemplate();
+        button.Measure(new Size(200, 40));
+        button.Arrange(new Rect(0, 0, 200, 40));
+
+        var offset = content.TranslatePoint(new Point(0, 0), button);
+        Assert.Equal(90, offset.X, 3);
+    }
+
+    [StaFact]
+    public void ContentAlignment_ExplicitLeft_ForwardsToContentPresenter()
+    {
+        // Regression: the template used to hardcode Center on the ContentPresenter, ignoring
+        // HorizontalContentAlignment entirely -- a row-style button (label left, badge right)
+        // had no way to make its content stretch/left-align.
+        var content = new Border { Width = 20, Height = 10 };
+        var button = new NaviusButton
+        {
+            Content = content,
+            Padding = new Thickness(0),
+            BorderThickness = new Thickness(0),
+            Width = 200,
+            Height = 40,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+        };
+        button.Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Primitives;component/Themes/Button.xaml"),
+        });
+
+        button.ApplyTemplate();
+        button.Measure(new Size(200, 40));
+        button.Arrange(new Rect(0, 0, 200, 40));
+
+        var offset = content.TranslatePoint(new Point(0, 0), button);
+        Assert.Equal(0, offset.X, 3);
     }
 
     [StaFact]

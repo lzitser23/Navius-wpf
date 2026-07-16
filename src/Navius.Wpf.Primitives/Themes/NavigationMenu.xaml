@@ -78,6 +78,8 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Padding" Value="10,6" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
@@ -86,7 +88,7 @@
                             Background="{TemplateBinding Background}"
                             CornerRadius="{DynamicResource Navius.Radius.Small}"
                             Padding="{TemplateBinding Padding}">
-                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        <ContentPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <!-- data-pressed -->

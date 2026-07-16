@@ -10,6 +10,8 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="10,6" />
         <Setter Property="FontSize" Value="14" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
@@ -23,8 +25,8 @@
                         CornerRadius="{DynamicResource Navius.Radius.Control}">
                         <ContentPresenter
                             Margin="{TemplateBinding Padding}"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center" />
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <!-- data-pressed -->

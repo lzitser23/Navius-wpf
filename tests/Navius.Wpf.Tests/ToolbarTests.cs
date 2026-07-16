@@ -147,6 +147,33 @@ public class ToolbarTests : IDisposable
         Assert.True(toggleItem.ApplyTemplate());
     }
 
+    [StaFact]
+    public void ContentAlignment_ExplicitLeft_ForwardsToContentPresenter()
+    {
+        // Regression: NaviusToolbarButton, NaviusToolbarLink and NaviusToolbarToggleItem all
+        // hardcoded Center on their ContentPresenter, ignoring HorizontalContentAlignment. Covers
+        // NaviusToolbarButton as the representative case -- the other two share the identical
+        // template shape (Border > ContentPresenter, Margin={TemplateBinding Padding}).
+        var content = new Border { Width = 20, Height = 10 };
+        var button = new NaviusToolbarButton
+        {
+            Content = content,
+            Padding = new Thickness(0),
+            BorderThickness = new Thickness(0),
+            Width = 200,
+            Height = 40,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Resources = CreateThemedScope(),
+        };
+
+        button.ApplyTemplate();
+        button.Measure(new Size(200, 40));
+        button.Arrange(new Rect(0, 0, 200, 40));
+
+        var offset = content.TranslatePoint(new Point(0, 0), button);
+        Assert.Equal(0, offset.X, 3);
+    }
+
     // --- Roving tab stop ---
 
     [StaFact]
