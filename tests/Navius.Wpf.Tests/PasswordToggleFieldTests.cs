@@ -76,6 +76,29 @@ public class PasswordToggleFieldTests
     }
 
     [StaFact]
+    public void Toggle_ContentAlignment_ExplicitLeft_ForwardsToContentPresenter()
+    {
+        // Regression: the ContentPresenter hardcoded Center and ignored HorizontalContentAlignment.
+        var content = new Border { Width = 10, Height = 10 };
+        var toggle = new NaviusPasswordToggleFieldToggle
+        {
+            Content = content,
+            Width = 100,
+            Height = 40,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Resources = CreateThemedScope(),
+        };
+
+        toggle.ApplyTemplate();
+        toggle.Measure(new Size(100, 40));
+        toggle.Arrange(new Rect(0, 0, 100, 40));
+
+        // The template's fixed Margin="6" on the ContentPresenter offsets the left edge.
+        var offset = content.TranslatePoint(new Point(0, 0), toggle);
+        Assert.Equal(6, offset.X, 3);
+    }
+
+    [StaFact]
     public void HiddenByDefault_PasswordBoxIsTheVisibleControl()
     {
         var (_, _, _, passwordBox, textBox) = CreateField();

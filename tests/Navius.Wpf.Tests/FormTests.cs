@@ -51,6 +51,29 @@ public class FormTests
     }
 
     [StaFact]
+    public void Submit_ContentAlignment_ExplicitLeft_ForwardsToContentPresenter()
+    {
+        // Regression: the ContentPresenter hardcoded Center and ignored HorizontalContentAlignment.
+        var content = new Border { Width = 20, Height = 10 };
+        var submit = new NaviusFormSubmit
+        {
+            Content = content,
+            Padding = new Thickness(0),
+            Width = 200,
+            Height = 40,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Resources = CreateThemedScope(),
+        };
+
+        submit.ApplyTemplate();
+        submit.Measure(new Size(200, 40));
+        submit.Arrange(new Rect(0, 0, 200, 40));
+
+        var offset = content.TranslatePoint(new Point(0, 0), submit);
+        Assert.Equal(0, offset.X, 3);
+    }
+
+    [StaFact]
     public void Submit_FiresWhenEveryFieldIsValid()
     {
         var field = MakeField("email");

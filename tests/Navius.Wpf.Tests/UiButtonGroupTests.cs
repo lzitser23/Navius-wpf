@@ -33,6 +33,36 @@ public class UiButtonGroupTests
     }
 
     [StaFact]
+    public void NaviusButtonGroupItem_ContentAlignment_ExplicitLeft_ForwardsToContentPresenter()
+    {
+        // Regression: the ContentPresenter hardcoded Center and ignored HorizontalContentAlignment.
+        var content = new Border { Width = 20, Height = 10 };
+        var scope = new ResourceDictionary();
+        ThemeManager.Apply(NaviusTheme.Light, scope);
+        scope.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("pack://application:,,,/Navius.Wpf.Ui;component/Themes/ButtonGroup.xaml"),
+        });
+        var item = new NaviusButtonGroupItem
+        {
+            Content = content,
+            Padding = new Thickness(0),
+            BorderThickness = new Thickness(0),
+            Width = 200,
+            Height = 40,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Resources = scope,
+        };
+
+        item.ApplyTemplate();
+        item.Measure(new Size(200, 40));
+        item.Arrange(new Rect(0, 0, 200, 40));
+
+        var offset = content.TranslatePoint(new Point(0, 0), item);
+        Assert.Equal(0, offset.X, 3);
+    }
+
+    [StaFact]
     public void NaviusButtonGroupItem_AutomationPeer_ReportsButtonControlType()
     {
         var item = new NaviusButtonGroupItem();

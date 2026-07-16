@@ -32,6 +32,8 @@
         <Setter Property="Foreground" Value="{DynamicResource Navius.MutedForeground}" />
         <Setter Property="Padding" Value="12,8" />
         <Setter Property="FontSize" Value="14" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
@@ -46,8 +48,8 @@
                         <ContentPresenter
                             Margin="{TemplateBinding Padding}"
                             ContentSource="Header"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center" />
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">

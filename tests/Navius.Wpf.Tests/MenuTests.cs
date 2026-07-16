@@ -77,6 +77,32 @@ public class MenuTests : IDisposable
     }
 
     [StaFact]
+    public void Trigger_ContentAlignment_ExplicitLeft_ForwardsToContentPresenter()
+    {
+        // Regression: this is the exact scenario a consumer sidebar hit -- setting
+        // HorizontalContentAlignment="Left" on a NaviusMenuTrigger (label left, chevron/count
+        // right in a row layout) did nothing because the template hardcoded Center.
+        var content = new Border { Width = 20, Height = 10 };
+        var trigger = new NaviusMenuTrigger
+        {
+            Content = content,
+            Padding = new Thickness(0),
+            BorderThickness = new Thickness(0),
+            Width = 200,
+            Height = 40,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Resources = CreateThemedScope(),
+        };
+
+        trigger.ApplyTemplate();
+        trigger.Measure(new Size(200, 40));
+        trigger.Arrange(new Rect(0, 0, 200, 40));
+
+        var offset = content.TranslatePoint(new Point(0, 0), trigger);
+        Assert.Equal(0, offset.X, 3);
+    }
+
+    [StaFact]
     public void Trigger_Toggle_OpensAssociatedMenu_AndSetsPlacementTarget()
     {
         var trigger = new NaviusMenuTrigger();

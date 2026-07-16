@@ -119,6 +119,31 @@ public class NavigationMenuTests : IDisposable
     }
 
     [StaFact]
+    public void Trigger_ContentAlignment_ExplicitLeft_ForwardsToContentPresenter()
+    {
+        // Regression: the ContentPresenter hardcoded Center for both axes and ignored
+        // HorizontalContentAlignment/VerticalContentAlignment (unlike its sibling
+        // NaviusNavigationMenuLink, which already forwarded HorizontalContentAlignment).
+        var content = new Border { Width = 20, Height = 10 };
+        var trigger = new NaviusNavigationMenuTrigger
+        {
+            Content = content,
+            Padding = new Thickness(0),
+            Width = 200,
+            Height = 40,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Resources = CreateThemedScope(),
+        };
+
+        trigger.ApplyTemplate();
+        trigger.Measure(new Size(200, 40));
+        trigger.Arrange(new Rect(0, 0, 200, 40));
+
+        var offset = content.TranslatePoint(new Point(0, 0), trigger);
+        Assert.Equal(0, offset.X, 3);
+    }
+
+    [StaFact]
     public void UseSharedViewport_True_ThrowsNotSupported()
     {
         var root = new NaviusNavigationMenu();
