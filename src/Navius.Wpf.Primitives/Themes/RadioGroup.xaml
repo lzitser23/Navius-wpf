@@ -16,7 +16,7 @@
     </Style>
 
     <Style TargetType="{x:Type controls:NaviusRadioGroupItem}">
-        <Setter Property="Foreground" Value="{DynamicResource Navius.PrimaryForeground}" />
+        <Setter Property="Foreground" Value="{DynamicResource Navius.Foreground}" />
         <Setter Property="Focusable" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
@@ -31,7 +31,7 @@
                                 CornerRadius="8">
                             <controls:NaviusRadioGroupIndicator
                                 IsChecked="{TemplateBinding IsChecked}"
-                                Foreground="{TemplateBinding Foreground}"
+                                Foreground="{DynamicResource Navius.PrimaryForeground}"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center" />
                         </Border>
