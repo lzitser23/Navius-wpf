@@ -142,10 +142,30 @@ public class UiCollectionPickerTests
             window.Activate();
             picker.UpdateLayout();
             var first = Assert.IsAssignableFrom<ListBoxItem>(picker.ItemContainerGenerator.ContainerFromIndex(0));
-            Keyboard.Focus(first);
-            Assert.Same(first, Keyboard.FocusedElement);
 
-            picker.SendKey(Key.Right, first);
+            // Two live-input hazards make a single attempt flaky outside headless CI: ListBox's
+            // arrow-key handler reads live Keyboard.Modifiers (with Ctrl held it moves focus
+            // without selecting; per-thread Win32 key state can go stale-pressed on a dev
+            // machine -- see InputState), and other [StaFact] classes showing real windows on
+            // parallel STA threads can steal native focus between Keyboard.Focus and the key
+            // press. So neutralize the thread state and acquire focus inside a bounded retry.
+            for (var attempt = 0; attempt < 20 && picker.SelectedIndex != 1; attempt++)
+            {
+                if (attempt > 0)
+                {
+                    Thread.Sleep(100);
+                    picker.SelectedIndex = 0;
+                }
+
+                InputState.Neutralize();
+                Keyboard.Focus(first);
+                if (!ReferenceEquals(first, Keyboard.FocusedElement))
+                {
+                    continue;
+                }
+
+                picker.SendKey(Key.Right, first);
+            }
 
             Assert.Equal(1, picker.SelectedIndex);
         }
