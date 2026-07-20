@@ -123,6 +123,18 @@ public class NaviusRadioGroup : ContentControl
         SyncCheckedFromValue();
     }
 
+    protected override void OnInitialized(EventArgs e)
+    {
+        base.OnInitialized(e);
+
+        // The XAML parser assigns Content before the content's own children are attached,
+        // so a Value declared as a XAML attribute is synced against an empty logical tree
+        // in OnContentChanged and never pre-checks its item. EndInit fires after the whole
+        // subtree is built (including for XamlReader.Parse, with no PresentationSource or
+        // layout pass required), so re-sync here.
+        SyncCheckedFromValue();
+    }
+
     protected override AutomationPeer OnCreateAutomationPeer() =>
         new NaviusRadioGroupAutomationPeer(this);
 

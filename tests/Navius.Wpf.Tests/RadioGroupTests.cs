@@ -112,6 +112,30 @@ public class RadioGroupTests : IDisposable
     }
 
     [StaFact]
+    public void XamlDeclaredValue_PreChecksMatchingItem()
+    {
+        // Mirrors the Gallery's "Pre-selected" markup: the parser sets Value before Content,
+        // so the initial sync must happen when the content (and its items) attach.
+        const string xaml = """
+            <radio:NaviusRadioGroup
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:radio="clr-namespace:Navius.Wpf.Primitives.Controls.RadioGroup;assembly=Navius.Wpf.Primitives"
+                Value="b">
+                <StackPanel>
+                    <radio:NaviusRadioGroupItem Value="a" Content="Option A" />
+                    <radio:NaviusRadioGroupItem Value="b" Content="Option B" />
+                    <radio:NaviusRadioGroupItem Value="c" Content="Option C" />
+                </StackPanel>
+            </radio:NaviusRadioGroup>
+            """;
+
+        var group = (NaviusRadioGroup)System.Windows.Markup.XamlReader.Parse(xaml);
+
+        var items = ((StackPanel)group.Content).Children.OfType<NaviusRadioGroupItem>().ToList();
+        Assert.Equal(new bool?[] { false, true, false }, items.Select(i => i.IsChecked));
+    }
+
+    [StaFact]
     public void Click_SelectsItem_UpdatesValueAndRaisesEvent()
     {
         var (group, a, _, _) = CreateGroup();
