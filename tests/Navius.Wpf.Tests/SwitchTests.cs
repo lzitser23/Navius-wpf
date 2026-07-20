@@ -105,9 +105,20 @@ public class SwitchTests
         var toggle = CreateHostedSwitch(out var source);
         using var _ = source;
 
-        // ButtonBase (ClickMode.Release) presses on KeyDown and clicks on KeyUp.
-        RaiseKey(toggle, Key.Space, Keyboard.KeyDownEvent, source);
-        RaiseKey(toggle, Key.Space, Keyboard.KeyUpEvent, source);
+        // ButtonBase (ClickMode.Release) presses on KeyDown and clicks on KeyUp -- but the native
+        // Space path also reads live thread input state (see InputState): OnKeyUp suppresses the
+        // click while the thread sees the left mouse button down, and OnKeyDown ignores Space
+        // while Alt reads held or the mouse is captured. Neutralize the thread state each
+        // attempt and retry briefly (releasing any capture a failed KeyUp left behind) to cover
+        // a real gesture arriving mid-attempt via the capture ButtonBase takes.
+        for (var attempt = 0; attempt < 20 && toggle.IsChecked != true; attempt++)
+        {
+            if (attempt > 0) Thread.Sleep(100);
+            InputState.Neutralize();
+            RaiseKey(toggle, Key.Space, Keyboard.KeyDownEvent, source);
+            RaiseKey(toggle, Key.Space, Keyboard.KeyUpEvent, source);
+            if (toggle.IsMouseCaptured) toggle.ReleaseMouseCapture();
+        }
 
         Assert.True(toggle.IsChecked);
     }

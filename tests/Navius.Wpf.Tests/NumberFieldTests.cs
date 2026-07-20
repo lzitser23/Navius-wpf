@@ -425,7 +425,21 @@ public class NumberFieldTests : IDisposable
     {
         var field = CreateAppliedField(0, 100, 50);
 
-        PressKey(InnerInput(field), Key.Up);
+        // The step handler reads live Keyboard.Modifiers (Shift -> LargeStep, Alt -> SmallStep),
+        // which resolve to per-thread Win32 key state that can go stale-pressed on a dev machine
+        // (see InputState). Neutralize the thread state, then reset and retry briefly in case a
+        // real gesture lands mid-attempt.
+        for (var attempt = 0; attempt < 20 && field.Value != 51; attempt++)
+        {
+            if (attempt > 0)
+            {
+                Thread.Sleep(100);
+                field.Value = 50;
+            }
+
+            InputState.Neutralize();
+            PressKey(InnerInput(field), Key.Up);
+        }
 
         Assert.Equal(51, field.Value);
     }
