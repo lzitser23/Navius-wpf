@@ -57,6 +57,21 @@ public class CheckboxTests
     }
 
     [StaFact]
+    public void DefaultTemplate_UsesSeparateContentAndIndicatorForegrounds()
+    {
+        var scope = CreateThemedScope();
+        var checkbox = new NaviusCheckbox { Content = "Label", IsChecked = true, Resources = scope };
+
+        Assert.True(checkbox.ApplyTemplate());
+
+        var panel = Assert.IsType<StackPanel>(System.Windows.Media.VisualTreeHelper.GetChild(checkbox, 0));
+        var box = Assert.IsType<Border>(panel.Children[0]);
+        var indicator = Assert.IsType<NaviusCheckboxIndicator>(box.Child);
+        Assert.Equal(checkbox.FindResource("Navius.Foreground"), checkbox.Foreground);
+        Assert.Equal(checkbox.FindResource("Navius.PrimaryForeground"), indicator.Foreground);
+    }
+
+    [StaFact]
     public void DefaultState_IsUncheckedAndThreeState()
     {
         var checkbox = new NaviusCheckbox();
