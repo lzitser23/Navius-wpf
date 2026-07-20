@@ -88,16 +88,19 @@ live in [`docs/parity/`](docs/parity/), one document per family.
 
 ## Installation
 
-The four library packages pack locally at `1.0.0-preview.1` and are not yet published
-to NuGet. Until they are, consume the source directly:
+The library packages are published to NuGet in preview:
+
+```bash
+dotnet add package Navius.Wpf.Primitives
+dotnet add package Navius.Wpf.Ui
+dotnet add package Navius.Wpf.Motion
+dotnet add package Navius.Wpf.Charts
+```
+
+Or consume the source directly:
 
 ```bash
 git clone https://github.com/lzitser23/Navius-wpf.git navius-wpf
-```
-
-Reference the projects you need:
-
-```bash
 dotnet add reference ../navius-wpf/src/Navius.Wpf.Primitives/Navius.Wpf.Primitives.csproj
 ```
 
