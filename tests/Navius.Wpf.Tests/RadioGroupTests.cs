@@ -97,6 +97,21 @@ public class RadioGroupTests : IDisposable
     }
 
     [StaFact]
+    public void DefaultTemplate_UsesSeparateContentAndIndicatorForegrounds()
+    {
+        var scope = CreateThemedScope();
+        var item = new NaviusRadioGroupItem { Content = "Label", IsChecked = true, Resources = scope };
+
+        Assert.True(item.ApplyTemplate());
+
+        var panel = Assert.IsType<StackPanel>(System.Windows.Media.VisualTreeHelper.GetChild(item, 0));
+        var circle = Assert.IsType<Border>(panel.Children[0]);
+        var indicator = Assert.IsType<NaviusRadioGroupIndicator>(circle.Child);
+        Assert.Equal(item.FindResource("Navius.Foreground"), item.Foreground);
+        Assert.Equal(item.FindResource("Navius.PrimaryForeground"), indicator.Foreground);
+    }
+
+    [StaFact]
     public void Click_SelectsItem_UpdatesValueAndRaisesEvent()
     {
         var (group, a, _, _) = CreateGroup();
