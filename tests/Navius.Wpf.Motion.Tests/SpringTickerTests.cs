@@ -113,6 +113,24 @@ public class SpringTickerTests
     }
 
     [StaFact]
+    public void Retarget_after_settling_re_arms_the_render_loop()
+    {
+        using var ticker = new SpringTicker(Spring.Default, 0, 1, _ => { }, FullMotion);
+
+        // Simulate the settle path: OnRendering calls Stop() once the spring is at rest,
+        // detaching the hook and clearing IsRunning.
+        ticker.Stop();
+        Assert.False(ticker.IsRunning);
+
+        ticker.Retarget(2);
+
+        // A retarget after settling must restart the ticker; otherwise the new solve never
+        // advances and the retarget is a silent no-op.
+        Assert.True(ticker.IsRunning);
+        Assert.Equal(2, ticker.Target);
+    }
+
+    [StaFact]
     public void Stop_detaches_the_rendering_hook_and_freezes_the_value()
     {
         using var ticker = new SpringTicker(Spring.Default, 0, 1, _ => { }, FullMotion);
