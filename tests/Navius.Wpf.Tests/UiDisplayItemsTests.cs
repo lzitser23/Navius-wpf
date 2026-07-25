@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Navius.Wpf.Ui.Alert;
@@ -201,6 +203,37 @@ public class UiDisplayItemsTests
         {
             Application.Current.Resources.MergedDictionaries.Remove(dictionary);
         }
+    }
+
+    [StaFact]
+    public void Alert_AutomationPeer_ReportsGroupControlType()
+    {
+        var alert = new NaviusAlert();
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(alert);
+
+        Assert.NotNull(peer);
+        Assert.Equal(AutomationControlType.Group, peer!.GetAutomationControlType());
+    }
+
+    [StaFact]
+    public void Alert_AutomationPeer_DefaultVariant_AnnouncesPolite()
+    {
+        var alert = new NaviusAlert { Variant = NaviusAlertVariant.Default };
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(alert);
+
+        Assert.Equal(AutomationLiveSetting.Polite, peer!.GetLiveSetting());
+    }
+
+    [StaFact]
+    public void Alert_AutomationPeer_DestructiveVariant_AnnouncesAssertive()
+    {
+        var alert = new NaviusAlert { Variant = NaviusAlertVariant.Destructive };
+
+        var peer = UIElementAutomationPeer.CreatePeerForElement(alert);
+
+        Assert.Equal(AutomationLiveSetting.Assertive, peer!.GetLiveSetting());
     }
 
     // --- Badge ---

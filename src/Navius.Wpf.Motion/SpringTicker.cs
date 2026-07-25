@@ -87,6 +87,16 @@ public sealed class SpringTicker : IDisposable
         if (!_motionPolicy.AnimationsEnabled)
         {
             CompleteAtTarget(notify: true);
+            return;
+        }
+
+        // A retarget after the run has already settled (OnRendering detaches the hook on
+        // settle) must re-arm the ticker, otherwise the new solve never advances -- a silent
+        // no-op. Re-attach the rendering hook if it isn't currently running.
+        if (!_isRunning && !_disposed)
+        {
+            _isRunning = true;
+            CompositionTarget.Rendering += OnRendering;
         }
     }
 
